@@ -578,6 +578,84 @@ async function repairLogoSources(){
   toast('ซ่อม Logo Sources เป็น Image Source แล้ว');
 }
 
+
+/* FIXED9: robust Dock logo preview fallback
+   OBS still uses real local Image Source path. Dock preview tries:
+   1) selected browser folder object URL
+   2) direct URL/data/blob from Sheet
+   3) repo/base path with every allowed extension
+   4) default.svg
+*/
+function logoPreviewCandidates(raw){
+  raw=String(raw||'').trim();
+  const out=[];
+  const local=findLocalLogo(raw);
+  if(local)out.push(local.dataUrl||local.url);
+  if(!raw){out.push('logos/default.svg');return [...new Set(out.filter(Boolean))]}
+  if(/^(https?:\/\/|data:image\/|blob:)/i.test(raw)){out.push(raw);return [...new Set(out.filter(Boolean))]}
+  const i=logoInfo(raw);
+  if(i&&i.url&&!isLikelyRealLocalPath(i.url))out.push(i.url);
+  const base=((settings.logo&&settings.logo.basePath)||'logos/').replace(/[\/]*$/,'/');
+  if(raw.match(/\.(png|jpe?g|webp|svg|gif)$/i)){
+    out.push(base+raw);
+  }else{
+    for(const ext of logoExts())out.push(base+raw+'.'+String(ext).replace(/^\./,''));
+  }
+  out.push('logos/default.svg');
+  return [...new Set(out.filter(Boolean))];
+}
+function setDockLogoImage(img,raw){
+  if(!img)return;
+  const candidates=logoPreviewCandidates(raw);
+  let idx=0;
+  img.dataset.logoRaw=String(raw||'');
+  img.dataset.logoCandidates=JSON.stringify(candidates);
+  img.onerror=function(){
+    idx++;
+    if(idx<candidates.length){this.src=candidates[idx];return}
+    this.onerror=null;this.src='logos/default.svg';
+  };
+  img.src=candidates[0]||'logos/default.svg';
+}
+logoPreviewUrl=function(name){return (logoPreviewCandidates(name)[0]||'logos/default.svg')};
+const __renderMatchFixed9=renderMatch;
+renderMatch=function(){
+  const m=state.match;
+  $('teamAName').textContent=m.TeamA||'TEAM A';
+  $('teamBName').textContent=m.TeamB||'TEAM B';
+  $('teamASub').textContent=m.LogoA||'LogoA';
+  $('teamBSub').textContent=m.LogoB||'LogoB';
+  const meta=[m.MatchID&&`MatchID: ${m.MatchID}`,m.Label1,m.Label2,m.Label3,m.Label4,m.Label5].filter(Boolean);
+  $('matchMeta').innerHTML=meta.map(x=>`<span class="pill">${esc(x)}</span>`).join('');
+  $('currentMatchStatus').textContent=m.MatchID?`Current: #${m.MatchID} ${m.TeamA||'TEAM A'} vs ${m.TeamB||'TEAM B'}${matchSub(m)?' | '+matchSub(m):''}`:'Current: ยังไม่ได้โหลดคู่แข่งขัน';
+  setDockLogoImage($('logoA'),m.LogoA);
+  setDockLogoImage($('logoB'),m.LogoB);
+  renderPeriodStatus();
+  updateMiniStatus();
+};
+renderLogoPreviewGrid=function(){
+  const grid=$('logoPreviewGrid');if(!grid)return;
+  const entries=[...new Map(Object.values(localLogoFiles||{}).map(x=>[x.url,x])).values()].slice(0,24);
+  if(entries.length){
+    grid.innerHTML=entries.map(x=>`<div class="logo-card"><img src="${esc(x.dataUrl||x.url)}" onerror="this.onerror=null;this.src='logos/default.svg'"><small>${esc(x.name)}</small></div>`).join('');
+    return;
+  }
+  const names=[state.match.LogoA,state.match.LogoB].filter(Boolean);
+  if(!names.length){grid.innerHTML='<div class="small muted">ยังไม่มีโลโก้ตัวอย่าง</div>';return;}
+  grid.innerHTML=names.map((n,i)=>`<div class="logo-card"><img id="logoPreviewCandidate_${i}" alt="${esc(n)}"><small>${esc(n)}</small><em class="small muted">ถ้าไม่ขึ้น ให้อัปโหลดไฟล์ไว้ใน logos/ หรือกดเลือกโฟลเดอร์เพื่อ Preview</em></div>`).join('');
+  names.forEach((n,i)=>setDockLogoImage($('logoPreviewCandidate_'+i),n));
+};
+const __renderLogosFixed9=renderLogos;
+renderLogos=function(){
+  const names=[state.match.LogoA,state.match.LogoB].filter(Boolean);
+  const localCount=Object.keys(localLogoFiles||{}).length;
+  const uniqueLocal=[...new Map(Object.values(localLogoFiles||{}).map(x=>[x.url,x])).values()].length;
+  $('logoReady').innerHTML=names.length?names.map(n=>{const i=logoInfo(n)||{};const obs=logoObsFile(n);const preview=logoPreviewCandidates(n).filter(x=>x!=='logos/default.svg').length;return `<div class="ready-row"><span>${esc(n)}</span><strong>${(i.found||preview||obs)?'Ready':'Missing'}</strong></div>`}).join(''):(localCount?`เลือกโฟลเดอร์แล้ว: ${uniqueLocal} ไฟล์`:'ยังไม่มีโลโก้ในคู่ปัจจุบัน');
+  setDockLogoImage($('logoA'),state.match.LogoA);
+  setDockLogoImage($('logoB'),state.match.LogoB);
+  renderLogoPreviewGrid();
+};
+
 bind();bindLogin();if($('btnOnlineUsers'))$('btnOnlineUsers').onclick=openOnlinePopup;if($('btnCloseOnlinePopup'))$('btnCloseOnlinePopup').onclick=closeOnlinePopup;if($('onlineModalBackdrop'))$('onlineModalBackdrop').onclick=e=>{if(e.target.id==='onlineModalBackdrop')closeOnlinePopup()};if($('btnRefreshOnlinePopup'))$('btnRefreshOnlinePopup').onclick=async()=>{await syncPresenceOnce();renderOnlinePopup()};document.querySelectorAll('.help-btn').forEach(b=>b.onclick=()=>showHelp(b.dataset.help));if($('btnSaveLogoSettings'))$('btnSaveLogoSettings').onclick=()=>saveSettingsFromInputs(true);if($('btnRepairLogoSources'))$('btnRepairLogoSources').onclick=repairLogoSources;if($('btnPickLogoFolder'))$('btnPickLogoFolder').onclick=()=>$('logoFolderInput').click();if($('logoFolderInput'))$('logoFolderInput').onchange=async e=>{const files=e.target.files||[];const first=files[0];const count=registerLogoFiles(files);await hydrateLocalLogoDataUrls();if(first&&first.webkitRelativePath){const folder=first.webkitRelativePath.split('/')[0];settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโฟลเดอร์โลโก้สำหรับ Preview: ${folder} (${count} ไฟล์) | OBS ต้องกรอก Logo Folder Path จริง`)}else if(count){settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโลโก้สำหรับ Preview แล้ว ${count} ไฟล์ | OBS ต้องกรอก Logo Folder Path จริง`)}};if($('btnSaveActions'))$('btnSaveActions').onclick=saveActionSettings;if($('btnPresetActions'))$('btnPresetActions').onclick=presetActions;if($('btnHideAllActions2'))$('btnHideAllActions2').onclick=hideAllActionSources;if($('btnHideActionSources'))$('btnHideActionSources').onclick=hideAllActionSources;if($('btnSaveLayout'))$('btnSaveLayout').onclick=saveLayoutSettings;if($('btnResetLayout'))$('btnResetLayout').onclick=resetLayoutSettings;if($('btnCheckObsSources'))$('btnCheckObsSources').onclick=()=>toast('ใช้ปุ่ม + เพื่อสร้าง/ตรวจทีละ Tag ได้ทันที');applySportDefaults(false);filterMatches(false);renderAll();applyAuthUI();if(auth.authenticated)startPresence();setInterval(tick,1000);window.addEventListener('beforeunload',saveLocal);if(state.sheetRows&&state.sheetRows.length){$('stSheet').className='status ok';$('stSheet').textContent=`Sheet: ${state.sheetRows.length}`}
 })();
 </script>

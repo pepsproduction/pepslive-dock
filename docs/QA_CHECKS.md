@@ -50,3 +50,11 @@
   3. Repo/Base Path เช่น `logos/A1.png`
   4. `logos/default.svg` ถ้าโหลดไม่สำเร็จ
 - ตรวจว่า `logoPreviewUrl()` ไม่ส่ง `C:/...` เข้า `<img>` ของ Dock โดยตรง
+
+
+## Fixed9 Dock Logo Preview QA
+- `logoPreviewCandidates()` exists and tries selected folder, URL/data/blob, repo logos path, then default.
+- `setDockLogoImage()` exists and falls back across extensions on image load error.
+- `renderMatch()` uses `setDockLogoImage()` for `logoA` and `logoB`.
+- `logoObsFile()` remains separated from Dock preview and still returns OBS Image Source path.
+- OBS Image Source pipeline is unchanged from Fixed7/Fixed8.

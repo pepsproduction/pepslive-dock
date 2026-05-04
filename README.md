@@ -137,3 +137,10 @@ docs/OBS_SOURCES.md
 - OBS Preview ใช้ `Image Source` และต้องใช้ path จริง เช่น `C:/PepsLive/logos/A1.png`
 - หน้า PepsLive Dock จะใช้ preview แยกต่างหาก โดยดูจากไฟล์ที่เลือกใน browser หรือ path `logos/` ใน GitHub repo
 - ถ้า OBS ขึ้นโลโก้แล้วแต่ Dock ไม่ขึ้น ให้ตรวจว่าใน repo มีไฟล์ `logos/A1.png` หรือกดเลือกโฟลเดอร์โลโก้ใหม่ในหน้า Settings > Logos
+
+
+## Fixed9: Dock Logo Preview
+
+ถ้า OBS แสดงโลโก้แล้วแต่หน้า Dock ไม่แสดง ให้ตรวจว่าไฟล์โลโก้อยู่ใน `logos/` บน GitHub หรือกดเลือกโฟลเดอร์โลโก้ใน Settings > Logos เพื่อให้ Dock ใช้ไฟล์นั้น preview ได้ใน session ปัจจุบัน. ระบบจะลองนามสกุลอัตโนมัติ เช่น `.png`, `.jpg`, `.webp`, `.svg`.
+
+OBS ยังใช้ Local Folder Path จริง เช่น `C:/PepsLive/logos/` สำหรับ Image Source เหมือนเดิม.
