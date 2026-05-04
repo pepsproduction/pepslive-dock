@@ -130,3 +130,10 @@ docs/OBS_SOURCES.md
 ```
 
 ปุ่มเลือกโฟลเดอร์ใช้สำหรับแสดงตัวอย่างใน Dock เท่านั้น ถ้าจะให้ OBS Image Source แสดงผล ต้องกรอก `Local Folder Path` จริง
+
+
+## หมายเหตุโลโก้ใน Dock และ OBS
+
+- OBS Preview ใช้ `Image Source` และต้องใช้ path จริง เช่น `C:/PepsLive/logos/A1.png`
+- หน้า PepsLive Dock จะใช้ preview แยกต่างหาก โดยดูจากไฟล์ที่เลือกใน browser หรือ path `logos/` ใน GitHub repo
+- ถ้า OBS ขึ้นโลโก้แล้วแต่ Dock ไม่ขึ้น ให้ตรวจว่าใน repo มีไฟล์ `logos/A1.png` หรือกดเลือกโฟลเดอร์โลโก้ใหม่ในหน้า Settings > Logos

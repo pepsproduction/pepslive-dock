@@ -128,9 +128,9 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
       </section>
             <section class="card score-card dock-module" id="moduleScore" data-module="score">
         <div class="teams">
-          <div class="team"><img id="logoA" class="logo-preview" alt="Logo A"><div class="team-name" id="teamAName">TEAM A</div><div class="team-sub" id="teamASub">LogoA</div><div class="score-buttons" id="scoreBtnsA"></div></div>
+          <div class="team"><img id="logoA" class="logo-preview" alt="Logo A" onerror="this.onerror=null;this.src='logos/default.svg'"><div class="team-name" id="teamAName">TEAM A</div><div class="team-sub" id="teamASub">LogoA</div><div class="score-buttons" id="scoreBtnsA"></div></div>
           <div class="score-mid"><div class="vs">SCORE</div><div class="scoreline"><span id="scoreA">0</span><span> - </span><span id="scoreB">0</span></div><button class="ghost tiny" id="btnUndo">Undo Last Score</button></div>
-          <div class="team right"><img id="logoB" class="logo-preview" alt="Logo B"><div class="team-name" id="teamBName">TEAM B</div><div class="team-sub" id="teamBSub">LogoB</div><div class="score-buttons" id="scoreBtnsB"></div></div>
+          <div class="team right"><img id="logoB" class="logo-preview" alt="Logo B" onerror="this.onerror=null;this.src='logos/default.svg'"><div class="team-name" id="teamBName">TEAM B</div><div class="team-sub" id="teamBSub">LogoB</div><div class="score-buttons" id="scoreBtnsB"></div></div>
         </div>
       </section>
       <section class="card timerbox dock-module" id="moduleClock" data-module="clock">
@@ -386,9 +386,26 @@ checkLogos=async function(showToast=true){
   }
   renderLogos();saveLocal()
 };
-logoPreviewUrl=function(name){const local=findLocalLogo(name);if(local)return local.dataUrl||local.url;const i=logoInfo(name);if(i&&i.url)return i.url;return 'logos/default.svg'};
+function logoPreviewRepoUrl(raw){
+  raw=String(raw||'').trim();
+  if(!raw)return '';
+  if(/^https?:\/\//i.test(raw)||/^data:image\//i.test(raw)||/^blob:/i.test(raw))return raw;
+  const base=((settings.logo&&settings.logo.basePath)||'logos/').replace(/[\/]*$/,'/');
+  if(raw.match(/\.(png|jpe?g|webp|svg|gif)$/i))return base+raw;
+  const ext=(logoExts()[0]||'png').replace(/^\./,'');
+  return base+raw+'.'+ext;
+}
+logoPreviewUrl=function(name){
+  const raw=String(name||'').trim();
+  const local=findLocalLogo(raw);
+  if(local)return local.dataUrl||local.url;
+  const i=logoInfo(raw);
+  if(i&&i.url&&(/^(https?:\/\/|data:image\/|blob:)/i.test(i.url)||!isLikelyRealLocalPath(i.url)))return i.url;
+  const repo=logoPreviewRepoUrl(raw);
+  return repo||'logos/default.svg';
+};
 logoObsFile=function(name){return logoObsValue(name)};
-function renderLogoPreviewGrid(){const grid=$('logoPreviewGrid');if(!grid)return;const entries=[...new Map(Object.values(localLogoFiles||{}).map(x=>[x.url,x])).values()].slice(0,24);if(entries.length){grid.innerHTML=entries.map(x=>`<div class="logo-card"><img src="${esc(x.url)}"><small>${esc(x.name)}</small></div>`).join('');return}const names=[state.match.LogoA,state.match.LogoB].filter(Boolean);grid.innerHTML=names.map(n=>`<div class="logo-card"><img src="${esc(logoPreviewUrl(n))}"><small>${esc(n)}</small></div>`).join('')||'<div class="small muted">ยังไม่มีโลโก้ตัวอย่าง</div>';}
+function renderLogoPreviewGrid(){const grid=$('logoPreviewGrid');if(!grid)return;const entries=[...new Map(Object.values(localLogoFiles||{}).map(x=>[x.url,x])).values()].slice(0,24);if(entries.length){grid.innerHTML=entries.map(x=>`<div class="logo-card"><img src="${esc(x.dataUrl||x.url)}" onerror="this.onerror=null;this.src='logos/default.svg'"><small>${esc(x.name)}</small></div>`).join('');return}const names=[state.match.LogoA,state.match.LogoB].filter(Boolean);grid.innerHTML=names.map(n=>`<div class="logo-card"><img src="${esc(logoPreviewUrl(n))}" onerror="this.onerror=null;this.src='logos/default.svg'"><small>${esc(n)}</small></div>`).join('')||'<div class="small muted">ยังไม่มีโลโก้ตัวอย่าง</div>';}
 
 function tagSourceName(k){
   if(k==='TeamA_FX')return settings.fx.teamA||'PEPS_TeamA_FX';
