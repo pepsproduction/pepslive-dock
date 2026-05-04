@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>PepsLive Settings</title><style>
+body{font-family:Segoe UI,Arial,sans-serif;background:#1b1d22;color:#f3f6fb;margin:0;padding:14px;font-size:13px}label{display:block;margin:0 0 10px;color:#b7c1d0}input{width:100%;box-sizing:border-box;margin-top:5px;padding:8px;border-radius:7px;border:1px solid #3a4150;background:#101218;color:#fff}button{width:100%;padding:9px;border:0;border-radius:8px;background:#3867ff;color:white;font-weight:700}small{display:block;color:#9aa4b4;line-height:1.4;margin-top:8px}.ok{color:#7ee0a1}.warn{color:#ffcf70}</style></head>
+<body>
+  <h3>PepsLive Dock</h3>
+  <label>OBS Host<input id="obsHost" value="127.0.0.1"></label>
+  <label>OBS Port<input id="obsPort" value="4455"></label>
+  <label>OBS Password<input id="obsPassword" type="password"></label>
+  <label>CommandBus Source<input id="commandBusSource" value="PEPS_CommandBus"></label>
+  <button id="save">บันทึกค่า Stream Deck</button>
+  <small id="status" class="warn">ตั้งค่านี้ใช้ร่วมกันทุกปุ่มในปลั๊กอิน</small>
+  <small>ต้องเปิด PepsLive Dock ใน OBS Dock และเชื่อม OBS WebSocket ไว้ก่อน Stream Deck จึงจะสั่งงานได้ครบ</small>
+<script src="property_inspector.js"></script>
+</body></html>

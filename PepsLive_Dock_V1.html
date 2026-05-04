@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>PepsLive Dock V1</title>
+<style>
+:root{--bg:#070b12;--panel:#101826;--panel2:#0b111c;--card:#141e2d;--line:#27344a;--text:#eef5ff;--muted:#9aa9bf;--blue:#4f7cff;--cyan:#22c7ff;--green:#20b56b;--red:#ef4444;--yellow:#f4b740;--shadow:0 18px 50px rgba(0,0,0,.34);--radius:18px;--font:Segoe UI,Tahoma,Arial,sans-serif}
+*{box-sizing:border-box}html,body{height:100%}body{margin:0;background:radial-gradient(circle at 12% 6%,rgba(79,124,255,.25),transparent 34%),linear-gradient(180deg,#060a12,#0e1624 60%,#070b12);color:var(--text);font-family:var(--font);overflow:auto}button,input,select,textarea{font:inherit}button{border:0;border-radius:14px;padding:10px 13px;color:#fff;background:#243248;cursor:pointer;transition:.12s ease;min-height:42px}button:hover{filter:brightness(1.08)}button:active{transform:translateY(1px)}button.primary{background:linear-gradient(135deg,var(--blue),#6f5cff)}button.success{background:linear-gradient(135deg,#17a85e,#20c778)}button.danger{background:linear-gradient(135deg,#d83b3b,#ef4444)}button.warn{background:linear-gradient(135deg,#f2a81d,#ffd36b);color:#121212}button.ghost{background:transparent;border:1px solid var(--line)}button.soft{background:#1a2638}button.tiny{min-height:30px;padding:6px 9px;border-radius:10px;font-size:12px}button.wide{width:100%}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:13px;padding:10px 12px;background:#0c1421;color:#fff;outline:none}input:focus,select:focus,textarea:focus{border-color:rgba(79,124,255,.85);box-shadow:0 0 0 3px rgba(79,124,255,.14)}label{display:grid;gap:6px;color:var(--muted);font-size:13px}.app{max-width:1180px;margin:0 auto;padding:12px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.brand{display:flex;align-items:center;gap:10px;min-width:0}.logo-dot{width:38px;height:38px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--cyan));font-weight:900;color:#06101c}.brand h1{font-size:18px;margin:0;line-height:1}.brand p{margin:3px 0 0;color:var(--muted);font-size:12px}.statusbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.status{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border-radius:999px;background:#101927;border:1px solid var(--line);font-size:12px;color:var(--muted);white-space:nowrap}.status::before{content:"";width:8px;height:8px;border-radius:50%;background:#65758b}.status.ok{color:#c9ffe0}.status.ok::before{background:var(--green);box-shadow:0 0 10px rgba(32,181,107,.7)}.status.bad{color:#ffd1d1}.status.bad::before{background:var(--red)}.status.warn{color:#ffe8aa}.status.warn::before{background:var(--yellow)}.grid{display:grid;gap:10px}.main{grid-template-columns:1fr 330px}.card{background:rgba(17,25,39,.92);border:1px solid rgba(255,255,255,.07);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.section-title h2{font-size:14px;margin:0;color:#dce8fb}.muted{color:var(--muted)}.small{font-size:12px}.sport-row{display:grid;grid-template-columns:190px 1fr auto;gap:8px;margin-bottom:8px}.matchbar{display:grid;grid-template-columns:1fr auto auto;gap:8px}.match-results{display:grid;gap:6px;margin-top:8px;max-height:220px;overflow:auto}.match-item{display:grid;gap:3px;text-align:left;padding:10px;border-radius:14px;border:1px solid var(--line);background:#0c1421;color:#eaf2ff;min-height:auto}.match-item:hover,.match-item.active{border-color:rgba(79,124,255,.8);background:#12213a}.match-item strong{font-size:13px}.match-item span{font-size:12px;color:var(--muted)}.match-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#0d1522;color:#d4e1f5;border-radius:999px;padding:6px 9px;font-size:12px}.score-card{padding:14px}.teams{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}.team{display:grid;gap:8px;min-width:0}.team.right{text-align:right}.team-name{font-weight:900;font-size:clamp(18px,4vw,34px);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.team-sub{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.logo-preview{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:#0b111b;object-fit:contain;justify-self:start}.team.right .logo-preview{justify-self:end}.score-mid{text-align:center;min-width:130px}.scoreline{font-weight:900;font-size:clamp(44px,9vw,82px);font-variant-numeric:tabular-nums;letter-spacing:-.08em}.scoreline span{letter-spacing:0}.vs{font-size:11px;color:var(--muted);letter-spacing:.16em}.score-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.score-buttons.football{grid-template-columns:repeat(2,1fr)}.timerbox{display:grid;gap:10px}.clock{font-size:clamp(42px,10vw,84px);font-weight:900;line-height:.95;font-variant-numeric:tabular-nums;text-align:center;background:#0b111b;border:1px solid var(--line);border-radius:18px;padding:12px}.time-edit{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}.period-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.fx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.side-panel{display:grid;gap:10px}.quick-log{max-height:190px;overflow:auto;display:grid;gap:6px}.log-item{padding:8px;border-radius:12px;background:#0c1421;border:1px solid rgba(255,255,255,.05);font-size:12px;color:#cbd8ec}.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.48);display:none;z-index:100}.drawer-backdrop.show{display:block}.drawer{position:fixed;top:0;right:0;height:100%;width:min(560px,100%);background:#0b111b;border-left:1px solid rgba(255,255,255,.1);box-shadow:-18px 0 60px rgba(0,0,0,.42);transform:translateX(102%);transition:.18s ease;z-index:101;display:flex;flex-direction:column}.drawer.show{transform:translateX(0)}.drawer-head{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid var(--line)}.drawer-head h2{margin:0;font-size:17px}.tabs{display:flex;gap:6px;overflow:auto;padding:10px 12px;border-bottom:1px solid var(--line)}.tab{min-height:34px;padding:7px 10px;border-radius:999px;background:#111a29;color:#b8c6db;white-space:nowrap}.tab.active{background:var(--blue);color:#fff}.drawer-body{padding:12px;overflow:auto;display:grid;gap:10px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.form-grid.one{grid-template-columns:1fr}.source-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:#101927;border:1px solid var(--line);box-shadow:var(--shadow);border-radius:14px;padding:10px 14px;color:#fff;opacity:0;pointer-events:none;transition:.16s ease;z-index:120;max-width:min(620px,calc(100% - 24px));font-size:13px}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:130}.modal-backdrop.show{display:flex}.modal{width:min(460px,100%);background:#101927;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:16px}.modal h3{margin:0 0 8px}.modal p{margin:0 0 14px;color:#c9d6e8;line-height:1.55}.modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}.danger-zone{border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);border-radius:16px;padding:12px}.ready-list{display:grid;gap:6px}.ready-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(255,255,255,.06);padding:7px 0}.ready-row:last-child{border-bottom:0}.kbd{border:1px solid var(--line);background:#0c1421;border-radius:7px;padding:1px 6px;font-size:11px;color:#cbd8ec}
+@media(max-width:900px){.main{grid-template-columns:1fr}.side-panel{grid-template-columns:1fr 1fr}.sport-row{grid-template-columns:1fr 1fr}.sport-row button{grid-column:span 2}}
+@media(max-width:620px){.app{padding:8px}.top{align-items:flex-start}.statusbar{justify-content:flex-start}.matchbar,.sport-row{grid-template-columns:1fr}.sport-row button{grid-column:auto}.teams{grid-template-columns:1fr}.score-mid{order:-1;margin:0 auto}.team.right{text-align:left}.team.right .logo-preview{justify-self:start}.score-buttons{grid-template-columns:repeat(2,1fr)}.time-edit,.period-row,.action-row,.fx-grid,.side-panel,.form-grid,.source-grid{grid-template-columns:1fr}.drawer{width:100%}.card{padding:10px}.team-name{white-space:normal}.logo-preview{display:none}}
+
+body{position:relative;min-height:100%;background:#07090d;color:var(--text)}
+body::before{content:"";position:fixed;inset:0;background:linear-gradient(180deg,rgba(6,8,12,.76),rgba(7,8,12,.82)),radial-gradient(circle at 20% 20%,rgba(255,102,0,.18),transparent 28%),radial-gradient(circle at 85% 18%,rgba(255,111,0,.14),transparent 24%),url('assets/login_theme_reference.png') center/cover no-repeat;filter:saturate(1.03);z-index:0}
+body::after{content:"";position:fixed;inset:0;background:linear-gradient(180deg,rgba(10,10,12,.12),rgba(0,0,0,.22));backdrop-filter:blur(4px);z-index:0;pointer-events:none}
+.app{position:relative;z-index:2;display:none;padding-top:10px}
+.app.ready{display:block}
+.logo-dot{background:linear-gradient(135deg,#ff6a00,#ff9340)!important;color:#fff!important;box-shadow:0 10px 30px rgba(255,106,0,.35)}
+.brand h1{letter-spacing:.01em}
+.brand p{color:#d3d7df!important}
+.statusbar .ghost{border-color:rgba(255,126,39,.35);color:#fff;background:rgba(255,126,39,.08)}
+.top-settings{border:1px solid rgba(255,126,39,.55)!important;box-shadow:0 8px 22px rgba(255,106,0,.18);font-weight:800}
+.card{background:linear-gradient(180deg,rgba(10,12,16,.78),rgba(9,11,16,.88))!important;border:1px solid rgba(255,255,255,.09)!important;backdrop-filter:blur(8px)}
+button.primary{background:linear-gradient(135deg,#ff6a00,#ff8a1e)!important}
+button.success{background:linear-gradient(135deg,#ff6a00,#ff8a1e)!important}
+button.warn{background:linear-gradient(135deg,#ff7a12,#ffb347)!important;color:#1a1306}
+button.ghost{border-color:rgba(255,126,39,.22)!important}
+input,select,textarea{background:rgba(13,16,22,.88)!important;border-color:rgba(255,255,255,.12)!important}
+input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!important;box-shadow:0 0 0 3px rgba(255,126,39,.15)!important}
+.tab.active{background:#ff6a00!important}
+.pill{border-color:rgba(255,126,39,.18)!important}
+.drawer{background:#0b0d12!important}
+.login-gate{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:28px;background:linear-gradient(180deg,rgba(4,5,8,.25),rgba(4,5,8,.55))}
+.login-gate.hidden{display:none}
+.login-card{position:relative;width:min(620px,92vw);padding:28px 28px 22px;border-radius:34px;background:linear-gradient(180deg,rgba(13,16,22,.74),rgba(6,8,11,.88));border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(13px);box-shadow:0 24px 90px rgba(0,0,0,.42),0 0 0 1px rgba(255,120,30,.08),0 0 30px rgba(255,106,0,.18) inset}
+.login-card::before{content:"";position:absolute;inset:0;border-radius:34px;padding:1px;background:linear-gradient(180deg,rgba(255,142,61,.95),rgba(255,142,61,.08) 22%,rgba(255,142,61,.08) 78%,rgba(255,142,61,.85));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.login-brand{display:grid;gap:4px;margin-bottom:16px}
+.login-brand .pepslogo{font-size:24px;font-weight:900;letter-spacing:.02em;display:flex;align-items:end;gap:7px;flex-wrap:wrap}.pepslogo .live{color:#ff6a00}.pepslogo .prod{display:inline-block;background:#ff6a00;color:#fff;padding:1px 8px 3px;border-radius:7px;font-size:19px;line-height:1.05}
+.login-title{font-size:54px;line-height:1;font-weight:900;letter-spacing:-.03em;margin:6px 0 4px}.login-sub{color:#c9ced7;font-size:14px;margin-bottom:18px}
+.login-grid{display:grid;gap:14px}
+.login-grid label{color:#f2f4f7;font-size:15px;font-weight:700}
+.login-grid .hint{font-size:12px;color:#aeb6c3;font-weight:500}
+.login-input{width:100%;border-radius:18px;border:1px solid rgba(255,255,255,.16);background:rgba(10,12,16,.62);padding:15px 16px;color:#fff;outline:none;font-size:17px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+.login-input:focus{border-color:#ff7e27;box-shadow:0 0 0 3px rgba(255,126,39,.14)}
+.province-wrap{position:relative}
+.province-list{position:absolute;left:0;right:0;top:calc(100% + 8px);max-height:248px;overflow:auto;border-radius:20px;border:1px solid rgba(255,255,255,.16);background:rgba(8,10,15,.96);box-shadow:0 20px 50px rgba(0,0,0,.4);padding:8px;display:none;z-index:30}
+.province-list.show{display:block}
+.province-item{width:100%;text-align:left;border-radius:14px;background:transparent;color:#fff;padding:11px 12px;min-height:auto;border:1px solid transparent}
+.province-item:hover,.province-item.active{background:linear-gradient(135deg,rgba(255,106,0,.22),rgba(255,106,0,.1));border-color:rgba(255,126,39,.22)}
+.login-actions{display:grid;gap:10px;margin-top:6px}
+.login-btn{min-height:54px;border-radius:18px;font-size:20px;font-weight:800;letter-spacing:.01em;background:linear-gradient(135deg,#ff6a00,#ff8a1e);box-shadow:0 12px 28px rgba(255,106,0,.22)}
+.login-btn.secondary{background:transparent;border:1px solid rgba(255,126,39,.45);font-size:16px;font-weight:700;box-shadow:none}
+.login-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);font-size:12px;color:#d9dee7}
+.login-meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.login-error{display:none;color:#ffd5c0;background:rgba(255,106,0,.12);border:1px solid rgba(255,126,39,.28);padding:10px 12px;border-radius:14px;font-size:13px}
+.login-error.show{display:block}
+@media(max-width:700px){.login-card{padding:22px 18px 18px;border-radius:24px;width:min(95vw,620px)}.login-title{font-size:42px}.login-brand .pepslogo{font-size:20px}.pepslogo .prod{font-size:16px}}
+.users-list{display:grid;gap:8px}
+.user-row{display:grid;grid-template-columns:1.2fr 1fr auto;gap:10px;align-items:center;padding:10px;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07)}
+.user-row strong{font-size:13px}.user-row span{font-size:12px;color:#cbd2dd}.user-row .online{color:#bdf7cc}.user-row .offline{color:#aeb6c3}
+.online-pill{display:inline-flex;align-items:center;gap:6px}.online-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:#20b56b;box-shadow:0 0 10px rgba(32,181,107,.7)}
+@media(max-width:620px){.user-row{grid-template-columns:1fr}.login-meta{gap:7px}}
+
+
+
+.online-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,126,39,.35);background:rgba(255,126,39,.1);color:#fff;border-radius:999px;padding:4px 9px;margin-left:6px;font-size:12px;min-height:26px}.online-pill:hover{background:rgba(255,126,39,.22)}
+.dock-module{transition:.16s ease}.dock-module.hidden-module{display:none!important}.action-buttons{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.action-buttons button{background:linear-gradient(180deg,rgba(255,106,0,.22),rgba(255,106,0,.08));border:1px solid rgba(255,126,39,.22)}
+.tag-table{display:grid;gap:7px}.tag-row{display:grid;grid-template-columns:1fr 1.3fr .8fr auto;gap:8px;align-items:center;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);border-radius:12px;padding:8px}.tag-row code{color:#ffd0b4}.tag-row .tag-type{color:#aeb8c6;font-size:12px}.tag-row button{min-height:32px;border-radius:10px;padding:6px 10px}.source-actions-settings,.layout-settings{display:grid;gap:8px}.action-setting{display:grid;grid-template-columns:.8fr 1.2fr .75fr .55fr;gap:8px;padding:8px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03)}.layout-row{display:grid;grid-template-columns:auto 1fr 90px;gap:10px;align-items:center;padding:9px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:rgba(255,255,255,.03)}.color-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.color-grid input[type=color]{height:44px;padding:4px}.help-btn{white-space:nowrap}.users-list{display:grid;gap:8px;max-height:380px;overflow:auto}.user-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);border-radius:14px;padding:10px}.user-row .online{color:#7effb6}.user-row .offline{color:#aeb6c3}.online-modal{width:min(620px,100%)}
+@media(max-width:620px){.action-buttons,.tag-row,.action-setting,.layout-row,.color-grid{grid-template-columns:1fr}.user-row{grid-template-columns:1fr}}
+
+
+.logo-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px;margin-top:8px}
+.logo-card{border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.035);border-radius:14px;padding:8px;display:grid;gap:6px;align-items:center;text-align:center;min-height:98px}
+.logo-card img{width:56px;height:56px;object-fit:contain;margin:auto;border-radius:10px;background:rgba(0,0,0,.24)}
+.logo-card small{font-size:11px;color:#b8c1cf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logo-note{border:1px solid rgba(255,126,39,.25);background:rgba(255,126,39,.08);border-radius:14px;padding:10px 12px;color:#ffd9bf;font-size:12px;line-height:1.55}
+
+</style>
+</head>
+<body>
+
+<div class="login-gate" id="loginGate">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="pepslogo"><span>•PEPS</span><span class="live">LIVE</span><span class="prod">PRODUCTION</span></div>
+      <div class="login-title">เข้าสู่ระบบ</div>
+      <div class="login-sub">เข้าสู่ระบบเพื่อเริ่มควบคุมการถ่ายทอดสด และใช้งาน PepsLive Dock ในโทนใหม่แบบเดียวกับระบบ</div>
+      <div class="login-meta"><span class="login-chip">ธีม Orange / Black</span><span class="login-chip">ค้นหาจังหวัดได้ทันที</span><span class="login-chip">พร้อมใช้งานบน GitHub Pages</span></div>
+    </div>
+    <div class="login-grid">
+      <label>ชื่อผู้ใช้
+        <input id="loginUsername" class="login-input" placeholder="กรอกชื่อผู้ใช้" autocomplete="name">
+      </label>
+      <label>จังหวัด <span class="hint">พิมพ์ค้นหาได้ และเลื่อนเลือกรายการได้ทันที</span>
+        <div class="province-wrap">
+          <input id="provinceSearchInput" class="login-input" placeholder="ค้นหาจังหวัด">
+          <div id="provinceList" class="province-list"></div>
+        </div>
+      </label>
+      <div id="loginError" class="login-error"></div>
+      <div class="login-actions">
+        <button id="btnLoginSubmit" class="login-btn">เข้าสู่ระบบ</button>
+        <button id="btnLoginPreview" class="login-btn secondary">ดูตัวอย่างระบบโดยใช้ค่าทดสอบ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="app" id="appRoot">
+  <div class="top">
+    <div class="brand"><div class="logo-dot">PL</div><div><h1>PepsLive Dock V1</h1><p><span id="sessionText">ล็อกอินก่อนเริ่มใช้งานระบบ</span> <button id="btnOnlineUsers" class="online-pill" type="button" style="display:none">ออนไลน์: 0 คน</button></p></div></div>
+    <div class="statusbar"><span id="stObs" class="status bad">OBS: Off</span><span id="stSheet" class="status warn">Sheet: Not loaded</span><span id="stLogo" class="status warn">Logo: Not checked</span><span id="stSave" class="status warn">Save: Local</span><button id="btnOpenSettings" class="primary tiny top-settings">ตั้งค่า</button><button id="btnLogout" class="ghost tiny">ออกจากระบบ</button></div>
+  </div>
+  <div class="grid main">
+    <main class="grid">
+      <section class="card dock-module" id="moduleQuick" data-module="quick">
+        <div class="section-title"><h2>Quick Match</h2><span class="small muted">เลือกคู่แข่งขัน</span></div>
+        <div class="sport-row">
+          <label>เลือกกีฬา<select id="sportSelect"><option value="football">ฟุตบอล</option><option value="basket3">บาส 3x3</option><option value="basket5">บาส 5v5</option></select></label>
+          <label>ค้นหา MatchID / ทีม / สนาม / รอบ<input id="matchSearch" placeholder="พิมพ์เพื่อกรองรายการทันที"></label>
+          <button class="primary" id="btnLoadSheet">โหลด Sheet</button>
+        </div>
+        <div class="matchbar"><select id="matchSelect"><option value="">ยังไม่มีข้อมูลแมตช์</option></select><button class="success" id="btnLoadMatch">Load Match</button><button class="primary" id="btnNextMatchTop">Next</button></div>
+        <div class="match-meta" id="matchMeta"></div>
+        <div class="pill" id="currentMatchStatus">Current: ยังไม่ได้โหลดคู่แข่งขัน</div>
+      </section>
+            <section class="card score-card dock-module" id="moduleScore" data-module="score">
+        <div class="teams">
+          <div class="team"><img id="logoA" class="logo-preview" alt="Logo A"><div class="team-name" id="teamAName">TEAM A</div><div class="team-sub" id="teamASub">LogoA</div><div class="score-buttons" id="scoreBtnsA"></div></div>
+          <div class="score-mid"><div class="vs">SCORE</div><div class="scoreline"><span id="scoreA">0</span><span> - </span><span id="scoreB">0</span></div><button class="ghost tiny" id="btnUndo">Undo Last Score</button></div>
+          <div class="team right"><img id="logoB" class="logo-preview" alt="Logo B"><div class="team-name" id="teamBName">TEAM B</div><div class="team-sub" id="teamBSub">LogoB</div><div class="score-buttons" id="scoreBtnsB"></div></div>
+        </div>
+      </section>
+      <section class="card timerbox dock-module" id="moduleClock" data-module="clock">
+        <div class="section-title"><h2>Clock / Status</h2><span class="pill" id="sportPill">ฟุตบอล</span></div>
+        <div class="clock" id="clock">00:00</div>
+        <div class="time-edit"><label>นาที<input id="timeMin" type="number" min="0" value="0"></label><label>วินาที<input id="timeSec" type="number" min="0" max="59" value="0"></label><button class="soft" id="btnApplyTime">บันทึกเวลา</button></div>
+        <div class="period-row"><select id="periodSelect"></select><select id="statusSelect"></select></div>
+        <div class="action-row"><button class="success" id="btnStart">Start</button><button class="warn" id="btnPause">Pause</button><button class="danger" id="btnResetTime">Reset Time</button></div>
+      </section>
+      <section class="card dock-module" id="moduleActions" data-module="actions">
+        <div class="section-title"><h2>Source Actions</h2><button class="ghost tiny" id="btnHideActionSources">Hide All</button></div>
+        <div class="action-buttons" id="sourceActionButtons"></div>
+      </section>
+    </main>
+    <aside class="side-panel">
+      <section class="card dock-module" id="moduleResult" data-module="result"><div class="section-title"><h2>Result</h2><span id="dirtyBadge" class="pill">Saved</span></div><div class="grid"><button class="soft" id="btnSaveResult">Save Result</button><button class="success" id="btnFinishMatch">Finish Match</button><button class="primary" id="btnNextMatch">Load Next Match</button></div></section>
+      <section class="card dock-module" id="moduleSystem" data-module="system"><div class="section-title"><h2>System Status</h2></div><div class="ready-list small muted"><div class="ready-row"><span>OBS</span><strong id="miniObsStatus">Off</strong></div><div class="ready-row"><span>Sheet</span><strong id="miniSheetStatus">Not loaded</strong></div><div class="ready-row"><span>Save</span><strong id="miniSaveStatus">Local</strong></div></div></section>
+    </aside>
+  </div>
+</div>
+<div id="drawerBackdrop" class="drawer-backdrop"></div>
+<aside id="drawer" class="drawer"><div class="drawer-head"><h2>Settings Drawer</h2><button class="ghost tiny" id="btnCloseDrawer">ปิด</button></div><div class="tabs" id="tabs"></div><div class="drawer-body">
+  <div id="tabMatch" class="tabpage grid"><section class="card"><div class="section-title"><h2>Match Loader</h2><button class="ghost tiny help-btn" data-help="match">วิธีการใช้งาน Match Loader</button></div><p class="small muted">ผลค้นหาแบบ realtime จากช่องค้นหาบนหน้า Dock คลิกเลือกคู่ได้ทันที แล้วกด Load Match</p><div class="match-results" id="matchResults"></div><div class="action-row"><button class="success" id="btnLoadMatchDrawer">Load Match</button><button class="primary" id="btnNextMatchDrawer">Next</button><button class="ghost" id="btnRefreshMatchResults">Refresh Results</button></div></section></div>
+  <div id="tabSheet" class="tabpage grid"><section class="card"><div class="section-title"><h2>Google Sheet</h2><button class="ghost tiny help-btn" data-help="sheet">วิธีการใช้งาน Sheet</button></div><div class="form-grid one"><label>Google Sheet URL<input id="setSheetUrl"></label><label>Apps Script Webhook URL สำหรับ Save Result<input id="setWebhookUrl" placeholder="วาง URL Web App จาก Apps Script"></label></div><div class="form-grid"><label>Default GID<input id="setSheetGid" placeholder="0"></label></div><div class="action-row"><button class="primary" id="btnLoadSheet2">โหลด Sheet</button><button class="soft" id="btnSaveSettingsSheet">บันทึกค่า</button><button class="ghost" id="btnPendingResults">ดู pending</button></div></section><section class="card"><div class="section-title"><h2>Sheet Schema</h2></div><p class="small muted">ใช้หัวตาราง: MatchID, LogoA, TeamA, LogoB, TeamB, Label1-Label5, ScoreA, ScoreB, FinalScore, MatchStatus, Winner, FinishedAt, UpdatedAt, UpdatedBy, Note. กีฬา/เวลา/FX เลือกจากหน้า Dock ไม่อยู่ใน Sheet แล้ว.</p></section></div>
+  <div id="tabObs" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>OBS WebSocket</h2><button class="ghost tiny help-btn" data-help="obs">วิธีการใช้งาน OBS</button></div><div class="form-grid"><label>Host<input id="setObsHost"></label><label>Port<input id="setObsPort"></label></div><div class="form-grid"><label>Password<input id="setObsPass" type="password"></label><label>Scene Name<input id="setObsScene" placeholder="เว้นว่าง = current scene"></label></div><div class="action-row"><button class="primary" id="btnObsConnect2">Connect</button><button class="soft" id="btnCreateSources">สร้างทั้งหมด</button><button class="ghost" id="btnTestText">Test Text</button><button class="success" id="btnSyncObs">Sync OBS</button></div></section><section class="card"><div class="section-title"><h2>OBS Tags / Sources</h2><button class="ghost tiny" id="btnCheckObsSources">ตรวจ Source</button></div><div class="tag-table" id="obsTagTable"></div></section></div>
+  <div id="tabLogos" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>Logos</h2><button class="ghost tiny help-btn" data-help="logos">วิธีการใช้งาน Logos</button></div><p class="small muted">เลือกวิธีใช้โลโก้ได้ 2 แบบ: GitHub/URL สำหรับ Pages หรือ Local Folder สำหรับเครื่องงานจริง</p><div class="form-grid"><label>Logo Mode<select id="setLogoMode"><option value="github">GitHub / URL</option><option value="local">Local Folder</option></select></label><label>Logo Base Path / Folder<input id="setLogoBasePath" placeholder="logos/"></label></div><div class="form-grid"><label>Local Folder Path<input id="setLogoFolderPath" placeholder="C:/PepsLive/logos/"></label><label>Extensions<input id="setLogoExts" placeholder="png,jpg,jpeg,webp,svg"></label></div><div class="action-row"><button class="primary" id="btnPickLogoFolder">เลือกโฟลเดอร์โลโก้</button><button class="soft" id="btnLogoCheck2">ตรวจโลโก้</button><button class="ghost" id="btnSaveLogoSettings">บันทึกค่าโลโก้</button><button class="soft" id="btnRepairLogoSources">ซ่อม Logo Image Sources</button></div><input id="logoFolderInput" type="file" webkitdirectory directory multiple style="display:none"></section><section class="card"><div class="section-title"><h2>Logo Ready / Preview</h2></div><div class="logo-note">ถ้าใช้ GitHub Pages แนะนำวางไฟล์ไว้ใน <b>logos/</b> แล้วใส่รหัสใน Sheet เช่น A1 → logos/A1.png<br>ถ้าเลือกโฟลเดอร์จากเครื่อง ระบบใช้โฟลเดอร์ที่เลือกสำหรับ Preview ใน Dock เท่านั้น ส่วน OBS Image Source ต้องใช้ Logo Folder Path จริง เช่น C:/PepsLive/logos/</div><div id="logoReady" class="ready-list small muted">ยังไม่ได้เช็ก</div><div id="logoPreviewGrid" class="logo-preview-grid"></div></section></div>
+  <div id="tabGraphics" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>FX Sources</h2><button class="ghost tiny help-btn" data-help="fx">วิธีการใช้งาน FX</button></div><div class="form-grid"><label>Team A FX Source<input id="setTeamAFx"></label><label>Team B FX Source<input id="setTeamBFx"></label><label>Auto Hide FX วินาที<input id="setFxHide" type="number" min="0" step="0.5"></label><label>คำอธิบาย<input value="0 = เปิดไว้ตลอด" disabled></label></div><div class="action-row"><button class="soft" id="btnSaveFxSettings">Save FX Settings</button><button class="primary" id="btnTestTeamAFx">Test Team A FX</button><button class="success" id="btnTestTeamBFx">Test Team B FX</button></div><div class="action-row"><button class="ghost" id="btnHideFx">Hide All FX</button></div></section></div>
+  <div id="tabSourceActions" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>Source Actions</h2><button class="ghost tiny help-btn" data-help="sourceActions">วิธีการใช้งาน Source Actions</button></div><p class="small muted">ตั้งค่า 6 ปุ่มสำหรับเปิด/ปิด Source หรือ Group ใน OBS และใช้ร่วมกับ Stream Deck ได้</p><div id="sourceActionSettings" class="source-actions-settings"></div><div class="action-row"><button class="soft" id="btnSaveActions">บันทึก Source Actions</button><button class="primary" id="btnPresetActions">ตั้งค่า Action พื้นฐาน</button><button class="ghost" id="btnHideAllActions2">Hide All Actions</button></div></section></div>
+  <div id="tabDockLayout" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>Dock Layout</h2><button class="ghost tiny help-btn" data-help="layout">วิธีการใช้งาน Dock Layout</button></div><p class="small muted">เลือกว่าจะให้หน้า PepsLive Dock แสดงอะไร และเรียงลำดับด้วยเลข Order</p><div id="layoutSettings" class="layout-settings"></div><div class="action-row"><button class="soft" id="btnSaveLayout">Save Layout</button><button class="ghost" id="btnResetLayout">Reset Layout</button></div></section></div>
+  <div id="tabAdvanced" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>Safety</h2><button class="ghost tiny help-btn" data-help="advanced">วิธีการใช้งาน Advanced</button></div><div class="form-grid"><label>Anti-double delay ms<input id="setAntiMs" type="number" min="100"></label><label>Timer Mode<select id="setTimerDefault"><option value="sport">ตามกีฬา</option><option value="up">นับขึ้น</option><option value="down">นับถอยหลัง</option></select></label></div><button class="soft" id="btnSaveSettingsAdvanced">บันทึกค่า</button></section><section class="card"><div class="section-title"><h2>Command Log</h2><button class="ghost tiny" id="btnClearLog">Clear</button></div><div class="quick-log" id="log"></div></section><section class="danger-zone"><div class="section-title"><h2>Danger Zone</h2></div><div class="action-row"><button class="danger" id="btnResetState">Reset Local State</button><button class="ghost" id="btnExportState">Export State</button><button class="ghost" id="btnImportState">Import State</button></div><input id="importFile" type="file" accept="application/json" style="display:none"></section></div>
+</div></aside>
+<div id="modalBackdrop" class="modal-backdrop"><div class="modal"><h3 id="modalTitle">Confirm</h3><p id="modalMessage"></p><div class="modal-actions"><button class="ghost" id="modalCancel">ยกเลิก</button><button class="primary" id="modalOk">ตกลง</button></div></div></div><div id="onlineModalBackdrop" class="modal-backdrop"><div class="modal online-modal"><h3>ผู้ใช้งานออนไลน์</h3><p class="muted small">รายชื่อผู้ใช้งานที่ active ภายใน 90 วินาทีล่าสุด</p><div id="onlineUsersPopup" class="users-list"><div class="small muted">ยังไม่มีข้อมูล</div></div><div class="modal-actions"><button class="ghost" id="btnRefreshOnlinePopup">Refresh</button><button class="primary" id="btnCloseOnlinePopup">ปิด</button></div></div></div><div id="toast" class="toast"></div>
+<script>
+(()=>{'use strict';
+const STORE_KEY='pepslive_dock_v1_state';
+const SETTINGS_KEY='pepslive_dock_v1_settings';
+const BRIDGE_HTTP='http://127.0.0.1:19445';
+const APP_HTTP=location.origin&&location.origin.startsWith('http')?location.origin:'http://127.0.0.1:19446';
+const $=id=>document.getElementById(id);
+const nowText=()=>new Date().toLocaleString('sv-SE');
+const pad2=n=>String(Math.max(0,Math.floor(n))).padStart(2,'0');
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const sourceKeys=['TeamA','TeamB','ScoreA','ScoreB','Clock','Period','Status','Label1','Label2','Label3','Label4','Label5','LogoA','LogoB','CommandBus','TeamA_PrimaryColor','TeamA_SecondaryColor','TeamB_PrimaryColor','TeamB_SecondaryColor'];
+const SCHEMA=['MatchID','LogoA','TeamA','LogoB','TeamB','Label1','Label2','Label3','Label4','Label5','ScoreA','ScoreB','FinalScore','MatchStatus','Winner','FinishedAt','UpdatedAt','UpdatedBy','Note'];
+const SPORT_PRESETS={football:{label:'ฟุตบอล',mode:'up',defaultSec:0,periods:['1st Half','Half Time','2nd Half','Extra Time','Penalty','Full Time'],buttons:[[ 'GOAL +1',1,'success'],['-1',-1,'danger']]},basket3:{label:'บาส 3x3',mode:'down',defaultSec:600,periods:['Game','OT','Full Time'],buttons:[['+1',1,'soft'],['+2',2,'primary'],['-1',-1,'danger'],['Foul',0,'ghost']]},basket5:{label:'บาส 5v5',mode:'down',defaultSec:600,periods:['Q1','Q2','Q3','Q4','OT','Full Time'],buttons:[['+1',1,'soft'],['+2',2,'primary'],['+3',3,'success'],['-1',-1,'danger']]}};
+const defaultSettings={sheetUrl:'',sheetGid:'0',webhookUrl:'',obsHost:'127.0.0.1',obsPort:'4455',obsPassword:'',obsScene:'',sources:{TeamA:'PEPS_TeamA',TeamB:'PEPS_TeamB',ScoreA:'PEPS_ScoreA',ScoreB:'PEPS_ScoreB',Clock:'PEPS_Clock',Period:'PEPS_Period',Status:'PEPS_Status',Label1:'PEPS_Label1',Label2:'PEPS_Label2',Label3:'PEPS_Label3',Label4:'PEPS_Label4',Label5:'PEPS_Label5',LogoA:'PEPS_LogoA',LogoB:'PEPS_LogoB',CommandBus:'PEPS_CommandBus',TeamA_PrimaryColor:'PEPS_TeamA_PrimaryColor',TeamA_SecondaryColor:'PEPS_TeamA_SecondaryColor',TeamB_PrimaryColor:'PEPS_TeamB_PrimaryColor',TeamB_SecondaryColor:'PEPS_TeamB_SecondaryColor'},fx:{teamA:'PEPS_TeamA_FX',teamB:'PEPS_TeamB_FX',autoHideSec:0},timeBySport:{football:{mode:'up',sec:0},basket3:{mode:'down',sec:600},basket5:{mode:'down',sec:600}},antiMs:420,timerDefault:'sport',logo:{mode:'local',basePath:'logos/',folderPath:'',exts:'png,jpg,jpeg,webp,svg'},teamColors:{aPrimary:'#ff6a00',aSecondary:'#111111',bPrimary:'#0057ff',bSecondary:'#ffffff'},actions:[{label:'Open',source:'PEPS_OpenFX',mode:'toggle',autoHide:0},{label:'Sponsor',source:'PEPS_Sponsor',mode:'toggle',autoHide:0},{label:'Lower',source:'PEPS_LowerThird',mode:'pulse',autoHide:6},{label:'Stats',source:'PEPS_Stats',mode:'toggle',autoHide:0},{label:'Break',source:'PEPS_Break',mode:'show',autoHide:0},{label:'Clear',source:'*',mode:'hideAll',autoHide:0}],layout:[{key:'quick',label:'Quick Match',show:true,order:1},{key:'score',label:'Score / Result',show:true,order:2},{key:'clock',label:'Clock / Status',show:true,order:3},{key:'actions',label:'Source Actions',show:true,order:4},{key:'result',label:'Result',show:true,order:5},{key:'system',label:'System Status',show:true,order:6}]};
+const defaultState={sheetRows:[],filteredRows:[],selectedIndex:-1,currentIndex:-1,sport:'football',dirty:false,lastSavedResult:null,match:{MatchID:'',LogoA:'',TeamA:'TEAM A',LogoB:'',TeamB:'TEAM B',Label1:'',Label2:'',Label3:'',Label4:'',Label5:'',ScoreA:'',ScoreB:'',FinalScore:'',MatchStatus:''},scoreA:0,scoreB:0,clockSec:0,clockMode:'up',timerRunning:false,period:'1st Half',status:'LIVE',history:[],logs:[],lastCmd:{key:'',t:0},logoMap:{},logoChecked:false,lastRemoteCommandId:'',lastCommandBusText:''};
+let settings=merge(defaultSettings,loadJson(SETTINGS_KEY,{}));
+let state=merge(defaultState,loadJson(STORE_KEY,{}));
+let localLogoFiles={};
+let localLogoObjectUrls=[];
+const AUTH_KEY='pepslive_dock_v1_auth';
+let auth=merge({authenticated:false,username:'',province:''},loadJson(AUTH_KEY,{}));
+const PROVINCES=['กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
+let provinceDropdownOpen=false;
+const PRESENCE_SESSION_KEY='pepslive_dock_presence_session_v1';
+const PRESENCE_TTL_MS=90000;
+let presence={onlineCount:1,users:[],updatedAt:'',timer:null,busy:false};
+function getPresenceSessionId(){let id=localStorage.getItem(PRESENCE_SESSION_KEY);if(!id){id='peps_'+Date.now()+'_'+Math.random().toString(16).slice(2);localStorage.setItem(PRESENCE_SESSION_KEY,id)}return id}
+function fallbackPresence(){const user={username:auth.username||'-',province:auth.province||'-',lastSeen:nowText(),online:true,current:true};presence.onlineCount=auth.authenticated?1:0;presence.users=auth.authenticated?[user]:[];presence.updatedAt=nowText();renderPresence()}
+function renderPresence(){if($('onlineCountText'))$('onlineCountText').textContent=(presence.onlineCount||0)+' คน';if($('presenceUpdatedText'))$('presenceUpdatedText').textContent=presence.updatedAt||'-';if($('usersList')){$('usersList').innerHTML=(presence.users||[]).length?(presence.users||[]).map(u=>`<div class="user-row"><div><strong>${esc(u.username||'-')}</strong><br><span>${esc(u.province||'-')}</span></div><span>${esc(u.lastSeen||'-')}</span><strong class="${u.online?'online':'offline'}">${u.online?'Online':'Offline'}</strong></div>`).join(''):'<div class="small muted">ยังไม่มีข้อมูลผู้ใช้งาน</div>'}updateSessionDisplay()}
+async function presenceRequest(action,extra={}){if(!settings.webhookUrl)throw new Error('missing_webhook');const payload=Object.assign({sessionId:getPresenceSessionId(),username:auth.username||'',province:auth.province||'',version:'PepsLive Dock V1',userAgent:navigator.userAgent},extra);const res=await jsonp(settings.webhookUrl,{action,payload:JSON.stringify(payload)},12000);if(!res||res.ok===false)throw new Error((res&&res.error)||'presence_failed');return res}
+async function syncPresenceOnce(){if(!auth.authenticated){fallbackPresence();return}if(presence.busy)return;presence.busy=true;try{const res=await presenceRequest('presenceHeartbeat');presence.onlineCount=Number(res.onlineCount||1);presence.users=res.users||[];presence.updatedAt=nowText();renderPresence()}catch(e){fallbackPresence()}finally{presence.busy=false}}
+function startPresence(){if(presence.timer)clearInterval(presence.timer);syncPresenceOnce();presence.timer=setInterval(syncPresenceOnce,30000)}
+async function stopPresence(){if(presence.timer)clearInterval(presence.timer);presence.timer=null;try{if(settings.webhookUrl&&auth.username)await presenceRequest('presenceOffline',{offline:true})}catch(_){ }fallbackPresence()}
+async function refreshUsers(){await syncPresenceOnce();toast('อัปเดตรายชื่อผู้ใช้งานแล้ว')}
+function saveAuth(){localStorage.setItem(AUTH_KEY,JSON.stringify(auth))}
+function openProvinceDropdown(){provinceDropdownOpen=true;$('provinceList').classList.add('show')}
+function closeProvinceDropdown(){provinceDropdownOpen=false;$('provinceList').classList.remove('show')}
+function renderProvinceList(query=''){const q=(query||'').trim().toLowerCase();const items=PROVINCES.filter(p=>!q||p.toLowerCase().includes(q)).slice(0,77);$('provinceList').innerHTML=items.length?items.map(p=>`<button type="button" class="province-item ${auth.province===p?'active':''}" data-province="${p}">${p}</button>`).join(''):'<div class="small muted" style="padding:10px 12px">ไม่พบจังหวัดที่ค้นหา</div>';document.querySelectorAll('[data-province]').forEach(btn=>btn.onclick=()=>selectProvince(btn.dataset.province));}
+function selectProvince(name){auth.province=name;$('provinceSearchInput').value=name;renderProvinceList(name);closeProvinceDropdown();saveAuth();updateSessionDisplay()}
+function updateSessionDisplay(){const text=auth.authenticated?`ผู้ใช้: ${auth.username||'-'} | จังหวัด: ${auth.province||'-'} | ออนไลน์: ${presence.onlineCount||1} คน`:'ล็อกอินก่อนเริ่มใช้งานระบบ';if($('sessionText'))$('sessionText').textContent=text}
+function applyAuthUI(){if(auth.authenticated){$('loginGate').classList.add('hidden');$('appRoot').classList.add('ready')}else{$('loginGate').classList.remove('hidden');$('appRoot').classList.remove('ready')}updateSessionDisplay()}
+function showLoginError(msg){const box=$('loginError');box.textContent=msg;box.classList.add('show')}
+function clearLoginError(){$('loginError').textContent='';$('loginError').classList.remove('show')}
+function commitLogin(preview=false){const username=($('loginUsername').value||'').trim()||(preview?'PepsLive Demo':'');const province=($('provinceSearchInput').value||'').trim()||(preview?'กรุงเทพมหานคร':'');if(!username)return showLoginError('กรุณากรอกชื่อผู้ใช้');if(!province)return showLoginError('กรุณาเลือกจังหวัด');if(!PROVINCES.includes(province))return showLoginError('กรุณาเลือกจังหวัดจากรายการที่ระบบมี');auth={authenticated:true,username,province};saveAuth();clearLoginError();applyAuthUI();startPresence();toast(`เข้าสู่ระบบแล้ว: ${username} • ${province}`)}
+async function logout(){await stopPresence();auth={authenticated:false,username:'',province:''};saveAuth();$('loginUsername').value='';$('provinceSearchInput').value='';clearLoginError();renderProvinceList('');applyAuthUI()}
+function bindLogin(){if($('loginUsername'))$('loginUsername').value=auth.username||'';if($('provinceSearchInput'))$('provinceSearchInput').value=auth.province||'';renderProvinceList(auth.province||'');$('provinceSearchInput').addEventListener('focus',()=>{renderProvinceList($('provinceSearchInput').value);openProvinceDropdown()});$('provinceSearchInput').addEventListener('input',e=>{auth.province='';renderProvinceList(e.target.value);openProvinceDropdown()});$('provinceSearchInput').addEventListener('keydown',e=>{if(e.key==='Escape')closeProvinceDropdown(); if(e.key==='Enter'){e.preventDefault(); const first=document.querySelector('.province-item'); if(first) selectProvince(first.dataset.province);}});document.addEventListener('click',e=>{if(!e.target.closest('.province-wrap')) closeProvinceDropdown()});$('btnLoginSubmit').onclick=()=>commitLogin(false);$('btnLoginPreview').onclick=()=>commitLogin(true);$('btnLogout').onclick=logout;applyAuthUI()}
+let obs={ws:null,connected:false,identified:false,req:0,pending:new Map()};
+function merge(base,over){const out=Array.isArray(base)?[...base]:{...base};for(const[k,v]of Object.entries(over||{})){out[k]=(v&&typeof v==='object'&&!Array.isArray(v)&&base[k]&&typeof base[k]==='object'&&!Array.isArray(base[k]))?merge(base[k],v):v}return out}
+function loadJson(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')||fallback}catch(_){return fallback}}
+function saveLocal(){localStorage.setItem(STORE_KEY,JSON.stringify(state));localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));postStateToBridge()}
+async function postStateToBridge(){try{await fetch(`${APP_HTTP}/state`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:{pepsLiveDockV12:state,settings,updatedAt:Date.now()}})})}catch(_){}}
+function toast(msg){const el=$('toast');el.textContent=msg;el.className='toast show';setTimeout(()=>el.className='toast',2600)}
+function log(msg){state.logs.unshift(`${new Date().toLocaleTimeString('th-TH',{hour12:false})} ${msg}`);state.logs=state.logs.slice(0,80);saveLocal();renderLog()}
+function confirmBox(title,msg,okText='ตกลง'){return new Promise(resolve=>{$('modalTitle').textContent=title;$('modalMessage').textContent=msg;$('modalOk').textContent=okText;$('modalBackdrop').classList.add('show');const done=v=>{$('modalBackdrop').classList.remove('show');$('modalOk').onclick=null;$('modalCancel').onclick=null;resolve(v)};$('modalOk').onclick=()=>done(true);$('modalCancel').onclick=()=>done(false)})}
+async function api(path,data,method='POST'){let lastErr;for(const base of [APP_HTTP,BRIDGE_HTTP]){try{const res=await fetch(base+path,{method,headers:{'Content-Type':'application/json'},body:method==='GET'?undefined:JSON.stringify(data||{})});const js=await res.json().catch(()=>({ok:false,error:'bad_json'}));if(res.ok&&js.ok!==false)return js;lastErr=js.error||res.statusText}catch(e){lastErr=e.message}}throw new Error(lastErr||'api_failed')}
+function sheetInfo(sheetUrl,gid='0'){const text=String(sheetUrl||'').trim();if(!text)throw new Error('missing_sheet_url');const m=text.match(/\/spreadsheets\/d\/([^/]+)/);let id=m?m[1]:'';let g=gid||'0';try{const u=new URL(text);g=u.searchParams.get('gid')||(u.hash.match(/gid=(\d+)/)||[])[1]||g}catch(_){}return{text,id,gid:g}}
+function sheetUrlToCsv(sheetUrl,gid='0'){const info=sheetInfo(sheetUrl,gid);if(info.text.includes('/export?format=csv'))return info.text;if(!info.id)return info.text;return `https://docs.google.com/spreadsheets/d/${info.id}/export?format=csv&gid=${encodeURIComponent(info.gid)}`}
+function sheetUrlToGviz(sheetUrl,gid='0',cb=''){const info=sheetInfo(sheetUrl,gid);if(!info.id)throw new Error('invalid_google_sheet_url');const url=new URL(`https://docs.google.com/spreadsheets/d/${info.id}/gviz/tq`);url.searchParams.set('gid',info.gid);url.searchParams.set('headers','1');url.searchParams.set('tqx',`out:json;responseHandler:${cb}`);return url.toString()}
+function parseCsvText(csv){const rows=[];let row=[],cur='',q=false;for(let i=0;i<csv.length;i++){const ch=csv[i],nx=csv[i+1];if(q){if(ch==='"'&&nx==='"'){cur+='"';i++}else if(ch==='"')q=false;else cur+=ch}else{if(ch==='"')q=true;else if(ch===','){row.push(cur);cur=''}else if(ch==='\n'){row.push(cur);rows.push(row);row=[];cur=''}else if(ch==='\r'){}else cur+=ch}}row.push(cur);rows.push(row);const headers=(rows.shift()||[]).map(h=>String(h||'').trim());const dataRows=rows.filter(r=>r.some(c=>String(c||'').trim()!=='')).map(r=>{const obj={};headers.forEach((h,i)=>obj[h||`Column${i+1}`]=r[i]==null?'':String(r[i]||'').trim());return obj});return{headers,rows:dataRows}}
+function gvizJsonp(sheetUrl,gid='0',timeoutMs=18000){return new Promise((resolve,reject)=>{const cb='pepslive_gviz_'+Date.now()+'_'+Math.floor(Math.random()*999999);let script=document.createElement('script'),done=false;function cleanup(){try{delete window[cb]}catch(_){};try{script.remove()}catch(_){}}window[cb]=data=>{if(done)return;done=true;cleanup();try{const cols=(data.table.cols||[]).map(c=>String(c.label||c.id||'').trim());const rows=(data.table.rows||[]).map(r=>{const obj={};cols.forEach((h,i)=>{const c=r.c&&r.c[i];obj[h||`Column${i+1}`]=c?(c.f!=null?String(c.f):String(c.v??'')):''});return obj}).filter(o=>Object.values(o).some(v=>String(v||'').trim()!==''));resolve({ok:true,headers:cols,rows,count:rows.length,direct:true,source:'gviz'})}catch(e){reject(e)}};script.onerror=()=>{if(done)return;done=true;cleanup();reject(new Error('gviz_jsonp_failed'))};try{script.src=sheetUrlToGviz(sheetUrl,gid,cb)}catch(e){return reject(e)}document.head.appendChild(script);setTimeout(()=>{if(done)return;done=true;cleanup();reject(new Error('gviz_jsonp_timeout'))},timeoutMs)})}
+function parsedLooksLikeSheet(parsed){return parsed&&parsed.headers&&SCHEMA.some(h=>parsed.headers.includes(h))}
+async function loadSheetRows(){const errors=[];try{return await api('/api/sheet/load',{sheetUrl:settings.sheetUrl,gid:settings.sheetGid})}catch(e){errors.push('local:'+e.message)}try{const csvUrl=sheetUrlToCsv(settings.sheetUrl,settings.sheetGid);const res=await fetch(csvUrl,{cache:'no-store'});if(!res.ok)throw new Error('http_'+res.status);const parsed=parseCsvText(await res.text());if(!parsedLooksLikeSheet(parsed))throw new Error('csv_schema_mismatch');return{ok:true,csvUrl,headers:parsed.headers,rows:parsed.rows,count:parsed.rows.length,direct:true,source:'csv'}}catch(e){errors.push('csv:'+e.message)}try{return await gvizJsonp(settings.sheetUrl,settings.sheetGid)}catch(e){errors.push('gviz:'+e.message)}throw new Error(errors.join(' | '))}
+function jsonp(url,params={},timeoutMs=18000){return new Promise((resolve,reject)=>{const cb='pepslive_cb_'+Date.now()+'_'+Math.floor(Math.random()*999999);const u=new URL(url);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,String(v)));u.searchParams.set('callback',cb);const script=document.createElement('script');let done=false;const cleanup=()=>{delete window[cb];script.remove()};window[cb]=data=>{if(done)return;done=true;cleanup();resolve(data||{})};script.onerror=()=>{if(done)return;done=true;cleanup();reject(new Error('jsonp_failed'))};script.src=u.toString();document.head.appendChild(script);setTimeout(()=>{if(done)return;done=true;cleanup();reject(new Error('jsonp_timeout'))},timeoutMs)})}
+async function saveResultRemote(payload){try{return await api('/api/save-result',payload)}catch(localErr){if(!payload.webhookUrl)throw localErr;const res=await jsonp(payload.webhookUrl,{action:'saveResult',payload:JSON.stringify({matchId:payload.matchId,values:payload.values,match:payload.match})});if(res&&res.ok)return{ok:true,remote:true,remoteResponse:res,direct:true};throw new Error((res&&res.error)||localErr.message||'save_failed')}}
+function cell(row,key,fb=''){const v=row&&row[key];return v!==undefined&&v!==null&&String(v).trim()!==''?String(v).trim():fb}
+function validateSchema(headers){const have=new Set((headers||[]).map(h=>String(h||'').trim()));return SCHEMA.filter(h=>!have.has(h))}
+function normalizeRow(row,idx){return{_raw:row,_index:idx,MatchID:cell(row,'MatchID',String(idx+1)),LogoA:cell(row,'LogoA'),TeamA:cell(row,'TeamA','TEAM A'),LogoB:cell(row,'LogoB'),TeamB:cell(row,'TeamB','TEAM B'),Label1:cell(row,'Label1'),Label2:cell(row,'Label2'),Label3:cell(row,'Label3'),Label4:cell(row,'Label4'),Label5:cell(row,'Label5'),ScoreA:cell(row,'ScoreA'),ScoreB:cell(row,'ScoreB'),FinalScore:cell(row,'FinalScore'),MatchStatus:cell(row,'MatchStatus')}}
+function matchSearchText(m){return [m.MatchID,m.TeamA,m.TeamB,m.Label1,m.Label2,m.Label3,m.Label4,m.Label5].join(' ').toLowerCase()}
+function matchTitle(m){return `#${m.MatchID} ${m.TeamA} vs ${m.TeamB}`}
+function matchSub(m){return [m.Label1,m.Label2,m.Label3,m.Label4,m.Label5].filter(Boolean).join(' | ')}
+function currentPreset(){return SPORT_PRESETS[state.sport]||SPORT_PRESETS.football}
+function applySportDefaults(resetClock=false){const p=currentPreset();const t=settings.timeBySport[state.sport]||{mode:p.mode,sec:p.defaultSec};state.clockMode=settings.timerDefault==='sport'?(t.mode||p.mode):settings.timerDefault;if(resetClock||!Number.isFinite(Number(state.clockSec)))state.clockSec=Number(t.sec??p.defaultSec)||0;if(!p.periods.includes(state.period))state.period=p.periods[0];saveLocal()}
+function setDirty(v=true){state.dirty=v;saveLocal();renderDirty()}
+function pushHistory(action){state.history.unshift({scoreA:state.scoreA,scoreB:state.scoreB,clockSec:state.clockSec,action,at:Date.now()});state.history=state.history.slice(0,20)}
+function guarded(key){const t=Date.now();if(state.lastCmd.key===key&&t-state.lastCmd.t<Number(settings.antiMs||420))return false;state.lastCmd={key,t};return true}
+async function loadSheet(){saveSettingsFromInputs(false);try{const res=await loadSheetRows();const rows=res.rows||[];const headers=res.headers||Object.keys(rows[0]||{});const missing=validateSchema(headers);if(missing.length)throw new Error('Schema ไม่ครบ: '+missing.join(', '));state.sheetRows=rows.map(normalizeRow);state.selectedIndex=state.sheetRows.length?0:-1;filterMatches(false);$('stSheet').className='status ok';$('stSheet').textContent=`Sheet: ${state.sheetRows.length}${res.direct?' Direct':''}`;log(`โหลด Sheet แล้ว ${state.sheetRows.length} คู่${res.direct?' แบบ GitHub Direct':''}`);saveLocal();renderAll();updateMiniStatus()}catch(e){$('stSheet').className='status bad';$('stSheet').textContent='Sheet: Error';updateMiniStatus();toast('โหลด Sheet ไม่สำเร็จ: '+e.message)}}
+function filterMatches(render=true){const q=$('matchSearch').value.trim().toLowerCase();state.filteredRows=!q?state.sheetRows:state.sheetRows.filter(m=>matchSearchText(m).includes(q));if(state.selectedIndex<0&&state.filteredRows.length)state.selectedIndex=state.filteredRows[0]._index;if(render)renderMatchPicker()}
+async function selectMatch(idx,load=false){idx=Number(idx);if(!Number.isFinite(idx)||idx<0||!state.sheetRows[idx])return;state.selectedIndex=idx;renderMatchPicker();if(load)await loadSelectedMatch()}
+async function loadSelectedMatch(skipConfirm=false){const idx=Number(state.selectedIndex);if(!Number.isFinite(idx)||idx<0||!state.sheetRows[idx])return toast('ยังไม่ได้เลือกคู่');if(state.dirty&&!skipConfirm){const ok=await confirmBox('เปลี่ยนคู่แข่งขัน','คู่ปัจจุบันยังไม่ได้บันทึกผล ต้องการเปลี่ยนเลยหรือไม่?','เปลี่ยนเลย');if(!ok)return}const m=state.sheetRows[idx];state.currentIndex=idx;state.selectedIndex=idx;state.match={...m};state.scoreA=Number(m.ScoreA||0)||0;state.scoreB=Number(m.ScoreB||0)||0;state.status=m.MatchStatus||'LIVE';state.period='';state.timerRunning=false;applySportDefaults(true);state.history=[];state.dirty=false;await checkLogos(false);saveLocal();renderAll();syncObsAll();log(`Load Match: ${m.TeamA} vs ${m.TeamB}`)}
+async function nextMatch(){if(state.currentIndex<0)return loadSelectedMatch();if(state.dirty){const ok=await confirmBox('บันทึกผลก่อนเปลี่ยนคู่','ต้องการบันทึกผลคู่ปัจจุบันก่อน Load Next Match หรือไม่?','บันทึกแล้วไปต่อ');if(ok)await saveResult('FINISHED',false)}const next=state.currentIndex+1;if(next>=state.sheetRows.length)return toast('ไม่มีคู่ถัดไปแล้ว');state.selectedIndex=next;await loadSelectedMatch(true)}
+function changeSport(s){state.sport=s;applySportDefaults(true);state.timerRunning=false;setDirty(true);renderAll();syncObsClock();log('Sport: '+currentPreset().label)}
+function applyTimeFromInputs(){const sec=(Number($('timeMin').value||0)*60)+(Number($('timeSec').value||0));state.clockSec=Math.max(0,sec);settings.timeBySport[state.sport]={mode:state.clockMode,sec:state.clockSec};setDirty(true);saveLocal();renderClock();syncObsClock();toast('บันทึกเวลาแล้ว')}
+function resetTime(){confirmBox('Reset Time','ต้องการรีเซ็ตเวลาตามชนิดกีฬาหรือไม่?','Reset').then(ok=>{if(!ok)return;applySportDefaults(true);state.timerRunning=false;setDirty(true);renderClock();syncObsClock();log('Reset time')})}
+function tick(){if(!state.timerRunning)return;if(state.clockMode==='down'){state.clockSec=Math.max(0,state.clockSec-1);if(state.clockSec===0)state.timerRunning=false}else state.clockSec+=1;setDirty(true);renderClock();syncObsClock(false)}
+function startTimer(){state.timerRunning=true;saveLocal();log('Timer start')}
+function pauseTimer(){state.timerRunning=false;saveLocal();log('Timer pause')}
+function changeScore(team,delta){const key=`score:${team}:${delta}`;if(!guarded(key))return;if(delta===0){log(`${team} action`);return}pushHistory(`${team} ${delta>0?'+':''}${delta}`);if(team==='A')state.scoreA=Math.max(0,state.scoreA+delta);else state.scoreB=Math.max(0,state.scoreB+delta);setDirty(true);renderScore();syncObsScore();if(delta>0)triggerFx(team);log(`${team==='A'?state.match.TeamA:state.match.TeamB} ${delta>0?'+':''}${delta}`)}
+function undo(){const h=state.history.shift();if(!h)return toast('ไม่มีรายการให้ Undo');state.scoreA=h.scoreA;state.scoreB=h.scoreB;state.clockSec=h.clockSec;setDirty(true);renderScore();renderClock();syncObsAll();log('Undo: '+h.action)}
+async function saveResult(status='LIVE',ask=true){
+  if(ask){const ok=await confirmBox(status==='FINISHED'?'Finish Match':'Save Result',`บันทึกผล ${state.scoreA}-${state.scoreB} ลง Google Sheet ตอนนี้หรือไม่?`,'บันทึก');if(!ok)return false}
+  if(!state.match.MatchID)return toast('ยังไม่มี MatchID สำหรับบันทึกผล'),false;
+  const a=Number(state.scoreA||0),b=Number(state.scoreB||0);const winner=a>b?state.match.TeamA:b>a?state.match.TeamB:'DRAW';
+  const values={ScoreA:a,ScoreB:b,FinalScore:`${a}-${b}`,MatchStatus:status,Winner:winner,FinishedAt:status==='FINISHED'?nowText():(state.match.FinishedAt||''),UpdatedAt:nowText(),UpdatedBy:(auth.username?`${auth.username} | PepsLive Dock V1`:'PepsLive Dock V1'),Note:state.match.Note||''};
+  const payload={sheetUrl:settings.sheetUrl,webhookUrl:settings.webhookUrl,matchId:state.match.MatchID,values,match:state.match};
+  $('stSave').className='status warn';$('stSave').textContent='Save: Writing';updateMiniStatus();
+  try{const res=await saveResultRemote(payload);
+    if(res.remote){
+      state.match={...state.match,...values};
+      const idx=state.currentIndex>=0?state.currentIndex:state.selectedIndex;
+      if(idx>=0&&state.sheetRows[idx])state.sheetRows[idx]={...state.sheetRows[idx],...values};
+      state.dirty=false;state.lastSavedResult=values;
+      $('stSave').className='status ok';$('stSave').textContent='Save: Sheet';
+      toast('บันทึกผลลง Google Sheet แล้ว');
+    }else{
+      state.lastSavedResult=values;
+      $('stSave').className='status warn';$('stSave').textContent='Save: Pending';
+      toast('ยังไม่ได้อัปเดต Sheet: เก็บลง pending local แล้ว');
+    }
+    log(`${status}: ${values.FinalScore}`);saveLocal();renderAll();return !!res.remote;
+  }catch(e){$('stSave').className='status bad';$('stSave').textContent='Save: Error';updateMiniStatus();toast('บันทึกผลไม่สำเร็จ: '+e.message);return false}}
+async function checkLogos(showToast=true){const names=[state.match.LogoA,state.match.LogoB].filter(Boolean);if(!names.length){state.logoChecked=false;renderLogos();return}try{const res=await api('/api/logo-check',{names});state.logoMap=res.logos||{};state.logoChecked=true;$('stLogo').className='status ok';$('stLogo').textContent=`Logo: ${Object.values(state.logoMap).filter(x=>x.found).length}/${names.length}`;if(showToast)toast('เช็กโลโก้แล้ว');renderLogos();saveLocal()}catch(e){state.logoMap={};names.forEach(n=>{const raw=String(n||'').trim();const isUrl=/^https?:\/\//i.test(raw);const file=raw.match(/\.(png|jpg|jpeg|webp|svg|gif)$/i)?raw:raw+'.png';state.logoMap[n]={found:true,fileName:file,localPath:isUrl?raw:'',url:isUrl?raw:`logos/${encodeURIComponent(file)}`}});state.logoChecked=true;$('stLogo').className='status warn';$('stLogo').textContent='Logo: Direct';if(showToast)toast('ใช้โลโก้แบบ GitHub/Direct');renderLogos();saveLocal()}}
+function logoInfo(name){return state.logoMap&&state.logoMap[name]?state.logoMap[name]:null}function logoPreviewUrl(name){const i=logoInfo(name);if(i&&i.url)return i.url;return 'logos/default.svg'}function logoObsFile(name){const i=logoInfo(name);return i&&(i.localPath||i.url)?(i.localPath||i.url):''}
+function obsUrl(){return `ws://${settings.obsHost||'127.0.0.1'}:${settings.obsPort||4455}`}
+async function sha256base64(text){const data=new TextEncoder().encode(text);const hash=await crypto.subtle.digest('SHA-256',data);return btoa(String.fromCharCode(...new Uint8Array(hash)))}
+async function obsAuth(password,salt,challenge){const secret=await sha256base64(password+salt);return await sha256base64(secret+challenge)}
+function obsSend(op,d){if(!obs.ws||obs.ws.readyState!==1)throw new Error('OBS not connected');obs.ws.send(JSON.stringify({op,d}))}
+function obsRequest(requestType,requestData={}){return new Promise((resolve,reject)=>{const requestId='req_'+(++obs.req)+'_'+Date.now();obs.pending.set(requestId,{resolve,reject,t:setTimeout(()=>{obs.pending.delete(requestId);reject(new Error('OBS timeout: '+requestType))},5000)});obsSend(6,{requestType,requestId,requestData})})}
+async function connectObs(){saveSettingsFromInputs(false);if(obs.ws)try{obs.ws.close()}catch(_){}$('stObs').className='status warn';$('stObs').textContent='OBS: Connecting';return new Promise((resolve,reject)=>{const ws=new WebSocket(obsUrl());obs.ws=ws;ws.onerror=()=>{$('stObs').className='status bad';$('stObs').textContent='OBS: Error';reject(new Error('OBS connection error'))};ws.onclose=()=>{obs.connected=false;obs.identified=false;$('stObs').className='status bad';$('stObs').textContent='OBS: Off'};ws.onmessage=async ev=>{try{const msg=JSON.parse(ev.data);if(msg.op===0){let identify={rpcVersion:1};const auth=msg.d&&msg.d.authentication;if(auth&&auth.challenge)identify.authentication=await obsAuth(settings.obsPassword||'',auth.salt,auth.challenge);obsSend(1,identify)}else if(msg.op===2){obs.connected=true;obs.identified=true;$('stObs').className='status ok';$('stObs').textContent='OBS: Connected';log('OBS connected');pollCommandBus();resolve(true)}else if(msg.op===7){const p=obs.pending.get(msg.d.requestId);if(p){clearTimeout(p.t);obs.pending.delete(msg.d.requestId);const ok=msg.d.requestStatus&&msg.d.requestStatus.result;ok?p.resolve(msg.d.responseData||{}):p.reject(new Error((msg.d.requestStatus&&msg.d.requestStatus.comment)||'OBS request failed'))}}}catch(e){console.warn(e)}};setTimeout(()=>{if(!obs.identified)reject(new Error('OBS identify timeout'))},7000)}).catch(e=>{toast('เชื่อม OBS ไม่สำเร็จ: '+e.message);throw e})}
+async function ensureObs(){if(obs.connected&&obs.ws&&obs.ws.readyState===1)return true;try{await connectObs();return true}catch(_){return false}}
+async function setText(inputName,text){if(!inputName)return;await obsRequest('SetInputSettings',{inputName,inputSettings:{text:String(text??'')},overlay:true})}
+async function setImage(inputName,file){if(!inputName||!file)return;await obsRequest('SetInputSettings',{inputName,inputSettings:{file:String(file)},overlay:true})}
+async function getText(inputName){if(!inputName)return '';const r=await obsRequest('GetInputSettings',{inputName});return String((r.inputSettings&&r.inputSettings.text)||'')}
+async function setLogo(inputName,value){if(!inputName||!value)return;const v=String(value);try{if(/^https?:\/\//i.test(v))await obsRequest('SetInputSettings',{inputName,inputSettings:{url:v},overlay:true})}catch(_){}try{await obsRequest('SetInputSettings',{inputName,inputSettings:{file:v},overlay:true})}catch(e){if(!/^https?:\/\//i.test(v))throw e}}
+async function currentScene(){if(settings.obsScene)return settings.obsScene;const r=await obsRequest('GetCurrentProgramScene');return r.currentProgramSceneName||r.sceneName||''}
+async function setSourceVisible(sourceName,enabled){try{const sceneName=await currentScene();const item=await obsRequest('GetSceneItemId',{sceneName,sourceName});await obsRequest('SetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId,sceneItemEnabled:!!enabled})}catch(e){log('Show/Hide source ไม่สำเร็จ: '+sourceName)}}
+async function triggerMedia(inputName){try{await obsRequest('TriggerMediaInputAction',{inputName,mediaAction:'OBS_WEBSOCKET_MEDIA_INPUT_ACTION_RESTART'})}catch(e){try{await obsRequest('SetInputSettings',{inputName,inputSettings:{restart_on_activate:true},overlay:true})}catch(_){}}}
+async function syncObsAll(){if(!(await ensureObs()))return;try{const m=state.match;await Promise.all([setText(settings.sources.TeamA,m.TeamA),setText(settings.sources.TeamB,m.TeamB),setText(settings.sources.ScoreA,state.scoreA),setText(settings.sources.ScoreB,state.scoreB),setText(settings.sources.Clock,fmtClock(state.clockSec)),setText(settings.sources.Period,state.period),setText(settings.sources.Status,state.status),setText(settings.sources.Label1,m.Label1),setText(settings.sources.Label2,m.Label2),setText(settings.sources.Label3,m.Label3),setText(settings.sources.Label4,m.Label4),setText(settings.sources.Label5,m.Label5),setLogo(settings.sources.LogoA,logoObsFile(m.LogoA)),setLogo(settings.sources.LogoB,logoObsFile(m.LogoB))]);toast('Sync OBS แล้ว')}catch(e){toast('Sync OBS ไม่สำเร็จ: '+e.message)}}
+async function syncObsScore(){if(!obs.connected)return;try{await Promise.all([setText(settings.sources.ScoreA,state.scoreA),setText(settings.sources.ScoreB,state.scoreB)])}catch(e){log('Sync score fail: '+e.message)}}
+async function syncObsClock(){if(!obs.connected)return;try{await Promise.all([setText(settings.sources.Clock,fmtClock(state.clockSec)),setText(settings.sources.Period,state.period),setText(settings.sources.Status,state.status)])}catch(e){}}
+async function triggerFx(team){const source=team==='A'?settings.fx.teamA:settings.fx.teamB;if(!(await ensureObs()))return;try{await setSourceVisible(source,true);await triggerMedia(source);const hide=Number(settings.fx.autoHideSec||0);if(hide>0)setTimeout(()=>setSourceVisible(source,false),hide*1000);log(`Trigger FX: Team ${team}`)}catch(e){toast('FX ไม่สำเร็จ: '+e.message)}}
+async function hideAllFx(){if(!(await ensureObs()))return;await Promise.all([setSourceVisible(settings.fx.teamA,false),setSourceVisible(settings.fx.teamB,false)]);log('Hide all FX')}
+async function createSources(){if(!(await ensureObs()))return;const ok=await confirmBox('Create OBS Sources','ระบบจะพยายามสร้าง Text/Image/Media Source ใน Scene ปัจจุบัน','Create');if(!ok)return;try{const sceneName=await currentScene();const textKind='text_gdiplus_v3';for(const k of ['TeamA','TeamB','ScoreA','ScoreB','Clock','Period','Status','Label1','Label2','Label3','Label4','Label5','CommandBus']){try{await obsRequest('CreateInput',{sceneName,inputName:settings.sources[k],inputKind:textKind,inputSettings:{text:k},sceneItemEnabled:true})}catch(_){}}for(const k of ['LogoA','LogoB']){try{await obsRequest('CreateInput',{sceneName,inputName:settings.sources[k],inputKind:'image_source',inputSettings:{file:''},sceneItemEnabled:true})}catch(_){}}for(const src of [settings.fx.teamA,settings.fx.teamB]){try{await obsRequest('CreateInput',{sceneName,inputName:src,inputKind:'ffmpeg_source',inputSettings:{local_file:'',is_local_file:true},sceneItemEnabled:false})}catch(_){}}toast('Create Sources เสร็จบางส่วน/ทั้งหมดแล้ว')}catch(e){toast('Create Sources ไม่สำเร็จ: '+e.message)}}
+
+async function processRemoteCommand(cmd){if(!cmd||typeof cmd!=='object')return;const id=String(cmd.id||JSON.stringify(cmd));if(id&&id===state.lastRemoteCommandId)return;state.lastRemoteCommandId=id;const action=cmd.action||cmd.type||cmd.command;log('SD Command: '+action);try{if(action==='score')changeScore(cmd.team||'A',Number(cmd.delta||1));else if(action==='timerStart')startTimer();else if(action==='timerPause')pauseTimer();else if(action==='timerReset'){applySportDefaults(true);state.timerRunning=false;setDirty(true);renderClock();syncObsClock();log('Reset time by Stream Deck')}else if(action==='undo')undo();else if(action==='loadSelected')await loadSelectedMatch(true);else if(action==='loadNext'){if(state.dirty)await saveResult('FINISHED',false);const next=state.currentIndex<0?state.selectedIndex:state.currentIndex+1;if(next>=0&&next<state.sheetRows.length){state.selectedIndex=next;await loadSelectedMatch(true)}else toast('ไม่มีคู่ถัดไปแล้ว')}else if(action==='saveResult')await saveResult('LIVE',false);else if(action==='finishMatch')await saveResult('FINISHED',false);else if(action==='syncObs')await syncObsAll();else if(action==='hideFx')await hideAllFx();else if(action==='triggerFx')await triggerFx(cmd.team||'A');else if(action==='setSport')changeSport(cmd.sport||'football');else if(action==='setStatus'){state.status=cmd.status||'LIVE';setDirty(true);renderClock();syncObsClock()}else if(action==='nextPeriod'){const p=currentPreset().periods;let i=p.indexOf(state.period);state.period=p[(i+1+p.length)%p.length];setDirty(true);renderClock();syncObsClock()}else if(action==='setPeriod'){state.period=String(cmd.period||state.period);setDirty(true);renderClock();syncObsClock()}else if(action==='resetMatch'){state.scoreA=0;state.scoreB=0;applySportDefaults(true);state.timerRunning=false;state.history=[];setDirty(true);renderAll();syncObsAll()}else toast('ไม่รู้จักคำสั่ง Stream Deck: '+action);saveLocal()}catch(e){toast('Stream Deck command error: '+e.message);log('SD Error: '+e.message)} }
+async function pollCommandBus(){if(!obs.connected||!settings.sources.CommandBus)return;try{const txt=await getText(settings.sources.CommandBus);if(!txt||txt===state.lastCommandBusText)return;state.lastCommandBusText=txt;let cmd=null;try{cmd=JSON.parse(txt)}catch(_){return}await processRemoteCommand(cmd)}catch(_){}}
+setInterval(pollCommandBus,650);
+function fmtClock(sec){sec=Math.max(0,Math.floor(sec));return `${pad2(sec/60)}:${pad2(sec%60)}`}
+function updateMiniStatus(){if($('miniObsStatus'))$('miniObsStatus').textContent=obs.connected?'Connected':'Off';if($('miniSheetStatus'))$('miniSheetStatus').textContent=(state.sheetRows&&state.sheetRows.length)?`${state.sheetRows.length} matches`:'Not loaded';if($('miniSaveStatus'))$('miniSaveStatus').textContent=($('stSave')&&$('stSave').textContent?$('stSave').textContent.replace('Save: ',''):'Local')}
+function renderAll(){renderSport();renderMatchPicker();renderMatch();renderScore();renderClock();renderButtons();renderSettingsInputs();renderDirty();renderLog();renderLogos()}
+function renderSport(){$('sportSelect').value=state.sport;$('sportPill').textContent=currentPreset().label}
+function renderMatchPicker(){const sel=$('matchSelect'),rows=state.filteredRows||[];sel.innerHTML=rows.length?rows.map(m=>`<option value="${m._index}">${esc(matchTitle(m)+' | '+matchSub(m))}</option>`).join(''):'<option value="">ยังไม่มีข้อมูลแมตช์</option>';if(state.selectedIndex>=0)sel.value=String(state.selectedIndex);const shown=rows.slice(0,30);$('matchResults').innerHTML=shown.length?shown.map(m=>`<button class="match-item ${m._index===state.selectedIndex?'active':''}" data-match-index="${m._index}"><strong>${esc(matchTitle(m))}</strong><span>${esc(matchSub(m)||'ไม่มี label')}</span></button>`).join(''):'<div class="small muted">ไม่พบผลลัพธ์</div>';document.querySelectorAll('[data-match-index]').forEach(b=>b.onclick=()=>selectMatch(b.dataset.matchIndex,false))}
+function renderMatch(){const m=state.match;$('teamAName').textContent=m.TeamA||'TEAM A';$('teamBName').textContent=m.TeamB||'TEAM B';$('teamASub').textContent=m.LogoA||'LogoA';$('teamBSub').textContent=m.LogoB||'LogoB';const meta=[m.MatchID&&`MatchID: ${m.MatchID}`,m.Label1,m.Label2,m.Label3,m.Label4,m.Label5].filter(Boolean);$('matchMeta').innerHTML=meta.map(x=>`<span class="pill">${esc(x)}</span>`).join('');$('currentMatchStatus').textContent=m.MatchID?`Current: #${m.MatchID} ${m.TeamA||'TEAM A'} vs ${m.TeamB||'TEAM B'}${matchSub(m)?' | '+matchSub(m):''}`:'Current: ยังไม่ได้โหลดคู่แข่งขัน';$('logoA').src=logoPreviewUrl(m.LogoA);$('logoB').src=logoPreviewUrl(m.LogoB);renderPeriodStatus();updateMiniStatus()}
+function renderScore(){$('scoreA').textContent=state.scoreA;$('scoreB').textContent=state.scoreB}
+function renderClock(){$('clock').textContent=fmtClock(state.clockSec);$('periodSelect').value=state.period;$('statusSelect').value=state.status;$('timeMin').value=Math.floor(state.clockSec/60);$('timeSec').value=Math.floor(state.clockSec%60)}
+function renderButtons(){const p=currentPreset();const make=(team,arr)=>arr.map(([label,delta,cls])=>`<button class="${cls||'soft'}" data-team="${team}" data-delta="${delta}">${label}</button>`).join('');$('scoreBtnsA').className='score-buttons '+(state.sport==='football'?'football':'');$('scoreBtnsB').className='score-buttons '+(state.sport==='football'?'football':'');$('scoreBtnsA').innerHTML=make('A',p.buttons);$('scoreBtnsB').innerHTML=make('B',p.buttons);document.querySelectorAll('[data-team]').forEach(btn=>btn.onclick=()=>changeScore(btn.dataset.team,Number(btn.dataset.delta)))}
+function renderPeriodStatus(){const p=currentPreset();$('periodSelect').innerHTML=p.periods.map(x=>`<option>${x}</option>`).join('');if(!p.periods.includes(state.period))state.period=p.periods[0];const statuses=['LIVE','BREAK','HALF TIME','FULL TIME','COMING UP'];$('statusSelect').innerHTML=statuses.map(s=>`<option>${s}</option>`).join('')}
+function renderDirty(){$('dirtyBadge').textContent=state.dirty?'Unsaved':'Saved';$('dirtyBadge').style.borderColor=state.dirty?'rgba(244,183,64,.55)':'rgba(32,181,107,.55)';updateMiniStatus()}
+function renderLog(){$('log').innerHTML=(state.logs||[]).slice(0,30).map(x=>`<div class="log-item">${esc(x)}</div>`).join('')||'<div class="small muted">ยังไม่มี log</div>'}
+function renderLogos(){const names=[state.match.LogoA,state.match.LogoB].filter(Boolean);const localCount=Object.keys(localLogoFiles||{}).length;const uniqueLocal=[...new Map(Object.values(localLogoFiles||{}).map(x=>[x.url,x])).values()].length;$('logoReady').innerHTML=names.length?names.map(n=>{const i=logoInfo(n)||{};return `<div class="ready-row"><span>${esc(n)}</span><strong>${i.found?'Ready':'Missing'}</strong></div>`}).join(''):(localCount?`เลือกโฟลเดอร์แล้ว: ${uniqueLocal} ไฟล์`:'ยังไม่มีโลโก้ในคู่ปัจจุบัน');$('logoA').src=logoPreviewUrl(state.match.LogoA);$('logoB').src=logoPreviewUrl(state.match.LogoB);if(typeof renderLogoPreviewGrid==='function')renderLogoPreviewGrid()}
+function renderSettingsInputs(){if($('setSheetUrl'))$('setSheetUrl').value=settings.sheetUrl;if($('setWebhookUrl'))$('setWebhookUrl').value=settings.webhookUrl;if($('setSheetGid'))$('setSheetGid').value=settings.sheetGid;if($('setObsHost'))$('setObsHost').value=settings.obsHost;if($('setObsPort'))$('setObsPort').value=settings.obsPort;if($('setObsPass'))$('setObsPass').value=settings.obsPassword;if($('setObsScene'))$('setObsScene').value=settings.obsScene;if($('setTeamAFx'))$('setTeamAFx').value=settings.fx.teamA;if($('setTeamBFx'))$('setTeamBFx').value=settings.fx.teamB;if($('setFxHide'))$('setFxHide').value=settings.fx.autoHideSec;if($('setAntiMs'))$('setAntiMs').value=settings.antiMs;if($('setTimerDefault'))$('setTimerDefault').value=settings.timerDefault;const box=$('sourceInputs');if(box)box.innerHTML=sourceKeys.map(k=>`<label>${k}<input data-source-key="${k}" value="${esc(settings.sources[k]||'')}"></label>`).join('')}
+function saveSettingsFromInputs(showToast=true){settings.sheetUrl=$('setSheetUrl').value.trim();settings.webhookUrl=$('setWebhookUrl').value.trim();settings.sheetGid=$('setSheetGid').value.trim()||'0';settings.obsHost=$('setObsHost').value.trim()||'127.0.0.1';settings.obsPort=$('setObsPort').value.trim()||'4455';settings.obsPassword=$('setObsPass').value;settings.obsScene=$('setObsScene').value.trim();settings.fx.teamA=$('setTeamAFx').value.trim()||'PEPS_TeamA_FX';settings.fx.teamB=$('setTeamBFx').value.trim()||'PEPS_TeamB_FX';settings.fx.autoHideSec=Number($('setFxHide').value||0);settings.antiMs=Number($('setAntiMs').value||420);settings.timerDefault=$('setTimerDefault').value;document.querySelectorAll('[data-source-key]').forEach(inp=>settings.sources[inp.dataset.sourceKey]=inp.value.trim());saveLocal();if(auth&&auth.authenticated)startPresence();if(showToast)toast('บันทึก Settings แล้ว')}
+function initDrawer(){const pages=[['Match Loader','tabMatch'],['Sheet','tabSheet'],['OBS','tabObs'],['Logos','tabLogos'],['FX','tabGraphics'],['Source Actions','tabSourceActions'],['Dock Layout','tabDockLayout'],['Advanced','tabAdvanced']];$('tabs').innerHTML=pages.map((p,i)=>`<button class="tab ${i===0?'active':''}" data-tab="${p[1]}">${p[0]}</button>`).join('');$('tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.tabpage').forEach(x=>x.style.display='none');$(b.dataset.tab).style.display='grid'}}
+function openDrawer(){renderSettingsInputs();$('drawerBackdrop').classList.add('show');$('drawer').classList.add('show')}function closeDrawer(){$('drawerBackdrop').classList.remove('show');$('drawer').classList.remove('show')}
+function on(id,fn){const el=$(id);if(el)el.onclick=fn;return el}
+function bind(){initDrawer();on('btnOpenSettings',openDrawer);on('btnCloseDrawer',closeDrawer);$('drawerBackdrop').onclick=closeDrawer;$('sportSelect').onchange=e=>changeSport(e.target.value);on('btnLoadSheet',loadSheet);on('btnLoadSheet2',loadSheet);$('matchSearch').oninput=()=>filterMatches(true);$('matchSelect').onchange=e=>selectMatch(e.target.value,false);on('btnLoadMatch',()=>loadSelectedMatch());on('btnLoadMatchDrawer',()=>loadSelectedMatch());on('btnNextMatch',nextMatch);on('btnNextMatchTop',nextMatch);on('btnNextMatchDrawer',nextMatch);on('btnRefreshMatchResults',()=>renderMatchPicker());on('btnUndo',undo);on('btnStart',startTimer);on('btnPause',pauseTimer);on('btnResetTime',resetTime);on('btnApplyTime',applyTimeFromInputs);$('periodSelect').onchange=e=>{state.period=e.target.value;setDirty(true);syncObsClock()};$('statusSelect').onchange=e=>{state.status=e.target.value;setDirty(true);syncObsClock()};on('btnHideFx',hideAllFx);on('btnConnectObs',connectObs);on('btnObsConnect2',connectObs);on('btnSyncObs',syncObsAll);on('btnCheckLogo',()=>checkLogos());on('btnLogoCheck2',()=>checkLogos());on('btnSaveResult',()=>saveResult('LIVE'));on('btnFinishMatch',()=>saveResult('FINISHED'));on('btnClearLog',()=>{state.logs=[];saveLocal();renderLog()});on('btnSaveSettingsSheet',()=>saveSettingsFromInputs(true));on('btnSaveSettingsAdvanced',()=>saveSettingsFromInputs(true));on('btnSaveFxSettings',()=>saveSettingsFromInputs(true));on('btnTestText',async()=>{await ensureObs();await setText(settings.sources.Status,'TEST '+nowText());toast('ส่ง Test Text แล้ว')});on('btnCreateSources',createSources);on('btnTestTeamAFx',()=>triggerFx('A'));on('btnTestTeamBFx',()=>triggerFx('B'));on('btnPendingResults',async()=>{try{const r=await api('/api/pending-results',{},'GET');toast(`Pending results: ${(r.results||[]).length}`)}catch(e){toast('อ่าน pending ไม่ได้')}});on('btnOpenLogoInfo',()=>toast('ตัวอย่าง: Sheet ใส่ A1 และวางไฟล์ scoreboard/logos/A1.png'));on('btnResetState',async()=>{const ok=await confirmBox('Reset State','ล้างค่า local ทั้งหมดหรือไม่?','Reset');if(ok){localStorage.removeItem(STORE_KEY);localStorage.removeItem(SETTINGS_KEY);state=merge(defaultState,{});settings=merge(defaultSettings,{});renderAll()}});on('btnExportState',()=>{const blob=new Blob([JSON.stringify({state,settings},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pepslive_dock_state.json';a.click();URL.revokeObjectURL(a.href)});on('btnRefreshUsers',refreshUsers);on('btnImportState',()=>$('importFile').click());$('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const js=JSON.parse(rd.result);if(js.state)state=merge(defaultState,js.state);if(js.settings)settings=merge(defaultSettings,js.settings);saveLocal();renderAll();toast('Import state แล้ว')}catch(err){toast('Import ไม่สำเร็จ')}};rd.readAsText(f)}}
+
+// ===== PepsLive Dock V1 final feature overrides =====
+const OBS_TAGS=[
+ ['TeamA','Text(GDI+)'],['TeamB','Text(GDI+)'],['ScoreA','Text(GDI+)'],['ScoreB','Text(GDI+)'],['Clock','Text(GDI+)'],['Period','Text(GDI+)'],['Status','Text(GDI+)'],['Label1','Text(GDI+)'],['Label2','Text(GDI+)'],['Label3','Text(GDI+)'],['Label4','Text(GDI+)'],['Label5','Text(GDI+)'],['LogoA','Logo'],['LogoB','Logo'],['TeamA_FX','Media'],['TeamB_FX','Media'],['CommandBus','Text(GDI+)'],['TeamA_PrimaryColor','Text(GDI+)'],['TeamA_SecondaryColor','Text(GDI+)'],['TeamB_PrimaryColor','Text(GDI+)'],['TeamB_SecondaryColor','Text(GDI+)']
+];
+const HELP_TEXT={
+ match:'วิธีการใช้งาน Match Loader\n1. โหลด Google Sheet ก่อน\n2. พิมพ์ค้นหา MatchID / ชื่อทีม / สนาม / รอบ\n3. คลิกเลือกคู่ที่ต้องการ\n4. กด Load Match เพื่อส่งชื่อทีม คะแนน โลโก้ และ label เข้า OBS\n5. กด Next เพื่อไปคู่ถัดไป',
+ sheet:'วิธีการใช้งาน Sheet\n1. ใส่ Google Sheet URL หรือ CSV export URL\n2. ใส่ Apps Script Webhook URL สำหรับ Save Result และ Online Users\n3. กดโหลด Sheet\n4. หัวตารางต้องตรงตาม Schema\n5. Finish Match จะอัปเดตคะแนนกลับไปที่แถวเดิมตาม MatchID',
+ obs:'วิธีการใช้งาน OBS\n1. เปิด OBS WebSocket ที่ port 4455\n2. ใส่ Host / Port / Password\n3. กด Connect\n4. ในตาราง OBS Tags กด + เพื่อสร้าง Source รายตัว\n5. Text จะสร้างเป็น Text(GDI+), Logo จะสร้างเป็น Image Source สำหรับ GitHub/URL หรือ Image Source สำหรับ Local Path, FX จะสร้างเป็น Media\n6. กด Sync OBS เพื่อทดสอบส่งข้อมูล',
+ logos:'วิธีการใช้งาน Logos\n1. ใน Sheet ใส่ LogoA / LogoB เป็นรหัส เช่น A1\n2. ถ้าใช้ GitHub Pages ให้วางไฟล์ไว้ใน logos/ เช่น logos/A1.png\n3. ถ้าใช้ Local Folder ให้เลือกโหมด Local และกรอก path โฟลเดอร์\n4. กดตรวจโลโก้ ระบบจะลองหา png/jpg/webp/svg\n5. ถ้าไม่พบจะใช้ default.svg แทน\n6. ถ้าโลโก้ไม่ขึ้นใน OBS ให้กด ซ่อม Logo Image Sources เพื่อบังคับ PEPS_LogoA/PEPS_LogoB เป็น Image Source และกรอก Logo Folder Path จริง',
+ fx:'วิธีการใช้งาน FX\n1. ตั้งชื่อ Source ของ Team A FX และ Team B FX\n2. ค่า Auto Hide = 0 คือเปิดค้าง\n3. ค่า 1 ขึ้นไปคือซ่อนอัตโนมัติหลังครบวินาที\n4. ปุ่ม Test ใช้ตรวจว่า source เล่นใน OBS ได้หรือไม่',
+ sourceActions:'วิธีการใช้งาน Source Actions\n1. ตั้งชื่อปุ่ม 1-6\n2. ใส่ Source หรือ Group ใน OBS\n3. เลือก Mode: Toggle, Show, Hide, Pulse, Hide All\n4. Pulse จะเปิดแล้วซ่อนตาม Auto Hide\n5. ปุ่มเหล่านี้ใช้ได้ทั้งหน้า Dock และ Stream Deck',
+ layout:'วิธีการใช้งาน Dock Layout\n1. ติ๊กเลือก Module ที่ต้องการแสดง\n2. ใส่เลข Order เพื่อเรียงลำดับ\n3. กด Save Layout\n4. ถ้าอยากกลับค่าเดิมให้กด Reset Layout',
+ advanced:'วิธีการใช้งาน Advanced\nใช้สำหรับตั้งค่า Anti-double, Export/Import State และดู Command Log เท่านั้น ถ้าไม่แน่ใจไม่ควร Reset State ระหว่างไลฟ์'
+};
+function normalizeSettingsV1(){settings.logo=settings.logo||{mode:'local',basePath:'logos/',folderPath:'',exts:'png,jpg,jpeg,webp,svg'};settings.logo.mode=settings.logo.mode||'local';settings.logo.basePath=settings.logo.basePath||'logos/';settings.logo.exts=settings.logo.exts||'png,jpg,jpeg,webp,svg';settings.teamColors=settings.teamColors||{aPrimary:'#ff6a00',aSecondary:'#111111',bPrimary:'#0057ff',bSecondary:'#ffffff'};settings.actions=settings.actions||[{label:'Open',source:'PEPS_OpenFX',mode:'toggle',autoHide:0},{label:'Sponsor',source:'PEPS_Sponsor',mode:'toggle',autoHide:0},{label:'Lower',source:'PEPS_LowerThird',mode:'pulse',autoHide:6},{label:'Stats',source:'PEPS_Stats',mode:'toggle',autoHide:0},{label:'Break',source:'PEPS_Break',mode:'show',autoHide:0},{label:'Clear',source:'*',mode:'hideAll',autoHide:0}];while(settings.actions.length<6)settings.actions.push({label:'Action '+(settings.actions.length+1),source:'',mode:'toggle',autoHide:0});settings.layout=settings.layout||[{key:'quick',label:'Quick Match',show:true,order:1},{key:'score',label:'Score / Result',show:true,order:2},{key:'clock',label:'Clock / Status',show:true,order:3},{key:'actions',label:'Source Actions',show:true,order:4},{key:'result',label:'Result',show:true,order:5},{key:'system',label:'System Status',show:true,order:6}];settings.sources.TeamA_PrimaryColor=settings.sources.TeamA_PrimaryColor||'PEPS_TeamA_PrimaryColor';settings.sources.TeamA_SecondaryColor=settings.sources.TeamA_SecondaryColor||'PEPS_TeamA_SecondaryColor';settings.sources.TeamB_PrimaryColor=settings.sources.TeamB_PrimaryColor||'PEPS_TeamB_PrimaryColor';settings.sources.TeamB_SecondaryColor=settings.sources.TeamB_SecondaryColor||'PEPS_TeamB_SecondaryColor';if(settings.fx && settings.fx.autoHideSec===undefined)settings.fx.autoHideSec=0;}
+normalizeSettingsV1();
+function showHelp(key){const txt=HELP_TEXT[key]||'ยังไม่มีข้อมูลวิธีการใช้งาน';confirmBox('วิธีการใช้งาน '+key,txt.replace(/\n/g,'\n'),'เข้าใจแล้ว')}
+const oldUpdateSessionDisplay=updateSessionDisplay;updateSessionDisplay=function(){const userText=auth.authenticated?`ผู้ใช้: ${auth.username||'-'} | จังหวัด: ${auth.province||'-'}`:'ล็อกอินก่อนเริ่มใช้งานระบบ';if($('sessionText'))$('sessionText').textContent=userText;if($('btnOnlineUsers')){if(auth.authenticated){$('btnOnlineUsers').style.display='inline-flex';$('btnOnlineUsers').textContent=`ออนไลน์: ${presence.onlineCount||1} คน`}else{$('btnOnlineUsers').style.display='none'}}};
+function renderOnlinePopup(){if(!$('onlineUsersPopup'))return;$('onlineUsersPopup').innerHTML=(presence.users||[]).length?(presence.users||[]).map(u=>`<div class="user-row"><div><strong>${esc(u.username||'-')}</strong><br><span>${esc(u.province||'-')}</span></div><span>${esc(u.lastSeen||'-')}</span><strong class="${u.online?'online':'offline'}">${u.online?'Online':'Offline'}</strong></div>`).join(''):'<div class="small muted">ยังไม่มีข้อมูลผู้ใช้งาน</div>'}
+async function openOnlinePopup(){await syncPresenceOnce();renderOnlinePopup();$('onlineModalBackdrop').classList.add('show')}
+function closeOnlinePopup(){$('onlineModalBackdrop').classList.remove('show')}
+function logoExts(){return String(settings.logo.exts||'png,jpg,jpeg,webp,svg').split(',').map(x=>x.trim()).filter(Boolean)}
+function cleanLogoBase(){return (settings.logo.mode==='local'?(settings.logo.folderPath||settings.logo.basePath||'logos/'):(settings.logo.basePath||'logos/')).replace(/[\/]*$/,'/')}
+function logoKeys(raw){raw=String(raw||'').trim();if(!raw)return[];const out=[raw,raw.toLowerCase()];const base=raw.replace(/\.(png|jpe?g|webp|svg|gif)$/i,'');out.push(base,base.toLowerCase());for(const ext of logoExts()){out.push(base+'.'+ext,(base+'.'+ext).toLowerCase())}return [...new Set(out)]}
+function registerLogoFiles(files){localLogoObjectUrls.forEach(u=>{try{URL.revokeObjectURL(u)}catch(_){}});localLogoObjectUrls=[];localLogoFiles={};Array.from(files||[]).forEach(f=>{if(!f.type.startsWith('image/')&&!f.name.match(/\.(png|jpe?g|webp|svg|gif)$/i))return;const url=URL.createObjectURL(f);localLogoObjectUrls.push(url);const keys=logoKeys(f.name);const rel=f.webkitRelativePath||f.name;keys.forEach(k=>localLogoFiles[k]={url,name:f.name,relativePath:rel,file:f});});return Object.keys(localLogoFiles).length}
+function findLocalLogo(raw){for(const k of logoKeys(raw)){if(localLogoFiles[k])return localLogoFiles[k]}return null}
+function buildLogoCandidates(raw){raw=String(raw||'').trim();if(!raw)return[];if(/^https?:\/\//i.test(raw))return[raw];const base=cleanLogoBase();if(raw.match(/\.(png|jpe?g|webp|svg|gif)$/i))return[base+raw];return logoExts().map(ext=>base+raw+'.'+ext)}
+checkLogos=async function(showToast=true){
+  const names=[state.match.LogoA,state.match.LogoB].filter(Boolean);
+  state.logoMap={};
+  const folderPath=(settings.logo&&settings.logo.folderPath)||'';
+  const realFolder=isLikelyRealLocalPath(folderPath);
+  for(const n of names){
+    const local=findLocalLogo(n);
+    const obsPath=logoObsValue(n);
+    if(settings.logo.mode==='local'){
+      state.logoMap[n]={
+        found:!!(local||obsPath),
+        fileName:(local&&local.name)||logoFilenameForObs(n),
+        localPath:obsPath,
+        url:(local&&(local.dataUrl||local.url))||'',
+        candidates:obsPath?[obsPath]:[]
+      };
+      continue;
+    }
+    const c=buildLogoCandidates(n);
+    const first=c[0]||'';
+    state.logoMap[n]={found:!!first,fileName:first,localPath:isLikelyRealLocalPath(first)?first:'',url:first,candidates:c};
+  }
+  const localCount=Object.keys(localLogoFiles).length;
+  state.logoChecked=true;
+  if(settings.logo.mode==='local' && !realFolder){
+    $('stLogo').className='status warn';
+    $('stLogo').textContent=localCount?`Logo: Preview ${localCount} files`:'Logo: Need Path';
+  }else if(names.length||localCount){
+    $('stLogo').className='status ok';
+    $('stLogo').textContent=localCount?`Logo: Local ${localCount} files`:`Logo: ${settings.logo.mode}`;
+  }else{
+    $('stLogo').className='status warn';
+    $('stLogo').textContent='Logo: None';
+  }
+  if(showToast){
+    if(settings.logo.mode==='local'&&!realFolder)toast('เลือกโลโก้สำหรับ Preview แล้ว แต่ OBS ต้องกรอก Logo Folder Path จริง เช่น C:/PepsLive/logos/');
+    else toast(localCount?`เลือกโลโก้ในโฟลเดอร์แล้ว ${localCount} รายการ`:'ตรวจโลโก้แล้ว: '+settings.logo.mode);
+  }
+  renderLogos();saveLocal()
+};
+logoPreviewUrl=function(name){const local=findLocalLogo(name);if(local)return local.dataUrl||local.url;const i=logoInfo(name);if(i&&i.url)return i.url;return 'logos/default.svg'};
+logoObsFile=function(name){return logoObsValue(name)};
+function renderLogoPreviewGrid(){const grid=$('logoPreviewGrid');if(!grid)return;const entries=[...new Map(Object.values(localLogoFiles||{}).map(x=>[x.url,x])).values()].slice(0,24);if(entries.length){grid.innerHTML=entries.map(x=>`<div class="logo-card"><img src="${esc(x.url)}"><small>${esc(x.name)}</small></div>`).join('');return}const names=[state.match.LogoA,state.match.LogoB].filter(Boolean);grid.innerHTML=names.map(n=>`<div class="logo-card"><img src="${esc(logoPreviewUrl(n))}"><small>${esc(n)}</small></div>`).join('')||'<div class="small muted">ยังไม่มีโลโก้ตัวอย่าง</div>';}
+
+function tagSourceName(k){
+  if(k==='TeamA_FX')return settings.fx.teamA||'PEPS_TeamA_FX';
+  if(k==='TeamB_FX')return settings.fx.teamB||'PEPS_TeamB_FX';
+  return (settings.sources&&settings.sources[k])?settings.sources[k]:'PEPS_'+k;
+}
+function tagInputKind(type){
+  if(type==='Text(GDI+)')return 'text_gdiplus_v3';
+  if(type==='Media')return 'ffmpeg_source';
+  if(type==='Logo')return 'image_source';
+  if(type==='Image')return 'image_source';
+  return 'text_gdiplus_v3';
+}
+function isLikelyRealLocalPath(v){return /^[a-zA-Z]:[\\/]/.test(v)||/^\\\\/.test(v)||/^\//.test(v)}
+function joinLocalFolderPath(folder,filename){
+  folder=String(folder||'').trim(); filename=String(filename||'').trim();
+  if(!folder||!filename)return '';
+  const sep=folder.includes('/')?'/':'\\';
+  return folder.replace(/[\\/]*$/,sep)+filename.replace(/^[\\/]+/,'');
+}
+function logoFilenameForObs(raw){
+  raw=String(raw||'').trim(); if(!raw)return '';
+  const local=findLocalLogo(raw); if(local&&local.name)return local.name;
+  if(/\.(png|jpe?g|webp|svg|gif)$/i.test(raw))return raw.split(/[\\/]/).pop();
+  const ext=(logoExts()[0]||'png').replace(/^\./,'');
+  return raw+'.'+ext;
+}
+function logoLocalObsPath(raw){
+  const folder=(settings.logo&&settings.logo.folderPath)||'';
+  if(!isLikelyRealLocalPath(folder))return '';
+  return joinLocalFolderPath(folder, logoFilenameForObs(raw));
+}
+function absolutePageUrl(v){try{return new URL(v,location.href).href}catch(_){return v}}
+function firstLogoCandidate(raw){const list=buildLogoCandidates(raw);return list&&list.length?list[0]:''}
+function logoObsValue(raw){
+  raw=String(raw||'').trim();
+  if(!raw)return '';
+  if(isLikelyRealLocalPath(raw))return raw;
+  if(settings.logo&&settings.logo.mode==='local'){
+    const p=logoLocalObsPath(raw);
+    return p||'';
+  }
+  /* OBS Image Source is most reliable with a real local file path. URLs may work in some OBS builds,
+     but for production use prefer Local Folder Path. */
+  if(/^https?:\/\//i.test(raw))return raw;
+  const candidate=firstLogoCandidate(raw);
+  if(candidate&&isLikelyRealLocalPath(candidate))return candidate;
+  return '';
+}
+function fileToDataUrl(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=()=>reject(r.error||new Error('read_file_failed'));r.readAsDataURL(file)})}
+async function hydrateLocalLogoDataUrls(){const seen=new Set();for(const item of Object.values(localLogoFiles||{})){if(!item||!item.file||seen.has(item.url))continue;seen.add(item.url);try{item.dataUrl=await fileToDataUrl(item.file)}catch(_){}}}
+async function getObsInputKind(inputName){try{const r=await obsRequest('GetInputSettings',{inputName});return r.inputKind||''}catch(_){return ''}}
+async function setLogo(inputName,value){
+  if(!inputName)return;
+  const rawValue=String(value||'').trim();
+  if(!rawValue){log('Logo skipped: no OBS-compatible value for '+inputName);return;}
+  const kind=await getObsInputKind(inputName);
+  const isUrl=/^(https?:\/\/|data:image\/)/i.test(rawValue);
+  try{
+    if(kind==='browser_source'||isUrl){
+      const url=isUrl?rawValue:absolutePageUrl(rawValue);
+      await obsRequest('SetInputSettings',{inputName,inputSettings:{url,width:360,height:360},overlay:true});
+      return;
+    }
+    await obsRequest('SetInputSettings',{inputName,inputSettings:{file:rawValue},overlay:true});
+  }catch(e){
+    toast('ส่งโลโก้เข้า OBS ไม่สำเร็จ: '+inputName+' | '+e.message);
+    throw e;
+  }
+}
+
+async function createSourceByTag(k,type){if(!(await ensureObs()))return;const sceneName=await currentScene();const inputName=tagSourceName(k);const kind=tagInputKind(type);let inputSettings={};let enabled=true;if(type==='Text(GDI+)')inputSettings={text:k};if(type==='Logo'){if(kind==='browser_source')inputSettings={url:'about:blank',width:360,height:360};else inputSettings={file:''}}if(type==='Image')inputSettings={file:''};if(type==='Media'){inputSettings={local_file:'',is_local_file:true};enabled=false}try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)} }
+createSources=async function(){if(!(await ensureObs()))return;for(const [k,t] of OBS_TAGS)await createSourceByTag(k,t);toast('สร้าง Source ทั้งหมดเสร็จแล้ว')};
+async function setActionVisible(sourceName,enabled){if(!sourceName||sourceName==='*')return;try{const sceneName=await currentScene();const item=await obsRequest('GetSceneItemId',{sceneName,sourceName});await obsRequest('SetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId,sceneItemEnabled:!!enabled})}catch(e){toast('ไม่พบ Source/Group: '+sourceName)} }
+async function toggleActionSource(sourceName){try{const sceneName=await currentScene();const item=await obsRequest('GetSceneItemId',{sceneName,sourceName});const r=await obsRequest('GetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId});await obsRequest('SetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId,sceneItemEnabled:!r.sceneItemEnabled})}catch(e){toast('Toggle ไม่สำเร็จ: '+sourceName)} }
+async function hideAllActionSources(){if(!(await ensureObs()))return;for(const a of settings.actions.slice(0,6)){if(a.source&&a.source!=='*')await setActionVisible(a.source,false)}log('Hide all Source Actions')}
+async function runSourceAction(slot){slot=Number(slot)-1;const a=settings.actions[slot];if(!a)return toast('ไม่มี Action นี้');if(!(await ensureObs()))return;const mode=a.mode||'toggle';if(mode==='hideAll'||a.source==='*')return hideAllActionSources();if(!a.source)return toast('ยังไม่ได้ตั้ง Source ของ '+(a.label||('Action '+(slot+1))));if(mode==='toggle')await toggleActionSource(a.source);else if(mode==='show')await setActionVisible(a.source,true);else if(mode==='hide')await setActionVisible(a.source,false);else if(mode==='pulse'){await setActionVisible(a.source,true);const h=Number(a.autoHide||0);if(h>0)setTimeout(()=>setActionVisible(a.source,false),h*1000)}log('Source Action: '+(a.label||slot+1))}
+function renderActionButtons(){if(!$('sourceActionButtons'))return;$('sourceActionButtons').innerHTML=settings.actions.slice(0,6).map((a,i)=>`<button data-run-action="${i+1}">${esc(a.label||('Action '+(i+1)))}</button>`).join('');document.querySelectorAll('[data-run-action]').forEach(b=>b.onclick=()=>runSourceAction(b.dataset.runAction))}
+function renderObsTagTable(){if(!$('obsTagTable'))return;$('obsTagTable').innerHTML=OBS_TAGS.map(([k,t])=>`<div class="tag-row"><strong>${esc(k)}</strong><code>${esc(tagSourceName(k))}</code><span class="tag-type">${esc(t)}</span><button class="primary tiny" data-create-tag="${esc(k)}" data-type="${esc(t)}">+</button></div>`).join('');document.querySelectorAll('[data-create-tag]').forEach(b=>b.onclick=()=>createSourceByTag(b.dataset.createTag,b.dataset.type))}
+const __oldOpenDrawerForTags=openDrawer;openDrawer=function(){__oldOpenDrawerForTags();renderObsTagTable();renderLogoPreviewGrid();};
+function renderSourceActionSettings(){if(!$('sourceActionSettings'))return;$('sourceActionSettings').innerHTML=settings.actions.slice(0,6).map((a,i)=>`<div class="action-setting"><label>ชื่อปุ่ม ${i+1}<input data-action-field="label" data-action-index="${i}" value="${esc(a.label||'')}"></label><label>Source / Group<input data-action-field="source" data-action-index="${i}" value="${esc(a.source||'')}"></label><label>Mode<select data-action-field="mode" data-action-index="${i}"><option value="toggle">Toggle</option><option value="show">Show</option><option value="hide">Hide</option><option value="pulse">Pulse</option><option value="hideAll">Hide All</option></select></label><label>Auto Hide<input type="number" min="0" data-action-field="autoHide" data-action-index="${i}" value="${Number(a.autoHide||0)}"></label></div>`).join('');document.querySelectorAll('[data-action-field="mode"]').forEach(sel=>sel.value=settings.actions[Number(sel.dataset.actionIndex)].mode||'toggle')}
+function saveActionSettings(){document.querySelectorAll('[data-action-field]').forEach(el=>{const i=Number(el.dataset.actionIndex),f=el.dataset.actionField;if(!settings.actions[i])settings.actions[i]={};settings.actions[i][f]=f==='autoHide'?Number(el.value||0):el.value});saveLocal();renderActionButtons();toast('บันทึก Source Actions แล้ว')}
+function presetActions(){settings.actions=[{label:'Open',source:'PEPS_OpenFX',mode:'toggle',autoHide:0},{label:'Sponsor',source:'PEPS_Sponsor',mode:'toggle',autoHide:0},{label:'Lower',source:'PEPS_LowerThird',mode:'pulse',autoHide:6},{label:'Stats',source:'PEPS_Stats',mode:'toggle',autoHide:0},{label:'Break',source:'PEPS_Break',mode:'show',autoHide:0},{label:'Clear',source:'*',mode:'hideAll',autoHide:0}];renderSourceActionSettings();saveActionSettings()}
+function renderLayoutSettings(){if(!$('layoutSettings'))return;$('layoutSettings').innerHTML=settings.layout.map(m=>`<div class="layout-row"><input type="checkbox" data-layout-field="show" data-layout-key="${m.key}" ${m.show?'checked':''}><strong>${esc(m.label)}</strong><input type="number" min="1" data-layout-field="order" data-layout-key="${m.key}" value="${m.order}"></div>`).join('')}
+function saveLayoutSettings(){document.querySelectorAll('[data-layout-field]').forEach(el=>{const key=el.dataset.layoutKey;const m=settings.layout.find(x=>x.key===key);if(!m)return;if(el.dataset.layoutField==='show')m.show=el.checked;else m.order=Number(el.value||99)});saveLocal();applyDockLayout();toast('บันทึก Dock Layout แล้ว')}
+function resetLayoutSettings(){settings.layout=[{key:'quick',label:'Quick Match',show:true,order:1},{key:'score',label:'Score / Result',show:true,order:2},{key:'clock',label:'Clock / Status',show:true,order:3},{key:'actions',label:'Source Actions',show:true,order:4},{key:'result',label:'Result',show:true,order:5},{key:'system',label:'System Status',show:true,order:6}];renderLayoutSettings();saveLayoutSettings()}
+function applyDockLayout(){(settings.layout||[]).forEach(m=>{const el=document.querySelector(`[data-module="${m.key}"]`);if(!el)return;el.classList.toggle('hidden-module',!m.show);el.style.order=String(m.order||99)})}
+const oldRenderAll=renderAll;renderAll=function(){oldRenderAll();normalizeSettingsV1();renderActionButtons();renderObsTagTable();renderSourceActionSettings();renderLayoutSettings();applyDockLayout();};
+const oldRenderSettingsInputs=renderSettingsInputs;renderSettingsInputs=function(){oldRenderSettingsInputs();normalizeSettingsV1();if($('setLogoMode'))$('setLogoMode').value=settings.logo.mode;if($('setLogoBasePath'))$('setLogoBasePath').value=settings.logo.basePath||'logos/';if($('setLogoFolderPath'))$('setLogoFolderPath').value=settings.logo.folderPath||'';if($('setLogoExts'))$('setLogoExts').value=settings.logo.exts||'png,jpg,jpeg,webp,svg';};
+const oldSaveSettingsFromInputs=saveSettingsFromInputs;saveSettingsFromInputs=function(showToast=true){oldSaveSettingsFromInputs(false);normalizeSettingsV1();if($('setLogoMode'))settings.logo.mode=$('setLogoMode').value;if($('setLogoBasePath'))settings.logo.basePath=$('setLogoBasePath').value.trim()||'logos/';if($('setLogoFolderPath'))settings.logo.folderPath=$('setLogoFolderPath').value.trim();if($('setLogoExts'))settings.logo.exts=$('setLogoExts').value.trim()||'png,jpg,jpeg,webp,svg';saveLocal();if(showToast)toast('บันทึก Settings แล้ว')};
+const oldSyncObsAll=syncObsAll;syncObsAll=async function(){await oldSyncObsAll();if(obs.connected){try{await Promise.all([setText(settings.sources.TeamA_PrimaryColor,settings.teamColors.aPrimary),setText(settings.sources.TeamA_SecondaryColor,settings.teamColors.aSecondary),setText(settings.sources.TeamB_PrimaryColor,settings.teamColors.bPrimary),setText(settings.sources.TeamB_SecondaryColor,settings.teamColors.bSecondary)])}catch(e){}}};
+const oldProcessRemoteCommand=processRemoteCommand;processRemoteCommand=async function(cmd){const action=cmd&&(cmd.action||cmd.type||cmd.command);if(action==='sourceAction')return runSourceAction(cmd.slot||1);if(action==='hideAllActions')return hideAllActionSources();return oldProcessRemoteCommand(cmd)};
+
+// Runtime safety patch: keep Settings Drawer and Timer resilient even if optional settings sections change.
+startTimer=function(){
+  if(state.clockMode==='down' && Number(state.clockSec||0)<=0){
+    applySportDefaults(true);
+    if(Number(state.clockSec||0)<=0)state.clockSec=600;
+  }
+  state.timerRunning=true;
+  saveLocal();
+  renderClock();
+  log('Timer start');
+  toast('เริ่มเวลาแล้ว');
+};
+pauseTimer=function(){state.timerRunning=false;saveLocal();renderClock();log('Timer pause');toast('หยุดเวลาแล้ว')};
+
+/* FIXED7: Jamornz-inspired logo pipeline for OBS Preview
+   LogoA/LogoB use OBS Image Source with a real local file path, matching the practical JamornzMedia-style workflow.
+   Dock preview can use browser-selected files, but OBS Image Source needs Logo Folder Path, e.g. C:/PepsLive/logos/. */
+async function obsInputExists(inputName){
+  try{await obsRequest('GetInputSettings',{inputName});return true}catch(_){return false}
+}
+async function removeObsInputIfExists(inputName){
+  try{await obsRequest('RemoveInput',{inputName});return true}catch(_){return false}
+}
+async function ensureLogoImageSource(inputName){
+  if(!inputName)throw new Error('missing_logo_input_name');
+  const sceneName=await currentScene();
+  let kind=await getObsInputKind(inputName);
+  if(kind==='image_source')return true;
+  if(kind){
+    log('Logo source type mismatch: '+inputName+' is '+kind+' → recreate as Image Source');
+    await removeObsInputIfExists(inputName);
+    await new Promise(r=>setTimeout(r,180));
+  }
+  try{
+    await obsRequest('CreateInput',{sceneName,inputName,inputKind:'image_source',inputSettings:{file:''},sceneItemEnabled:true});
+    log('Create Logo Image Source: '+inputName);
+    return true;
+  }catch(e){
+    kind=await getObsInputKind(inputName);
+    if(kind==='image_source')return true;
+    throw new Error('สร้าง/ซ่อม Logo Image Source ไม่สำเร็จ: '+inputName+' | '+e.message);
+  }
+}
+/* compatibility alias for older internal calls */
+async function ensureLogoBrowserSource(inputName){return ensureLogoImageSource(inputName)}
+async function setLogo(inputName,value){
+  if(!inputName)return;
+  const rawValue=String(value||'').trim();
+  if(!rawValue){
+    toast('ยังไม่มี path โลโก้สำหรับ OBS Image Source: กรุณากรอก Logo Folder Path เช่น C:/PepsLive/logos/');
+    log('Logo skipped: no OBS-compatible local path for '+inputName);
+    return;
+  }
+  await ensureLogoImageSource(inputName);
+  await obsRequest('SetInputSettings',{inputName,inputSettings:{file:rawValue},overlay:true});
+  log('Logo Image Source sent to OBS: '+inputName+' → '+rawValue);
+}
+async function createSourceByTag(k,type){
+  if(!(await ensureObs()))return;
+  const sceneName=await currentScene();
+  const inputName=tagSourceName(k);
+  if(type==='Logo'){
+    try{await ensureLogoImageSource(inputName);toast('สร้าง/ซ่อม Logo Image Source แล้ว: '+inputName)}catch(e){toast(e.message)}
+    return;
+  }
+  const kind=tagInputKind(type);let inputSettings={};let enabled=true;
+  if(type==='Text(GDI+)')inputSettings={text:k};
+  if(type==='Image')inputSettings={file:''};
+  if(type==='Media'){inputSettings={local_file:'',is_local_file:true};enabled=false}
+  try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)}
+}
+createSources=async function(){if(!(await ensureObs()))return;for(const [k,t] of OBS_TAGS)await createSourceByTag(k,t);toast('สร้าง/ซ่อม Source ทั้งหมดเสร็จแล้ว')};
+async function repairLogoSources(){
+  if(!(await ensureObs()))return;
+  await ensureLogoImageSource(settings.sources.LogoA||'PEPS_LogoA');
+  await ensureLogoImageSource(settings.sources.LogoB||'PEPS_LogoB');
+  toast('ซ่อม Logo Sources เป็น Image Source แล้ว');
+}
+
+bind();bindLogin();if($('btnOnlineUsers'))$('btnOnlineUsers').onclick=openOnlinePopup;if($('btnCloseOnlinePopup'))$('btnCloseOnlinePopup').onclick=closeOnlinePopup;if($('onlineModalBackdrop'))$('onlineModalBackdrop').onclick=e=>{if(e.target.id==='onlineModalBackdrop')closeOnlinePopup()};if($('btnRefreshOnlinePopup'))$('btnRefreshOnlinePopup').onclick=async()=>{await syncPresenceOnce();renderOnlinePopup()};document.querySelectorAll('.help-btn').forEach(b=>b.onclick=()=>showHelp(b.dataset.help));if($('btnSaveLogoSettings'))$('btnSaveLogoSettings').onclick=()=>saveSettingsFromInputs(true);if($('btnRepairLogoSources'))$('btnRepairLogoSources').onclick=repairLogoSources;if($('btnPickLogoFolder'))$('btnPickLogoFolder').onclick=()=>$('logoFolderInput').click();if($('logoFolderInput'))$('logoFolderInput').onchange=async e=>{const files=e.target.files||[];const first=files[0];const count=registerLogoFiles(files);await hydrateLocalLogoDataUrls();if(first&&first.webkitRelativePath){const folder=first.webkitRelativePath.split('/')[0];settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโฟลเดอร์โลโก้สำหรับ Preview: ${folder} (${count} ไฟล์) | OBS ต้องกรอก Logo Folder Path จริง`)}else if(count){settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโลโก้สำหรับ Preview แล้ว ${count} ไฟล์ | OBS ต้องกรอก Logo Folder Path จริง`)}};if($('btnSaveActions'))$('btnSaveActions').onclick=saveActionSettings;if($('btnPresetActions'))$('btnPresetActions').onclick=presetActions;if($('btnHideAllActions2'))$('btnHideAllActions2').onclick=hideAllActionSources;if($('btnHideActionSources'))$('btnHideActionSources').onclick=hideAllActionSources;if($('btnSaveLayout'))$('btnSaveLayout').onclick=saveLayoutSettings;if($('btnResetLayout'))$('btnResetLayout').onclick=resetLayoutSettings;if($('btnCheckObsSources'))$('btnCheckObsSources').onclick=()=>toast('ใช้ปุ่ม + เพื่อสร้าง/ตรวจทีละ Tag ได้ทันที');applySportDefaults(false);filterMatches(false);renderAll();applyAuthUI();if(auth.authenticated)startPresence();setInterval(tick,1000);window.addEventListener('beforeunload',saveLocal);if(state.sheetRows&&state.sheetRows.length){$('stSheet').className='status ok';$('stSheet').textContent=`Sheet: ${state.sheetRows.length}`}
+})();
+</script>
+</body>
+</html>

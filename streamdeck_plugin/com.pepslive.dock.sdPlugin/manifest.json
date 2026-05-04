@@ -1,0 +1,511 @@
+{
+  "Actions": [
+    {
+      "UUID": "com.pepslive.dock.teama.plus1",
+      "Name": "ทีม A +1",
+      "Tooltip": "Team A +1",
+      "Icon": "images/teama_plus1",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/teama_plus1",
+          "Title": "A +1"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.teama.plus2",
+      "Name": "ทีม A +2",
+      "Tooltip": "Team A +2",
+      "Icon": "images/teama_plus2",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/teama_plus2",
+          "Title": "A +2"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.teama.plus3",
+      "Name": "ทีม A +3",
+      "Tooltip": "Team A +3",
+      "Icon": "images/teama_plus3",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/teama_plus3",
+          "Title": "A +3"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.teama.minus1",
+      "Name": "ทีม A -1",
+      "Tooltip": "Team A -1",
+      "Icon": "images/teama_minus1",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/teama_minus1",
+          "Title": "A -1"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.teamb.plus1",
+      "Name": "ทีม B +1",
+      "Tooltip": "Team B +1",
+      "Icon": "images/teamb_plus1",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/teamb_plus1",
+          "Title": "B +1"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.teamb.plus2",
+      "Name": "ทีม B +2",
+      "Tooltip": "Team B +2",
+      "Icon": "images/teamb_plus2",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/teamb_plus2",
+          "Title": "B +2"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.teamb.plus3",
+      "Name": "ทีม B +3",
+      "Tooltip": "Team B +3",
+      "Icon": "images/teamb_plus3",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/teamb_plus3",
+          "Title": "B +3"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.teamb.minus1",
+      "Name": "ทีม B -1",
+      "Tooltip": "Team B -1",
+      "Icon": "images/teamb_minus1",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/teamb_minus1",
+          "Title": "B -1"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.timer.start",
+      "Name": "เริ่มเวลา",
+      "Tooltip": "Timer Start",
+      "Icon": "images/timer_start",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/timer_start",
+          "Title": "START"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.timer.pause",
+      "Name": "หยุดเวลา",
+      "Tooltip": "Timer Pause",
+      "Icon": "images/timer_pause",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/timer_pause",
+          "Title": "PAUSE"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.timer.reset",
+      "Name": "รีเซ็ตเวลา",
+      "Tooltip": "Timer Reset",
+      "Icon": "images/timer_reset",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/timer_reset",
+          "Title": "RESET"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.undo",
+      "Name": "ย้อนคะแนน",
+      "Tooltip": "Undo Last Score",
+      "Icon": "images/undo",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/undo",
+          "Title": "UNDO"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.match.loadselected",
+      "Name": "โหลดคู่ที่เลือก",
+      "Tooltip": "Load Selected Match",
+      "Icon": "images/match_loadselected",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/match_loadselected",
+          "Title": "LOAD"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.match.next",
+      "Name": "คู่ถัดไป",
+      "Tooltip": "Load Next Match",
+      "Icon": "images/match_next",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/match_next",
+          "Title": "NEXT"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.result.save",
+      "Name": "บันทึกผล",
+      "Tooltip": "Save Result",
+      "Icon": "images/result_save",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/result_save",
+          "Title": "SAVE"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.result.finish",
+      "Name": "จบแมตช์",
+      "Tooltip": "Finish Match",
+      "Icon": "images/result_finish",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/result_finish",
+          "Title": "FINISH"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.obs.sync",
+      "Name": "ซิงก์ OBS",
+      "Tooltip": "Sync OBS",
+      "Icon": "images/obs_sync",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/obs_sync",
+          "Title": "SYNC"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.fx.a",
+      "Name": "FX ทีม A",
+      "Tooltip": "Trigger Team A FX",
+      "Icon": "images/fx_a",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_a",
+          "Title": "A FX"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.fx.b",
+      "Name": "FX ทีม B",
+      "Tooltip": "Trigger Team B FX",
+      "Icon": "images/fx_b",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_b",
+          "Title": "B FX"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.fx.hide",
+      "Name": "ซ่อน FX",
+      "Tooltip": "Hide All FX",
+      "Icon": "images/fx_hide",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_hide",
+          "Title": "HIDE FX"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.sport.football",
+      "Name": "กีฬา ฟุตบอล",
+      "Tooltip": "Set Sport Football",
+      "Icon": "images/sport_football",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/sport_football",
+          "Title": "FOOTBALL"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.sport.basket3",
+      "Name": "กีฬา บาส 3x3",
+      "Tooltip": "Set Sport Basketball 3x3",
+      "Icon": "images/sport_basket3",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/sport_basket3",
+          "Title": "BASKET 3"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.sport.basket5",
+      "Name": "กีฬา บาส 5v5",
+      "Tooltip": "Set Sport Basketball 5v5",
+      "Icon": "images/sport_basket5",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/sport_basket5",
+          "Title": "BASKET 5"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.status.live",
+      "Name": "สถานะ LIVE",
+      "Tooltip": "Set Status LIVE",
+      "Icon": "images/status_live",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/status_live",
+          "Title": "LIVE"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.status.break",
+      "Name": "สถานะ BREAK",
+      "Tooltip": "Set Status BREAK",
+      "Icon": "images/status_break",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/status_break",
+          "Title": "BREAK"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.status.fulltime",
+      "Name": "สถานะ FULL TIME",
+      "Tooltip": "Set Status FULL TIME",
+      "Icon": "images/status_fulltime",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/status_fulltime",
+          "Title": "FULL"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.period.next",
+      "Name": "ช่วงถัดไป",
+      "Tooltip": "Next Period",
+      "Icon": "images/period_next",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/period_next",
+          "Title": "PERIOD"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.match.reset",
+      "Name": "รีเซ็ตแมตช์",
+      "Tooltip": "Reset Match",
+      "Icon": "images/match_reset",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/match_reset",
+          "Title": "RESET MATCH"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.action.1",
+      "Name": "Source Action 1",
+      "Tooltip": "Run PepsLive Source Action 1",
+      "Icon": "images/fx_a",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_a",
+          "Title": "ACT 1"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.action.2",
+      "Name": "Source Action 2",
+      "Tooltip": "Run PepsLive Source Action 2",
+      "Icon": "images/fx_a",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_a",
+          "Title": "ACT 2"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.action.3",
+      "Name": "Source Action 3",
+      "Tooltip": "Run PepsLive Source Action 3",
+      "Icon": "images/fx_a",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_a",
+          "Title": "ACT 3"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.action.4",
+      "Name": "Source Action 4",
+      "Tooltip": "Run PepsLive Source Action 4",
+      "Icon": "images/fx_a",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_a",
+          "Title": "ACT 4"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.action.5",
+      "Name": "Source Action 5",
+      "Tooltip": "Run PepsLive Source Action 5",
+      "Icon": "images/fx_a",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_a",
+          "Title": "ACT 5"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.action.6",
+      "Name": "Source Action 6",
+      "Tooltip": "Run PepsLive Source Action 6",
+      "Icon": "images/fx_a",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_a",
+          "Title": "ACT 6"
+        }
+      ]
+    },
+    {
+      "UUID": "com.pepslive.dock.action.hideall",
+      "Name": "Hide All Actions",
+      "Tooltip": "Hide all configured Source Actions",
+      "Icon": "images/fx_hide",
+      "PropertyInspectorPath": "property_inspector.html",
+      "SupportedInMultiActions": true,
+      "States": [
+        {
+          "Image": "images/fx_hide",
+          "Title": "HIDE"
+        }
+      ]
+    }
+  ],
+  "Author": "Pepsproduction",
+  "CodePath": "plugin.html",
+  "Description": "Stream Deck controls for PepsLive Dock via OBS CommandBus.",
+  "Name": "PepsLive Dock V1",
+  "Icon": "images/plugin",
+  "URL": "https://github.com/pepsproduction",
+  "Version": "1.0.0",
+  "SDKVersion": 2,
+  "Software": {
+    "MinimumVersion": "6.0"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ]
+}

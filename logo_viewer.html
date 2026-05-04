@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PepsLive Logo Viewer</title>
+<style>
+html,body{margin:0;width:100%;height:100%;background:transparent;overflow:hidden}
+body{display:grid;place-items:center}
+img{max-width:100vw;max-height:100vh;width:100%;height:100%;object-fit:contain;display:block}
+</style>
+</head>
+<body>
+<img id="logo" alt="PepsLive Logo">
+<script>
+const params=new URLSearchParams(location.search);
+const src=params.get('src')||'';
+document.getElementById('logo').src=src;
+</script>
+</body>
+</html>
