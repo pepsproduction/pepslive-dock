@@ -67,10 +67,11 @@ function saveResult_(payload) {
   }
   if (rowIndex < 0) return { ok: false, error: 'match_not_found', matchId: matchId };
 
-  var resultCols = ['ScoreA','ScoreB','FinalScore','MatchStatus','Winner','FinishedAt','UpdatedAt','UpdatedBy','Note'];
+  var resultCols = ['TeamA','TeamB','ScoreA','ScoreB','FinalScore','MatchStatus','Winner','FinishedAt','UpdatedAt','UpdatedBy','Note'];
   resultCols.forEach(function(h) {
+    if (values[h] == null) return;
     var col = headers.indexOf(h) + 1;
-    sheet.getRange(rowIndex, col).setValue(values[h] == null ? '' : values[h]);
+    if (col > 0) sheet.getRange(rowIndex, col).setValue(values[h]);
   });
 
   SpreadsheetApp.flush();
@@ -81,11 +82,70 @@ function usersSheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName('PepsLiveUsers');
   if (!sheet) sheet = ss.insertSheet('PepsLiveUsers');
-  var headers = ['SessionID','Username','Province','LastSeen','Version','UserAgent','Status'];
-  var first = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
-  var needsHeader = first.join('').trim() === '' || String(first[0] || '') !== 'SessionID';
-  if (needsHeader) sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  var headers = ['SessionID','Username','Province','FirstSeen','LastSeen','OfflineAt','Version','UserAgent','Status','LastAction'];
+  var lastColumn = Math.max(sheet.getLastColumn(), headers.length);
+  var first = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+  var current = first.map(function(h) { return String(h || '').trim(); });
+  var needsHeader = current.join('').trim() === '' || current[0] !== 'SessionID';
+
+  if (needsHeader) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    return sheet;
+  }
+
+  // Migrate older PepsLiveUsers sheets:
+  // SessionID, Username, Province, LastSeen, Version, UserAgent, Status
+  if (current.indexOf('FirstSeen') === -1 && current.indexOf('LastSeen') === 3) {
+    var lastRow = sheet.getLastRow();
+    var oldRows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, Math.max(7, sheet.getLastColumn())).getValues() : [];
+    sheet.clearContents();
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    if (oldRows.length) {
+      var migrated = oldRows.map(function(row) {
+        var lastSeen = row[3] || '';
+        return [
+          row[0] || '',
+          row[1] || '',
+          row[2] || '',
+          lastSeen,
+          lastSeen,
+          String(row[6] || '') === 'Offline' ? lastSeen : '',
+          row[4] || '',
+          row[5] || '',
+          row[6] || 'Offline',
+          'migrated'
+        ];
+      });
+      sheet.getRange(2, 1, migrated.length, headers.length).setValues(migrated);
+    }
+    return sheet;
+  }
+
+  headers.forEach(function(header, index) {
+    if (current[index] !== header) sheet.getRange(1, index + 1).setValue(header);
+  });
   return sheet;
+}
+
+function presenceHeaders_() {
+  return ['SessionID','Username','Province','FirstSeen','LastSeen','OfflineAt','Version','UserAgent','Status','LastAction'];
+}
+
+function findPresenceRow_(sheet, sessionId) {
+  var data = sheet.getDataRange().getValues();
+  for (var r = 1; r < data.length; r++) {
+    if (String(data[r][0] || '').trim() === sessionId) {
+      return { rowIndex: r + 1, row: data[r], data: data };
+    }
+  }
+  return { rowIndex: -1, row: null, data: data };
+}
+
+function formatPresenceDate_(value) {
+  var date = value instanceof Date ? value : new Date(value);
+  var ms = date.getTime();
+  if (isNaN(ms)) return String(value || '');
+  return Utilities.formatDate(date, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
 }
 
 function presenceHeartbeat_(payload) {
@@ -98,18 +158,23 @@ function presenceHeartbeat_(payload) {
   if (!province) province = '-';
 
   var sheet = usersSheet_();
-  var data = sheet.getDataRange().getValues();
-  var rowIndex = -1;
-  for (var r = 1; r < data.length; r++) {
-    if (String(data[r][0] || '').trim() === sessionId) {
-      rowIndex = r + 1;
-      break;
-    }
-  }
+  var found = findPresenceRow_(sheet, sessionId);
   var now = new Date();
-  var row = [sessionId, username, province, now, String(payload.version || ''), String(payload.userAgent || ''), 'Online'];
-  if (rowIndex < 0) sheet.appendRow(row);
-  else sheet.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+  var firstSeen = found.row && found.row[3] ? found.row[3] : now;
+  var row = [
+    sessionId,
+    username,
+    province,
+    firstSeen,
+    now,
+    '',
+    String(payload.version || ''),
+    String(payload.userAgent || ''),
+    'Online',
+    String(payload.lastAction || 'presenceHeartbeat')
+  ];
+  if (found.rowIndex < 0) sheet.appendRow(row);
+  else sheet.getRange(found.rowIndex, 1, 1, row.length).setValues([row]);
 
   SpreadsheetApp.flush();
   var list = presenceList_();
@@ -122,13 +187,26 @@ function presenceOffline_(payload) {
   var sessionId = String(payload.sessionId || '').trim();
   if (!sessionId) return { ok: false, error: 'missing_sessionId' };
   var sheet = usersSheet_();
-  var data = sheet.getDataRange().getValues();
-  for (var r = 1; r < data.length; r++) {
-    if (String(data[r][0] || '').trim() === sessionId) {
-      sheet.getRange(r + 1, 4).setValue(new Date(new Date().getTime() - 24 * 60 * 60 * 1000));
-      sheet.getRange(r + 1, 7).setValue('Offline');
-      break;
-    }
+  var found = findPresenceRow_(sheet, sessionId);
+  var now = new Date();
+  if (found.rowIndex > 0) {
+    sheet.getRange(found.rowIndex, 5).setValue(now);
+    sheet.getRange(found.rowIndex, 6).setValue(now);
+    sheet.getRange(found.rowIndex, 9).setValue('Offline');
+    sheet.getRange(found.rowIndex, 10).setValue(String(payload.lastAction || 'presenceOffline'));
+  } else {
+    sheet.appendRow([
+      sessionId,
+      String(payload.username || '-'),
+      String(payload.province || '-'),
+      now,
+      now,
+      now,
+      String(payload.version || ''),
+      String(payload.userAgent || ''),
+      'Offline',
+      String(payload.lastAction || 'presenceOffline')
+    ]);
   }
   SpreadsheetApp.flush();
   return presenceList_();
@@ -144,23 +222,31 @@ function presenceList_() {
     var row = data[r];
     var sessionId = String(row[0] || '').trim();
     if (!sessionId) continue;
-    var lastDate = row[3] instanceof Date ? row[3] : new Date(row[3]);
+    var firstDate = row[3] instanceof Date ? row[3] : new Date(row[3]);
+    var lastDate = row[4] instanceof Date ? row[4] : new Date(row[4]);
+    var offlineDate = row[5] instanceof Date ? row[5] : new Date(row[5]);
     var lastMs = lastDate.getTime();
-    var online = !isNaN(lastMs) && (now - lastMs) <= ttl && String(row[6] || 'Online') !== 'Offline';
+    var online = !isNaN(lastMs) && (now - lastMs) <= ttl && String(row[8] || 'Online') !== 'Offline';
     users.push({
       sessionId: sessionId,
       username: String(row[1] || '-'),
       province: String(row[2] || '-'),
-      lastSeen: isNaN(lastMs) ? String(row[3] || '-') : Utilities.formatDate(lastDate, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss'),
-      version: String(row[4] || ''),
-      online: online
+      firstSeen: isNaN(firstDate.getTime()) ? String(row[3] || '') : formatPresenceDate_(firstDate),
+      lastSeen: isNaN(lastMs) ? String(row[4] || '-') : formatPresenceDate_(lastDate),
+      offlineAt: isNaN(offlineDate.getTime()) ? String(row[5] || '') : formatPresenceDate_(offlineDate),
+      version: String(row[6] || ''),
+      status: online ? 'Online' : 'Offline',
+      lastAction: String(row[9] || ''),
+      online: online,
+      lastSeenMs: isNaN(lastMs) ? 0 : lastMs
     });
   }
   users.sort(function(a, b) {
     if (a.online !== b.online) return a.online ? -1 : 1;
-    return String(b.lastSeen).localeCompare(String(a.lastSeen));
+    return (b.lastSeenMs || 0) - (a.lastSeenMs || 0);
   });
   var onlineCount = users.filter(function(u) { return u.online; }).length;
+  users.forEach(function(u) { delete u.lastSeenMs; });
   return { ok: true, onlineCount: onlineCount, users: users, updatedAt: new Date().toISOString() };
 }
 
