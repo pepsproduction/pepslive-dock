@@ -61,7 +61,8 @@ bridge/google_apps_script_save_result.gs
 4. คัดลอกโค้ดจากไฟล์ `.txt` ไปวางใน Google Sheet > Extensions > Apps Script
 5. Deploy เป็น Web App และตั้งสิทธิ์ให้ผู้ใช้ที่มีลิงก์เรียกใช้งานได้
 6. นำ Web App URL กลับมาใส่ช่อง Apps Script Webhook URL
-7. กด `ทดสอบ Webhook` ถ้าขึ้น Webhook OK แปลว่า Save Result และ Presence พร้อมใช้งาน
+7. กด `ทดสอบ Webhook` ถ้าขึ้น Webhook OK พร้อมเลขเวอร์ชัน แปลว่า Save Result และ Presence พร้อมใช้งาน
+8. ถ้าขึ้น Old Script ให้คัดลอกสคริปต์ล่าสุดไปวางและ Deploy เป็น Web App เวอร์ชันใหม่อีกครั้ง
 
 ### Presence / Online Users
 
@@ -69,6 +70,16 @@ bridge/google_apps_script_save_result.gs
 - เมื่อ logout หรือปิดหน้า Dock ระบบจะพยายาม mark Offline ทันที และยังมี TTL 90 วินาทีเป็น fallback
 - Sheet `PepsLiveUsers` จะเก็บ `FirstSeen`, `LastSeen`, `OfflineAt`, `Status`, `LastAction` เพื่อดูประวัติคนที่เคย login แม้ออฟไลน์แล้ว
 - ถ้าไม่ใส่ Webhook URL หรือ Webhook ใช้งานไม่ได้ Dock จะแสดงคำเตือนแทนการแสดงรายชื่อหลอก
+
+## ตรวจ syntax ก่อนอัปโหลด
+
+ถ้ามี Node.js ในเครื่อง สามารถตรวจ JavaScript ใน Dock และ Apps Script ได้ด้วยคำสั่ง:
+
+```text
+node scripts/check-syntax.js
+```
+
+คำสั่งนี้ไม่ต้องติดตั้ง dependency เพิ่ม และใช้แทน GitHub Actions ได้ในช่วงที่ Actions ยังไม่พร้อมใช้งาน
 
 ## โลโก้ทีม
 
