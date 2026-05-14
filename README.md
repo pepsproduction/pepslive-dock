@@ -53,6 +53,23 @@ bridge/google_apps_script_save_result.gs
 - Finish Match
 - Online Users / Presence
 
+### ติดตั้ง Sheet / Webhook แบบเร็ว
+
+1. เปิด Dock แล้วไปที่ Settings > Sheet
+2. กด `แบบฟอร์ม` เพื่อดาวน์โหลด Excel template แล้วนำไปสร้าง Google Sheet ของงาน
+3. กด `โหลดสคริป` เพื่อดาวน์โหลด Apps Script เป็นไฟล์ `.txt`
+4. คัดลอกโค้ดจากไฟล์ `.txt` ไปวางใน Google Sheet > Extensions > Apps Script
+5. Deploy เป็น Web App และตั้งสิทธิ์ให้ผู้ใช้ที่มีลิงก์เรียกใช้งานได้
+6. นำ Web App URL กลับมาใส่ช่อง Apps Script Webhook URL
+7. กด `ทดสอบ Webhook` ถ้าขึ้น Webhook OK แปลว่า Save Result และ Presence พร้อมใช้งาน
+
+### Presence / Online Users
+
+- ผู้ใช้ Online คือ session ที่ heartbeat ภายใน 90 วินาทีล่าสุด
+- เมื่อ logout หรือปิดหน้า Dock ระบบจะพยายาม mark Offline ทันที และยังมี TTL 90 วินาทีเป็น fallback
+- Sheet `PepsLiveUsers` จะเก็บ `FirstSeen`, `LastSeen`, `OfflineAt`, `Status`, `LastAction` เพื่อดูประวัติคนที่เคย login แม้ออฟไลน์แล้ว
+- ถ้าไม่ใส่ Webhook URL หรือ Webhook ใช้งานไม่ได้ Dock จะแสดงคำเตือนแทนการแสดงรายชื่อหลอก
+
 ## โลโก้ทีม
 
 ### GitHub / URL Mode
