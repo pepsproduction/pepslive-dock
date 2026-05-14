@@ -6,13 +6,17 @@
  * - presenceHeartbeat: บันทึก/อัปเดตสถานะผู้ใช้งานออนไลน์
  * - presenceList: ดึงรายชื่อผู้ใช้งานทั้งหมด
  * - presenceOffline: ตั้งสถานะผู้ใช้ให้ offline เมื่อออกจากระบบ
+ * - webhookInfo: ตรวจเวอร์ชันและฟีเจอร์ของสคริปต์ที่ deploy อยู่
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
+var PEPSLIVE_WEBHOOK_VERSION = '2026-05-14.3';
+
 function doPost(e) {
   try {
     var payload = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     var action = String(payload.action || '').trim();
+    if (action === 'webhookInfo') return json_(webhookInfo_());
     if (action === 'presenceHeartbeat') return json_(presenceHeartbeat_(payload.payload || payload));
     if (action === 'presenceList') return json_(presenceList_());
     if (action === 'presenceOffline') return json_(presenceOffline_(payload.payload || payload));
@@ -27,6 +31,7 @@ function doGet(e) {
   try {
     var action = String((e && e.parameter && e.parameter.action) || '').trim();
     var payload = JSON.parse(String((e && e.parameter && e.parameter.payload) || '{}'));
+    if (action === 'webhookInfo') return jsonp_(webhookInfo_(), callback);
     if (action === 'saveResult') return jsonp_(saveResult_(payload), callback);
     if (action === 'presenceHeartbeat') return jsonp_(presenceHeartbeat_(payload), callback);
     if (action === 'presenceList') return jsonp_(presenceList_(), callback);
@@ -35,6 +40,24 @@ function doGet(e) {
   } catch (err) {
     return jsonp_({ ok: false, error: String(err && err.message || err) }, callback);
   }
+}
+
+function webhookInfo_() {
+  return {
+    ok: true,
+    app: 'PepsLive Dock Apps Script Webhook',
+    version: PEPSLIVE_WEBHOOK_VERSION,
+    serverTime: new Date().toISOString(),
+    features: {
+      saveResult: true,
+      teamNameSave: true,
+      presenceHeartbeat: true,
+      presenceList: true,
+      presenceOffline: true,
+      offlineAt: true,
+      firstSeen: true
+    }
+  };
 }
 
 function saveResult_(payload) {
