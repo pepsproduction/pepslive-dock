@@ -80,7 +80,7 @@ bridge/google_apps_script_save_result.gs
 4. มือถือจะเปิดหน้า Remote แยก พร้อมปุ่มควบคุมคะแนน เวลา Save Result, Finish Match, Load Next Match, Sync OBS และ Source Actions
 5. ปุ่มในมือถือเพิ่ม/ลบได้อย่างอิสระและเก็บเฉพาะในเครื่องมือถือ ไม่กระทบหน้า Dock หลัก
 
-Mobile Remote ใช้ชีต `PepsLiveRemote` ในไฟล์ Google Sheet เดียวกันเป็นคิวคำสั่ง และใช้ `PepsLiveRemoteState` / `PepsLiveRemoteDevices` สำหรับสถานะคะแนนล่าสุดกับรายชื่อมือถือที่เชื่อมต่อ จึงยังใช้ GitHub Pages ได้โดยไม่ต้องมี backend เพิ่ม ถ้ามือถือขึ้นว่าส่งคำสั่งไม่ได้ ให้โหลดสคริปต์ล่าสุดแล้ว Deploy Apps Script ใหม่ก่อนทดสอบอีกครั้ง
+Mobile Remote จะพยายามเชื่อมต่อแบบ Direct P2P ผ่าน WebRTC/PeerJS ก่อนเพื่อให้มือถือสั่ง Dock ได้แม้ Apps Script ยังไม่ได้อัปเดต จากนั้นจึงใช้ชีต `PepsLiveRemote` เป็นคิวสำรอง และใช้ `PepsLiveRemoteState` / `PepsLiveRemoteDevices` สำหรับสถานะคะแนนล่าสุดกับรายชื่อมือถือที่เชื่อมต่อเมื่อ deploy Apps Script รุ่นใหม่แล้ว ถ้ามือถือขึ้นว่าส่งคำสั่งไม่ได้ ให้โหลดสคริปต์ล่าสุดแล้ว Deploy Apps Script ใหม่ก่อนทดสอบอีกครั้ง
 
 ## ตรวจ syntax ก่อนอัปโหลด
 
