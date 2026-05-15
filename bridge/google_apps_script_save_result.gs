@@ -11,19 +11,33 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-05-15.1';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-05-15.2';
+
+function parseJson_(value, fallback) {
+  if (value && typeof value === 'object') return value;
+  try {
+    return JSON.parse(String(value || '{}'));
+  } catch (err) {
+    return fallback || {};
+  }
+}
+
+function requestPayload_(payload) {
+  if (!payload) return {};
+  return parseJson_(payload.payload != null ? payload.payload : payload, {});
+}
 
 function doPost(e) {
   try {
-    var payload = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    var payload = parseJson_((e && e.postData && e.postData.contents) || '{}', {});
     var action = String(payload.action || '').trim();
     if (action === 'webhookInfo') return json_(webhookInfo_());
-    if (action === 'remoteOpen') return json_(remoteOpen_(payload.payload || payload));
-    if (action === 'remoteSend') return json_(remoteSend_(payload.payload || payload));
-    if (action === 'remotePoll') return json_(remotePoll_(payload.payload || payload));
-    if (action === 'presenceHeartbeat') return json_(presenceHeartbeat_(payload.payload || payload));
+    if (action === 'remoteOpen') return json_(remoteOpen_(requestPayload_(payload)));
+    if (action === 'remoteSend') return json_(remoteSend_(requestPayload_(payload)));
+    if (action === 'remotePoll') return json_(remotePoll_(requestPayload_(payload)));
+    if (action === 'presenceHeartbeat') return json_(presenceHeartbeat_(requestPayload_(payload)));
     if (action === 'presenceList') return json_(presenceList_());
-    if (action === 'presenceOffline') return json_(presenceOffline_(payload.payload || payload));
+    if (action === 'presenceOffline') return json_(presenceOffline_(requestPayload_(payload)));
     return json_(saveResult_(payload));
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
@@ -34,7 +48,7 @@ function doGet(e) {
   var callback = String((e && e.parameter && e.parameter.callback) || '').trim();
   try {
     var action = String((e && e.parameter && e.parameter.action) || '').trim();
-    var payload = JSON.parse(String((e && e.parameter && e.parameter.payload) || '{}'));
+    var payload = parseJson_(String((e && e.parameter && e.parameter.payload) || '{}'), {});
     if (action === 'webhookInfo') return jsonp_(webhookInfo_(), callback);
     if (action === 'remoteOpen') return jsonp_(remoteOpen_(payload), callback);
     if (action === 'remoteSend') return jsonp_(remoteSend_(payload), callback);
@@ -63,7 +77,8 @@ function webhookInfo_() {
       presenceOffline: true,
       offlineAt: true,
       firstSeen: true,
-      mobileRemote: true
+      mobileRemote: true,
+      mobileRemoteFallback: true
     }
   };
 }
@@ -306,6 +321,23 @@ function remoteLatestSeq_(sheet, room) {
   return latest;
 }
 
+function remoteFindCommand_(sheet, room, id) {
+  if (!id) return null;
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+  var data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+  for (var i = 0; i < data.length; i++) {
+    var row = data[i];
+    if (String(row[1] || '').trim() === room && String(row[2] || '').trim() === id) {
+      return {
+        seq: Number(row[0] || 0),
+        createdAt: row[5] instanceof Date ? row[5].toISOString() : String(row[5] || '')
+      };
+    }
+  }
+  return null;
+}
+
 function remoteOpen_(payload) {
   payload = payload || {};
   var room = String(payload.room || '').trim();
@@ -324,6 +356,10 @@ function remoteSend_(payload) {
   var seq = Math.max(2, sheet.getLastRow() + 1);
   var id = String(command.id || ('remote_' + new Date().getTime() + '_' + Math.floor(Math.random() * 100000)));
   command.id = id;
+  var existing = remoteFindCommand_(sheet, room, id);
+  if (existing) {
+    return { ok: true, duplicate: true, room: room, seq: existing.seq, id: id, sentAt: existing.createdAt };
+  }
   sheet.appendRow([
     seq,
     room,
