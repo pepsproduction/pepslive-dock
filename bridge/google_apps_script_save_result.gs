@@ -7,16 +7,20 @@
  * - presenceList: ดึงรายชื่อผู้ใช้งานทั้งหมด
  * - presenceOffline: ตั้งสถานะผู้ใช้ให้ offline เมื่อออกจากระบบ
  * - webhookInfo: ตรวจเวอร์ชันและฟีเจอร์ของสคริปต์ที่ deploy อยู่
+ * - remoteOpen / remoteSend / remotePoll: ห้องควบคุมผ่านมือถือ
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-05-14.3';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-05-15.1';
 
 function doPost(e) {
   try {
     var payload = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     var action = String(payload.action || '').trim();
     if (action === 'webhookInfo') return json_(webhookInfo_());
+    if (action === 'remoteOpen') return json_(remoteOpen_(payload.payload || payload));
+    if (action === 'remoteSend') return json_(remoteSend_(payload.payload || payload));
+    if (action === 'remotePoll') return json_(remotePoll_(payload.payload || payload));
     if (action === 'presenceHeartbeat') return json_(presenceHeartbeat_(payload.payload || payload));
     if (action === 'presenceList') return json_(presenceList_());
     if (action === 'presenceOffline') return json_(presenceOffline_(payload.payload || payload));
@@ -32,6 +36,9 @@ function doGet(e) {
     var action = String((e && e.parameter && e.parameter.action) || '').trim();
     var payload = JSON.parse(String((e && e.parameter && e.parameter.payload) || '{}'));
     if (action === 'webhookInfo') return jsonp_(webhookInfo_(), callback);
+    if (action === 'remoteOpen') return jsonp_(remoteOpen_(payload), callback);
+    if (action === 'remoteSend') return jsonp_(remoteSend_(payload), callback);
+    if (action === 'remotePoll') return jsonp_(remotePoll_(payload), callback);
     if (action === 'saveResult') return jsonp_(saveResult_(payload), callback);
     if (action === 'presenceHeartbeat') return jsonp_(presenceHeartbeat_(payload), callback);
     if (action === 'presenceList') return jsonp_(presenceList_(), callback);
@@ -55,7 +62,8 @@ function webhookInfo_() {
       presenceList: true,
       presenceOffline: true,
       offlineAt: true,
-      firstSeen: true
+      firstSeen: true,
+      mobileRemote: true
     }
   };
 }
@@ -271,6 +279,95 @@ function presenceList_() {
   var onlineCount = users.filter(function(u) { return u.online; }).length;
   users.forEach(function(u) { delete u.lastSeenMs; });
   return { ok: true, onlineCount: onlineCount, users: users, updatedAt: new Date().toISOString() };
+}
+
+function remoteSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('PepsLiveRemote');
+  if (!sheet) sheet = ss.insertSheet('PepsLiveRemote');
+  var headers = ['Seq','Room','CommandID','CommandJson','Sender','CreatedAt'];
+  var first = sheet.getRange(1, 1, 1, headers.length).getValues()[0].map(function(h) {
+    return String(h || '').trim();
+  });
+  if (first.join('').trim() === '' || first[0] !== 'Seq') {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+  return sheet;
+}
+
+function remoteLatestSeq_(sheet, room) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return 1;
+  var data = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  var latest = 1;
+  data.forEach(function(row) {
+    if (String(row[1] || '').trim() === room) latest = Math.max(latest, Number(row[0] || 0));
+  });
+  return latest;
+}
+
+function remoteOpen_(payload) {
+  payload = payload || {};
+  var room = String(payload.room || '').trim();
+  if (!room) return { ok: false, error: 'missing_room' };
+  var sheet = remoteSheet_();
+  return { ok: true, room: room, lastSeq: remoteLatestSeq_(sheet, room), version: PEPSLIVE_WEBHOOK_VERSION };
+}
+
+function remoteSend_(payload) {
+  payload = payload || {};
+  var room = String(payload.room || '').trim();
+  var command = payload.command || null;
+  if (!room) return { ok: false, error: 'missing_room' };
+  if (!command || typeof command !== 'object') return { ok: false, error: 'missing_command' };
+  var sheet = remoteSheet_();
+  var seq = Math.max(2, sheet.getLastRow() + 1);
+  var id = String(command.id || ('remote_' + new Date().getTime() + '_' + Math.floor(Math.random() * 100000)));
+  command.id = id;
+  sheet.appendRow([
+    seq,
+    room,
+    id,
+    JSON.stringify(command),
+    String(payload.sender || ''),
+    new Date()
+  ]);
+  SpreadsheetApp.flush();
+  return { ok: true, room: room, seq: seq, id: id, sentAt: new Date().toISOString() };
+}
+
+function remotePoll_(payload) {
+  payload = payload || {};
+  var room = String(payload.room || '').trim();
+  var afterSeq = Number(payload.afterSeq || 0);
+  if (!room) return { ok: false, error: 'missing_room' };
+  var sheet = remoteSheet_();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { ok: true, room: room, commands: [], lastSeq: 1 };
+  var data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+  var commands = [];
+  var lastSeq = Math.max(1, afterSeq);
+  data.forEach(function(row) {
+    var seq = Number(row[0] || 0);
+    if (String(row[1] || '').trim() !== room || seq <= afterSeq) return;
+    var command = null;
+    try {
+      command = JSON.parse(String(row[3] || '{}'));
+    } catch (err) {
+      command = { action: 'invalid', error: String(err && err.message || err) };
+    }
+    commands.push({
+      seq: seq,
+      id: String(row[2] || ''),
+      command: command,
+      sender: String(row[4] || ''),
+      createdAt: row[5] instanceof Date ? row[5].toISOString() : String(row[5] || '')
+    });
+    lastSeq = Math.max(lastSeq, seq);
+  });
+  commands.sort(function(a, b) { return a.seq - b.seq; });
+  if (commands.length > 30) commands = commands.slice(commands.length - 30);
+  return { ok: true, room: room, commands: commands, lastSeq: lastSeq, polledAt: new Date().toISOString() };
 }
 
 function json_(obj) {
