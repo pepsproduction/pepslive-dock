@@ -11,7 +11,7 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-05-15.2';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-05-15.3';
 
 function parseJson_(value, fallback) {
   if (value && typeof value === 'object') return value;
@@ -35,6 +35,9 @@ function doPost(e) {
     if (action === 'remoteOpen') return json_(remoteOpen_(requestPayload_(payload)));
     if (action === 'remoteSend') return json_(remoteSend_(requestPayload_(payload)));
     if (action === 'remotePoll') return json_(remotePoll_(requestPayload_(payload)));
+    if (action === 'remoteStateSet') return json_(remoteStateSet_(requestPayload_(payload)));
+    if (action === 'remoteStateGet') return json_(remoteStateGet_(requestPayload_(payload)));
+    if (action === 'remotePing') return json_(remotePing_(requestPayload_(payload)));
     if (action === 'presenceHeartbeat') return json_(presenceHeartbeat_(requestPayload_(payload)));
     if (action === 'presenceList') return json_(presenceList_());
     if (action === 'presenceOffline') return json_(presenceOffline_(requestPayload_(payload)));
@@ -53,6 +56,9 @@ function doGet(e) {
     if (action === 'remoteOpen') return jsonp_(remoteOpen_(payload), callback);
     if (action === 'remoteSend') return jsonp_(remoteSend_(payload), callback);
     if (action === 'remotePoll') return jsonp_(remotePoll_(payload), callback);
+    if (action === 'remoteStateSet') return jsonp_(remoteStateSet_(payload), callback);
+    if (action === 'remoteStateGet') return jsonp_(remoteStateGet_(payload), callback);
+    if (action === 'remotePing') return jsonp_(remotePing_(payload), callback);
     if (action === 'saveResult') return jsonp_(saveResult_(payload), callback);
     if (action === 'presenceHeartbeat') return jsonp_(presenceHeartbeat_(payload), callback);
     if (action === 'presenceList') return jsonp_(presenceList_(), callback);
@@ -78,7 +84,9 @@ function webhookInfo_() {
       offlineAt: true,
       firstSeen: true,
       mobileRemote: true,
-      mobileRemoteFallback: true
+      mobileRemoteFallback: true,
+      mobileRemoteState: true,
+      mobileRemotePresence: true
     }
   };
 }
@@ -310,6 +318,140 @@ function remoteSheet_() {
   return sheet;
 }
 
+function ensureRemoteHeaders_(sheet, headers) {
+  var width = Math.max(sheet.getLastColumn(), headers.length);
+  var first = sheet.getRange(1, 1, 1, width).getValues()[0].map(function(h) {
+    return String(h || '').trim();
+  });
+  if (first.join('').trim() === '' || first[0] !== headers[0]) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  } else {
+    headers.forEach(function(header, index) {
+      if (first[index] !== header) sheet.getRange(1, index + 1).setValue(header);
+    });
+  }
+  return sheet;
+}
+
+function remoteStateSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('PepsLiveRemoteState');
+  if (!sheet) sheet = ss.insertSheet('PepsLiveRemoteState');
+  return ensureRemoteHeaders_(sheet, ['Room','RoomName','StateJson','UpdatedAt']);
+}
+
+function remoteDevicesSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('PepsLiveRemoteDevices');
+  if (!sheet) sheet = ss.insertSheet('PepsLiveRemoteDevices');
+  return ensureRemoteHeaders_(sheet, ['Room','Sender','Label','Status','LastSeen','UserAgent']);
+}
+
+function remoteDeviceSummary_(room) {
+  var sheet = remoteDevicesSheet_();
+  var lastRow = sheet.getLastRow();
+  var nowMs = new Date().getTime();
+  var ttlMs = 20 * 1000;
+  var devices = [];
+  if (lastRow >= 2) {
+    var data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+    data.forEach(function(row) {
+      if (String(row[0] || '').trim() !== room) return;
+      var lastSeen = row[4] instanceof Date ? row[4] : new Date(row[4]);
+      var lastMs = lastSeen.getTime();
+      var online = String(row[3] || 'on') !== 'off' && !isNaN(lastMs) && (nowMs - lastMs) <= ttlMs;
+      if (!online) return;
+      devices.push({
+        sender: String(row[1] || ''),
+        label: String(row[2] || 'Mobile Remote'),
+        lastSeen: isNaN(lastMs) ? '' : lastSeen.toISOString()
+      });
+    });
+  }
+  return { deviceCount: devices.length, devices: devices };
+}
+
+function remotePing_(payload) {
+  payload = payload || {};
+  var room = String(payload.room || '').trim();
+  var sender = String(payload.sender || '').trim();
+  if (!room) return { ok: false, error: 'missing_room' };
+  if (!sender) sender = 'mobile_' + new Date().getTime();
+  var sheet = remoteDevicesSheet_();
+  var lastRow = sheet.getLastRow();
+  var data = lastRow >= 2 ? sheet.getRange(2, 1, lastRow - 1, 6).getValues() : [];
+  var rowIndex = -1;
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][0] || '').trim() === room && String(data[i][1] || '').trim() === sender) {
+      rowIndex = i + 2;
+      break;
+    }
+  }
+  var row = [
+    room,
+    sender,
+    String(payload.label || 'Mobile Remote'),
+    String(payload.status || 'on'),
+    new Date(),
+    String(payload.userAgent || '')
+  ];
+  if (rowIndex > 0) sheet.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+  else sheet.appendRow(row);
+  SpreadsheetApp.flush();
+  var summary = remoteDeviceSummary_(room);
+  return { ok: true, room: room, sender: sender, deviceCount: summary.deviceCount, devices: summary.devices };
+}
+
+function remoteStateSet_(payload) {
+  payload = payload || {};
+  var room = String(payload.room || '').trim();
+  var state = payload.state || null;
+  if (!room) return { ok: false, error: 'missing_room' };
+  if (!state || typeof state !== 'object') return { ok: false, error: 'missing_state' };
+  var sheet = remoteStateSheet_();
+  var lastRow = sheet.getLastRow();
+  var data = lastRow >= 2 ? sheet.getRange(2, 1, lastRow - 1, 1).getValues() : [];
+  var rowIndex = -1;
+  for (var i = 0; i < data.length; i++) {
+    if (String(data[i][0] || '').trim() === room) {
+      rowIndex = i + 2;
+      break;
+    }
+  }
+  var row = [room, String(state.roomName || payload.roomName || ''), JSON.stringify(state), new Date()];
+  if (rowIndex > 0) sheet.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+  else sheet.appendRow(row);
+  SpreadsheetApp.flush();
+  var summary = remoteDeviceSummary_(room);
+  return { ok: true, room: room, stateUpdatedAt: new Date().toISOString(), deviceCount: summary.deviceCount, devices: summary.devices };
+}
+
+function remoteStateGet_(payload) {
+  payload = payload || {};
+  var room = String(payload.room || '').trim();
+  if (!room) return { ok: false, error: 'missing_room' };
+  if (payload.sender) remotePing_(payload);
+  var sheet = remoteStateSheet_();
+  var lastRow = sheet.getLastRow();
+  var state = null;
+  var updatedAt = '';
+  if (lastRow >= 2) {
+    var data = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
+    for (var i = 0; i < data.length; i++) {
+      if (String(data[i][0] || '').trim() !== room) continue;
+      try {
+        state = JSON.parse(String(data[i][2] || '{}'));
+      } catch (err) {
+        return { ok: false, error: 'bad_state_json' };
+      }
+      updatedAt = data[i][3] instanceof Date ? data[i][3].toISOString() : String(data[i][3] || '');
+      break;
+    }
+  }
+  var summary = remoteDeviceSummary_(room);
+  return { ok: true, room: room, state: state, updatedAt: updatedAt, deviceCount: summary.deviceCount, devices: summary.devices };
+}
+
 function remoteLatestSeq_(sheet, room) {
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return 1;
@@ -343,7 +485,8 @@ function remoteOpen_(payload) {
   var room = String(payload.room || '').trim();
   if (!room) return { ok: false, error: 'missing_room' };
   var sheet = remoteSheet_();
-  return { ok: true, room: room, lastSeq: remoteLatestSeq_(sheet, room), version: PEPSLIVE_WEBHOOK_VERSION };
+  var summary = remoteDeviceSummary_(room);
+  return { ok: true, room: room, lastSeq: remoteLatestSeq_(sheet, room), version: PEPSLIVE_WEBHOOK_VERSION, deviceCount: summary.deviceCount, devices: summary.devices };
 }
 
 function remoteSend_(payload) {
@@ -378,8 +521,9 @@ function remotePoll_(payload) {
   var afterSeq = Number(payload.afterSeq || 0);
   if (!room) return { ok: false, error: 'missing_room' };
   var sheet = remoteSheet_();
+  var summary = remoteDeviceSummary_(room);
   var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return { ok: true, room: room, commands: [], lastSeq: 1 };
+  if (lastRow < 2) return { ok: true, room: room, commands: [], lastSeq: 1, deviceCount: summary.deviceCount, devices: summary.devices };
   var data = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
   var commands = [];
   var lastSeq = Math.max(1, afterSeq);
@@ -403,7 +547,7 @@ function remotePoll_(payload) {
   });
   commands.sort(function(a, b) { return a.seq - b.seq; });
   if (commands.length > 30) commands = commands.slice(commands.length - 30);
-  return { ok: true, room: room, commands: commands, lastSeq: lastSeq, polledAt: new Date().toISOString() };
+  return { ok: true, room: room, commands: commands, lastSeq: lastSeq, polledAt: new Date().toISOString(), deviceCount: summary.deviceCount, devices: summary.devices };
 }
 
 function json_(obj) {

@@ -74,13 +74,13 @@ bridge/google_apps_script_save_result.gs
 
 ### Mobile Remote
 
-1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook OK v2026-05-15.2` หรือใหม่กว่า
+1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook OK v2026-05-15.3` หรือใหม่กว่า
 2. กดปุ่มรูปมือถือบนแถบบนของ Dock
 3. สแกน QR Code ด้วยมือถือ หรือ copy link ไปเปิดในมือถือ
 4. มือถือจะเปิดหน้า Remote แยก พร้อมปุ่มควบคุมคะแนน เวลา Save Result, Finish Match, Load Next Match, Sync OBS และ Source Actions
 5. ปุ่มในมือถือเพิ่ม/ลบได้อย่างอิสระและเก็บเฉพาะในเครื่องมือถือ ไม่กระทบหน้า Dock หลัก
 
-Mobile Remote ใช้ชีต `PepsLiveRemote` ในไฟล์ Google Sheet เดียวกันเป็นคิวคำสั่ง จึงยังใช้ GitHub Pages ได้โดยไม่ต้องมี backend เพิ่ม ถ้ามือถือขึ้นว่าส่งคำสั่งไม่ได้ ให้โหลดสคริปต์ล่าสุดแล้ว Deploy Apps Script ใหม่ก่อนทดสอบอีกครั้ง
+Mobile Remote ใช้ชีต `PepsLiveRemote` ในไฟล์ Google Sheet เดียวกันเป็นคิวคำสั่ง และใช้ `PepsLiveRemoteState` / `PepsLiveRemoteDevices` สำหรับสถานะคะแนนล่าสุดกับรายชื่อมือถือที่เชื่อมต่อ จึงยังใช้ GitHub Pages ได้โดยไม่ต้องมี backend เพิ่ม ถ้ามือถือขึ้นว่าส่งคำสั่งไม่ได้ ให้โหลดสคริปต์ล่าสุดแล้ว Deploy Apps Script ใหม่ก่อนทดสอบอีกครั้ง
 
 ## ตรวจ syntax ก่อนอัปโหลด
 
