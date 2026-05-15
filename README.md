@@ -52,6 +52,7 @@ bridge/google_apps_script_save_result.gs
 - Save Result
 - Finish Match
 - Online Users / Presence
+- Mobile Remote ผ่าน QR Code
 
 ### ติดตั้ง Sheet / Webhook แบบเร็ว
 
@@ -70,6 +71,16 @@ bridge/google_apps_script_save_result.gs
 - เมื่อ logout หรือปิดหน้า Dock ระบบจะพยายาม mark Offline ทันที และยังมี TTL 90 วินาทีเป็น fallback
 - Sheet `PepsLiveUsers` จะเก็บ `FirstSeen`, `LastSeen`, `OfflineAt`, `Status`, `LastAction` เพื่อดูประวัติคนที่เคย login แม้ออฟไลน์แล้ว
 - ถ้าไม่ใส่ Webhook URL หรือ Webhook ใช้งานไม่ได้ Dock จะแสดงคำเตือนแทนการแสดงรายชื่อหลอก
+
+### Mobile Remote
+
+1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook OK v2026-05-15.1` หรือใหม่กว่า
+2. กดปุ่มรูปมือถือบนแถบบนของ Dock
+3. สแกน QR Code ด้วยมือถือ หรือ copy link ไปเปิดในมือถือ
+4. มือถือจะเปิดหน้า Remote แยก พร้อมปุ่มควบคุมคะแนน เวลา Save Result, Finish Match, Load Next Match, Sync OBS และ Source Actions
+5. ปุ่มในมือถือเพิ่ม/ลบได้อย่างอิสระและเก็บเฉพาะในเครื่องมือถือ ไม่กระทบหน้า Dock หลัก
+
+Mobile Remote ใช้ชีต `PepsLiveRemote` ในไฟล์ Google Sheet เดียวกันเป็นคิวคำสั่ง จึงยังใช้ GitHub Pages ได้โดยไม่ต้องมี backend เพิ่ม
 
 ## ตรวจ syntax ก่อนอัปโหลด
 
