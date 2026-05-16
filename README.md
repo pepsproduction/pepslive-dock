@@ -183,3 +183,40 @@ docs/OBS_SOURCES.md
 ถ้า OBS แสดงโลโก้แล้วแต่หน้า Dock ไม่แสดง ให้ตรวจว่าไฟล์โลโก้อยู่ใน `logos/` บน GitHub หรือกดเลือกโฟลเดอร์โลโก้ใน Settings > Logos เพื่อให้ Dock ใช้ไฟล์นั้น preview ได้ใน session ปัจจุบัน. ระบบจะลองนามสกุลอัตโนมัติ เช่น `.png`, `.jpg`, `.webp`, `.svg`.
 
 OBS ยังใช้ Local Folder Path จริง เช่น `C:/PepsLive/logos/` สำหรับ Image Source เหมือนเดิม.
+
+## Scoreboard Skin Studio Sync
+
+PepsLive Dock can now publish match state to **PepsLive Scoreboard Skin Studio** using shared protocol.
+
+### Protocol
+- `protocol`: `PEPSLIVE_SCOREBOARD_STATE_V1`
+- `channel`: `pepslive-scoreboard-state-v1`
+- `localStorage fallback`: `pepslive.scoreboard.sharedState.v1`
+- `custom event`: `pepslive:scoreboard-state-updated`
+- `source`: `pepslive-dock`
+
+### Enable / Disable
+- Toggle in Dock panel: **Scoreboard Skin Studio Sync** (Enable Sync)
+- Or set localStorage key: `pepslive.scoreboardSkinSync.enabled` (`true` / `false`)
+
+### Exported Fields (summary)
+- Event: `eventName`, `eventLogo`
+- Home: `homeName`, `homeShortName`, `homeScore`, `homeLogo`, `theme.homeColor`
+- Away: `awayName`, `awayShortName`, `awayScore`, `awayLogo`, `theme.awayColor`
+- Clock/Status: `gameClock`, `periodLabel`, `statusLabel`
+- Football extras: `addedTime`, `aggregateScore`, `penaltyScore`, `goalScorerList`, `cardInfo`
+- Basketball extras: `shotClock`, `homeFouls`, `awayFouls`, `homeTimeouts`, `awayTimeouts`, `possession`, `bonus`
+
+### Overlay URLs
+- Base: [https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/](https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/)
+- Live example: [https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/overlays/live.html?skin=FB-LIVE-01](https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/overlays/live.html?skin=FB-LIVE-01)
+- Summary example: [https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=FB-SUM-01](https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=FB-SUM-01)
+
+### Same-origin note
+BroadcastChannel/localStorage sync works best when Dock and Skin Studio share the same origin, e.g. both under `https://pepsproduction.github.io`.
+If opened on different origins (`localhost` different port, `file://`, other domain), sync may not propagate.
+
+### Troubleshooting
+- Overlay not updating: open overlay with `debug=1` and verify `source=pepslive-dock`.
+- OBS still shows old state: refresh Browser Source cache or regenerate URL (`v=timestamp`).
+- Sync disabled accidentally: check panel toggle or `pepslive.scoreboardSkinSync.enabled`.

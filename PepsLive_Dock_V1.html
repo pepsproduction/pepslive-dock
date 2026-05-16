@@ -153,6 +153,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
     <aside class="side-panel">
       <section class="card dock-module" id="moduleResult" data-module="result"><div class="section-title"><h2>Result</h2><span id="dirtyBadge" class="pill">Saved</span></div><div class="grid"><button class="soft" id="btnSaveResult">Save Result</button><button class="success" id="btnFinishMatch">Finish Match</button><button class="primary" id="btnNextMatch">Load Next Match</button></div></section>
       <section class="card dock-module" id="moduleSystem" data-module="system"><div class="section-title"><h2>System Status</h2></div><div class="ready-list small muted"><div class="ready-row"><span>OBS</span><strong id="miniObsStatus">Off</strong></div><div class="ready-row"><span>Sheet</span><strong id="miniSheetStatus">Not loaded</strong></div><div class="ready-row"><span>Save</span><strong id="miniSaveStatus">Local</strong></div></div></section>
+      <section class="card dock-module" id="moduleSkinSync"><div class="section-title"><h2>Scoreboard Skin Studio Sync</h2><span id="skinSyncStatusBadge" class="pill">Off</span></div><div class="grid small"><label><input id="skinSyncEnabled" type="checkbox"> Enable Sync</label><div class="ready-list small muted"><div class="ready-row"><span>Status</span><strong id="skinSyncStatusText">Off</strong></div><div class="ready-row"><span>Last Sync</span><strong id="skinSyncLastTime">-</strong></div></div><div class="action-row"><button class="soft" id="btnPublishSkinSync">Publish Current State</button><button class="ghost" id="btnCopySkinLiveUrl">Copy Live URL</button><button class="ghost" id="btnCopySkinSummaryUrl">Copy Summary URL</button></div><div class="action-row"><button class="ghost" id="btnCopySkinLiveDebugUrl">Copy Live Debug URL</button><button class="ghost" id="btnCopySkinSummaryDebugUrl">Copy Summary Debug URL</button><button class="soft" id="btnCopySkinPayload">Copy Last Payload</button></div><div class="settings-hint small">Same-origin แนะนำให้เปิด Dock และ Skin Studio ภายใต้โดเมนเดียวกัน เช่น github.io โดเมนเดียว เพื่อให้ BroadcastChannel/localStorage sync ได้ดีที่สุด</div><pre id="skinSyncPayloadPreview" class="small muted" style="margin:0;max-height:160px;overflow:auto">No payload yet</pre></div></section>
     </aside>
   </div>
 </div>
@@ -168,6 +169,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
   <div id="tabAdvanced" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>Safety</h2><button class="ghost tiny help-btn" data-help="advanced">วิธีการใช้งาน Advanced</button></div><div class="form-grid"><label>Anti-double delay ms<input id="setAntiMs" type="number" min="100"></label><label>Timer Mode<select id="setTimerDefault"><option value="sport">ตามกีฬา</option><option value="up">นับขึ้น</option><option value="down">นับถอยหลัง</option></select></label></div><button class="soft" id="btnSaveSettingsAdvanced">บันทึกค่า</button></section><section class="card"><div class="section-title"><h2>Command Log</h2><button class="ghost tiny" id="btnClearLog">Clear</button></div><div class="quick-log" id="log"></div></section><section class="danger-zone"><div class="section-title"><h2>Danger Zone</h2></div><div class="action-row"><button class="danger" id="btnResetState">Reset Local State</button><button class="ghost" id="btnExportState">Export State</button><button class="ghost" id="btnImportState">Import State</button></div><input id="importFile" type="file" accept="application/json" style="display:none"></section></div>
 </div></aside>
 <div id="modalBackdrop" class="modal-backdrop"><div class="modal"><h3 id="modalTitle">Confirm</h3><p id="modalMessage"></p><div class="modal-actions"><button class="ghost" id="modalCancel">ยกเลิก</button><button class="primary" id="modalOk">ตกลง</button></div></div></div><div id="onlineModalBackdrop" class="modal-backdrop"><div class="modal online-modal"><h3>ผู้ใช้งานออนไลน์</h3><p class="muted small">รายชื่อผู้ใช้งานที่ active ภายใน 90 วินาทีล่าสุด</p><div id="onlineUsersPopup" class="users-list"><div class="small muted">ยังไม่มีข้อมูล</div></div><div class="modal-actions"><button class="ghost" id="btnRefreshOnlinePopup">Refresh</button><button class="primary" id="btnCloseOnlinePopup">ปิด</button></div></div></div><div id="remoteModalBackdrop" class="modal-backdrop"><div class="modal remote-modal"><div class="section-title"><div><h3>Mobile Remote</h3><p class="muted small">สแกน QR เพื่อควบคุม Dock ผ่านมือถือ ซ่อนได้โดยไม่ตัดการเชื่อมต่อ</p></div><button class="ghost tiny" id="btnHideRemotePopup">ซ่อน</button></div><div id="remoteModalBody" class="remote-grid"></div><div class="modal-actions"><button class="ghost" id="btnCopyRemoteLink">Copy Link</button><button class="danger" id="btnCloseRemoteRoom">รีห้องใหม่</button></div></div></div><div id="donateModalBackdrop" class="modal-backdrop"><div class="modal donate-modal"><div class="section-title"><div><h3>Support PepsProduction</h3><p class="muted small">เลือกช่องทางสนับสนุนที่สะดวก</p></div><button class="ghost tiny" id="btnCloseDonate">ปิด</button></div><div class="donate-grid"><a class="donate-card" href="https://easydonate.app/pepsproduction" target="_blank" rel="noopener">EasyDonate (Thailand)<span>เปิดหน้า Donate</span></a><a class="donate-card" href="https://pepsproduction.github.io/pepslive-tools/support.html" target="_blank" rel="noopener">Support Coffee<span>เปิดหน้า Support</span></a></div></div></div><div id="toast" class="toast"></div>
+<script src="src/scoreboard-skin-sync.js"></script>
 <script>
 (()=>{'use strict';
 const STORE_KEY='pepslive_dock_v1_state';
@@ -780,7 +782,122 @@ renderLogos=function(){
   renderLogoPreviewGrid();
 };
 
-if(initMobileRemoteMode())return;bind();bindLogin();bindScoreNameEditing();bindMobileRemoteControls();if($('btnOnlineUsers'))$('btnOnlineUsers').onclick=openOnlinePopup;if($('btnCloseOnlinePopup'))$('btnCloseOnlinePopup').onclick=closeOnlinePopup;if($('onlineModalBackdrop'))$('onlineModalBackdrop').onclick=e=>{if(e.target.id==='onlineModalBackdrop')closeOnlinePopup()};if($('btnRefreshOnlinePopup'))$('btnRefreshOnlinePopup').onclick=async()=>{await syncPresenceOnce();renderOnlinePopup()};document.querySelectorAll('.help-btn').forEach(b=>b.onclick=()=>showHelp(b.dataset.help));if($('btnSaveLogoSettings'))$('btnSaveLogoSettings').onclick=()=>saveSettingsFromInputs(true);if($('btnRepairLogoSources'))$('btnRepairLogoSources').onclick=repairLogoSources;if($('btnPickLogoFolder'))$('btnPickLogoFolder').onclick=()=>$('logoFolderInput').click();if($('logoFolderInput'))$('logoFolderInput').onchange=async e=>{const files=e.target.files||[];const first=files[0];const count=registerLogoFiles(files);await hydrateLocalLogoDataUrls();if(first&&first.webkitRelativePath){const folder=first.webkitRelativePath.split('/')[0];settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโฟลเดอร์โลโก้สำหรับ Preview: ${folder} (${count} ไฟล์) | OBS ต้องกรอก Logo Folder Path จริง`)}else if(count){settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโลโก้สำหรับ Preview แล้ว ${count} ไฟล์ | OBS ต้องกรอก Logo Folder Path จริง`)}};if($('btnSaveActions'))$('btnSaveActions').onclick=saveActionSettings;if($('btnPresetActions'))$('btnPresetActions').onclick=presetActions;if($('btnHideAllActions2'))$('btnHideAllActions2').onclick=hideAllActionSources;if($('btnHideActionSources'))$('btnHideActionSources').onclick=hideAllActionSources;if($('btnSaveLayout'))$('btnSaveLayout').onclick=saveLayoutSettings;if($('btnResetLayout'))$('btnResetLayout').onclick=resetLayoutSettings;if($('btnCheckObsSources'))$('btnCheckObsSources').onclick=()=>toast('ใช้ปุ่ม + เพื่อสร้าง/ตรวจทีละ Tag ได้ทันที');applySportDefaults(false);filterMatches(false);renderAll();applyAuthUI();if(auth.authenticated)startPresence();resumeMobileRemoteSession();setInterval(tick,1000);window.addEventListener('pagehide',sendPresenceOfflineBeacon);window.addEventListener('beforeunload',()=>{sendPresenceOfflineBeacon();saveLocal()});if(state.sheetRows&&state.sheetRows.length){$('stSheet').className='status ok';$('stSheet').textContent=`Sheet: ${state.sheetRows.length}`}
+const SKIN_SYNC_ENABLED_KEY='pepslive.scoreboardSkinSync.enabled';
+const SKIN_STUDIO_BASE_URL='https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/';
+let skinSyncController=null;
+let skinSyncLastResult=null;
+function isSkinSyncEnabled(){const raw=localStorage.getItem(SKIN_SYNC_ENABLED_KEY);return raw===null?true:raw==='true'}
+function setSkinSyncEnabled(next){localStorage.setItem(SKIN_SYNC_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus()}
+function currentDockStateForSkinSync(){
+  return {
+    sport: state.sport,
+    scoreA: state.scoreA,
+    scoreB: state.scoreB,
+    clockSec: state.clockSec,
+    timerRunning: !!state.timerRunning,
+    period: state.period,
+    status: state.status,
+    type: String(state.status||'').toUpperCase().includes('FULL')?'summary':'live',
+    match: {
+      TeamA: state.match&&state.match.TeamA,
+      TeamB: state.match&&state.match.TeamB,
+      LogoA: state.match&&state.match.LogoA,
+      LogoB: state.match&&state.match.LogoB,
+      MatchID: state.match&&state.match.MatchID,
+      Label1: state.match&&state.match.Label1,
+      Label2: state.match&&state.match.Label2
+    },
+    eventTitle: (state.match&&state.match.Label1)||'PEPS LIVE',
+    settings: { teamColors: settings&&settings.teamColors?settings.teamColors:{} }
+  };
+}
+function syncSportToSkinDefault(sport,kind){
+  const s=String(sport||'').toLowerCase();
+  const isSummary=kind==='summary';
+  if(s==='basket3'||s==='basket5'||s==='basketball')return isSummary?'BB-SUM-01':'BB-LIVE-01';
+  return isSummary?'FB-SUM-01':'FB-LIVE-01';
+}
+function makeSkinStudioOverlayUrl(kind,debug){
+  const normalizedKind=kind==='summary'?'summary':'live';
+  const st=currentDockStateForSkinSync();
+  const skinId=syncSportToSkinDefault(st.sport,normalizedKind);
+  const url=new URL('overlays/'+normalizedKind+'.html',SKIN_STUDIO_BASE_URL);
+  url.searchParams.set('skin',skinId);
+  url.searchParams.set('v',String(Date.now()));
+  if(debug)url.searchParams.set('debug','1');
+  return url.toString();
+}
+function safeCopy(text,okMsg){
+  const value=String(text||'').trim();
+  if(!value)return;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(value).then(()=>toast(okMsg||'Copy ����')).catch(()=>toast('Copy ��������'));
+    return;
+  }
+  const ta=document.createElement('textarea');
+  ta.value=value;
+  document.body.appendChild(ta);
+  ta.select();
+  try{document.execCommand('copy');toast(okMsg||'Copy ����')}catch(_){toast('Copy ��������')}
+  ta.remove();
+}
+function renderSkinSyncStatus(){
+  const enabled=isSkinSyncEnabled();
+  const badge=$('skinSyncStatusBadge');
+  const statusText=$('skinSyncStatusText');
+  const lastTime=$('skinSyncLastTime');
+  const payloadPreview=$('skinSyncPayloadPreview');
+  const toggle=$('skinSyncEnabled');
+  if(toggle)toggle.checked=enabled;
+  if(badge){badge.textContent=enabled?'Ready':'Off';}
+  if(statusText){
+    if(!enabled)statusText.textContent='Off';
+    else if(skinSyncLastResult&&skinSyncLastResult.ok)statusText.textContent='Publishing';
+    else statusText.textContent='Ready';
+  }
+  if(lastTime)lastTime.textContent=skinSyncLastResult&&skinSyncLastResult.payload?new Date(skinSyncLastResult.payload.timestamp||Date.now()).toLocaleTimeString():'-';
+  if(payloadPreview&&skinSyncLastResult&&skinSyncLastResult.payload){
+    payloadPreview.textContent=JSON.stringify(skinSyncLastResult.payload,null,2);
+  }else if(payloadPreview){
+    payloadPreview.textContent='No payload yet';
+  }
+}
+function publishSkinSyncNow(){
+  if(!window.ScoreboardSkinSync||!window.ScoreboardSkinSync.publishScoreboardSkinState){
+    toast('Skin Sync adapter not loaded');
+    return {ok:false,error:'adapter_missing'};
+  }
+  const result=window.ScoreboardSkinSync.publishScoreboardSkinState(currentDockStateForSkinSync());
+  skinSyncLastResult=result;
+  renderSkinSyncStatus();
+  return result;
+}
+function initSkinSyncPanel(){
+  if(!$('moduleSkinSync'))return;
+  if($('skinSyncEnabled'))$('skinSyncEnabled').onchange=e=>setSkinSyncEnabled(!!(e&&e.target&&e.target.checked));
+  if($('btnPublishSkinSync'))$('btnPublishSkinSync').onclick=()=>{const r=publishSkinSyncNow();toast(r&&r.ok?'Publish � Skin Studio ����':'Publish ��������')};
+  if($('btnCopySkinPayload'))$('btnCopySkinPayload').onclick=()=>safeCopy(skinSyncLastResult&&skinSyncLastResult.payload?JSON.stringify(skinSyncLastResult.payload,null,2):'','Copy payload ����');
+  if($('btnCopySkinLiveUrl'))$('btnCopySkinLiveUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',false),'Copy Live URL ����');
+  if($('btnCopySkinSummaryUrl'))$('btnCopySkinSummaryUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',false),'Copy Summary URL ����');
+  if($('btnCopySkinLiveDebugUrl'))$('btnCopySkinLiveDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',true),'Copy Live Debug URL ����');
+  if($('btnCopySkinSummaryDebugUrl'))$('btnCopySkinSummaryDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',true),'Copy Summary Debug URL ����');
+  if(window.ScoreboardSkinSync&&window.ScoreboardSkinSync.installScoreboardSkinAutoSync){
+    skinSyncController=window.ScoreboardSkinSync.installScoreboardSkinAutoSync(
+      ()=>currentDockStateForSkinSync(),
+      {
+        intervalMs: 250,
+        debounceMs: 120,
+        timerMinIntervalMs: 1000,
+        enabled: ()=>isSkinSyncEnabled(),
+        onPublished: (result)=>{skinSyncLastResult=result;renderSkinSyncStatus()}
+      }
+    );
+  }else{
+    console.warn('[SkinSync] adapter missing: src/scoreboard-skin-sync.js');
+  }
+  renderSkinSyncStatus();
+}
+if(initMobileRemoteMode())return;bind();bindLogin();bindScoreNameEditing();bindMobileRemoteControls();if($('btnOnlineUsers'))$('btnOnlineUsers').onclick=openOnlinePopup;if($('btnCloseOnlinePopup'))$('btnCloseOnlinePopup').onclick=closeOnlinePopup;if($('onlineModalBackdrop'))$('onlineModalBackdrop').onclick=e=>{if(e.target.id==='onlineModalBackdrop')closeOnlinePopup()};if($('btnRefreshOnlinePopup'))$('btnRefreshOnlinePopup').onclick=async()=>{await syncPresenceOnce();renderOnlinePopup()};document.querySelectorAll('.help-btn').forEach(b=>b.onclick=()=>showHelp(b.dataset.help));if($('btnSaveLogoSettings'))$('btnSaveLogoSettings').onclick=()=>saveSettingsFromInputs(true);if($('btnRepairLogoSources'))$('btnRepairLogoSources').onclick=repairLogoSources;if($('btnPickLogoFolder'))$('btnPickLogoFolder').onclick=()=>$('logoFolderInput').click();if($('logoFolderInput'))$('logoFolderInput').onchange=async e=>{const files=e.target.files||[];const first=files[0];const count=registerLogoFiles(files);await hydrateLocalLogoDataUrls();if(first&&first.webkitRelativePath){const folder=first.webkitRelativePath.split('/')[0];settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโฟลเดอร์โลโก้สำหรับ Preview: ${folder} (${count} ไฟล์) | OBS ต้องกรอก Logo Folder Path จริง`)}else if(count){settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโลโก้สำหรับ Preview แล้ว ${count} ไฟล์ | OBS ต้องกรอก Logo Folder Path จริง`)}};if($('btnSaveActions'))$('btnSaveActions').onclick=saveActionSettings;if($('btnPresetActions'))$('btnPresetActions').onclick=presetActions;if($('btnHideAllActions2'))$('btnHideAllActions2').onclick=hideAllActionSources;if($('btnHideActionSources'))$('btnHideActionSources').onclick=hideAllActionSources;if($('btnSaveLayout'))$('btnSaveLayout').onclick=saveLayoutSettings;if($('btnResetLayout'))$('btnResetLayout').onclick=resetLayoutSettings;if($('btnCheckObsSources'))$('btnCheckObsSources').onclick=()=>toast('ใช้ปุ่ม + เพื่อสร้าง/ตรวจทีละ Tag ได้ทันที');applySportDefaults(false);filterMatches(false);renderAll();initSkinSyncPanel();applyAuthUI();if(auth.authenticated)startPresence();resumeMobileRemoteSession();setInterval(tick,1000);window.addEventListener('pagehide',sendPresenceOfflineBeacon);window.addEventListener('beforeunload',()=>{sendPresenceOfflineBeacon();saveLocal()});if(state.sheetRows&&state.sheetRows.length){$('stSheet').className='status ok';$('stSheet').textContent=`Sheet: ${state.sheetRows.length}`}
 })();
 </script>
 </body>
