@@ -220,3 +220,56 @@ If opened on different origins (`localhost` different port, `file://`, other dom
 - Overlay not updating: open overlay with `debug=1` and verify `source=pepslive-dock`.
 - OBS still shows old state: refresh Browser Source cache or regenerate URL (`v=timestamp`).
 - Sync disabled accidentally: check panel toggle or `pepslive.scoreboardSkinSync.enabled`.
+
+## Real Browser Sync Test (Phase 3.1.1)
+
+ทดสอบ Sync แบบ browser-to-browser ให้ใช้ **origin เดียวกัน** เท่านั้น
+
+### 1) เปิด Same-Origin Local Server
+
+```bash
+node scripts/serve-same-origin.mjs
+```
+
+### 2) URL สำหรับทดสอบ
+
+- Dock UI: [http://127.0.0.1:8123/pepslive-dock/PepsLive_Dock_V1.html](http://127.0.0.1:8123/pepslive-dock/PepsLive_Dock_V1.html)
+- Live overlay debug (Football): [http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/live.html?skin=FB-LIVE-01&debug=1](http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/live.html?skin=FB-LIVE-01&debug=1)
+- Summary overlay debug (Football): [http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=FB-SUM-01&debug=1](http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=FB-SUM-01&debug=1)
+- Live overlay debug (Basketball): [http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/live.html?skin=BB-LIVE-01&debug=1](http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/live.html?skin=BB-LIVE-01&debug=1)
+- Summary overlay debug (Basketball): [http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=BB-SUM-01&debug=1](http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=BB-SUM-01&debug=1)
+
+### 3) วิธีทดสอบ Sync
+
+1. เข้า Dock แล้วเปิด `Enable Sync`
+2. กด `Publish Current State`
+3. เปลี่ยนคะแนน/เวลา/สถานะจาก workflow เดิมของ Dock
+4. ดู overlay debug box ว่า source เป็น `pepslive-dock`
+5. ตรวจค่า score/team/clock/status ว่าอัปเดตตาม Dock
+
+### 4) ตรวจ localStorage
+
+- key: `pepslive.scoreboard.sharedState.v1`
+- ต้องมี payload ที่ `protocol = PEPSLIVE_SCOREBOARD_STATE_V1`
+- `source` ต้องเป็น `pepslive-dock`
+
+### 5) Same-Origin Warning
+
+กรณีเหล่านี้อาจไม่ sync:
+- Dock เปิดจาก `file://`
+- Dock เปิดที่ `localhost:xxxx` แต่ overlay เปิดที่ `127.0.0.1:yyyy`
+- Dock/overlay คนละ domain
+
+BroadcastChannel/localStorage จะทำงานได้ดีสุดเมื่อทั้งสองหน้าอยู่ origin เดียวกัน
+
+### 6) Smoke Script
+
+```bash
+node scripts/check-skin-sync-browser.mjs
+```
+
+สคริปต์นี้จะ:
+- start same-origin server
+- เช็ก HTTP 200 ของ Dock + overlay URLs
+- ถ้ามี Playwright จะรัน browser automation ต่อ
+- ถ้าไม่มี Playwright จะพิมพ์ manual checklist ให้อัตโนมัติ

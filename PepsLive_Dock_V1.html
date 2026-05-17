@@ -786,6 +786,7 @@ const SKIN_SYNC_ENABLED_KEY='pepslive.scoreboardSkinSync.enabled';
 const SKIN_STUDIO_BASE_URL='https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/';
 let skinSyncController=null;
 let skinSyncLastResult=null;
+let skinSyncPanelInited=false;
 function isSkinSyncEnabled(){const raw=localStorage.getItem(SKIN_SYNC_ENABLED_KEY);return raw===null?true:raw==='true'}
 function setSkinSyncEnabled(next){localStorage.setItem(SKIN_SYNC_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus()}
 function currentDockStateForSkinSync(){
@@ -848,7 +849,9 @@ function renderSkinSyncStatus(){
   const lastTime=$('skinSyncLastTime');
   const payloadPreview=$('skinSyncPayloadPreview');
   const toggle=$('skinSyncEnabled');
+  const publishBtn=$('btnPublishSkinSync');
   if(toggle)toggle.checked=enabled;
+  if(publishBtn)publishBtn.disabled=!enabled;
   if(badge){badge.textContent=enabled?'Ready':'Off';}
   if(statusText){
     if(!enabled)statusText.textContent='Off';
@@ -863,6 +866,9 @@ function renderSkinSyncStatus(){
   }
 }
 function publishSkinSyncNow(){
+  if(!isSkinSyncEnabled()){
+    return {ok:false,error:'sync_disabled'};
+  }
   if(!window.ScoreboardSkinSync||!window.ScoreboardSkinSync.publishScoreboardSkinState){
     toast('Skin Sync adapter not loaded');
     return {ok:false,error:'adapter_missing'};
@@ -874,13 +880,20 @@ function publishSkinSyncNow(){
 }
 function initSkinSyncPanel(){
   if(!$('moduleSkinSync'))return;
+  if(skinSyncPanelInited){renderSkinSyncStatus();return;}
+  skinSyncPanelInited=true;
   if($('skinSyncEnabled'))$('skinSyncEnabled').onchange=e=>setSkinSyncEnabled(!!(e&&e.target&&e.target.checked));
-  if($('btnPublishSkinSync'))$('btnPublishSkinSync').onclick=()=>{const r=publishSkinSyncNow();toast(r&&r.ok?'Publish ไป Skin Studio แล้ว':'Publish ไม่สำเร็จ')};
+  if($('btnPublishSkinSync'))$('btnPublishSkinSync').onclick=()=>{
+    const r=publishSkinSyncNow();
+    if(r&&r.error==='sync_disabled'){toast('Sync ปิดอยู่ เปิด Enable Sync ก่อน');return;}
+    toast(r&&r.ok?'Publish ไป Skin Studio แล้ว':'Publish ไม่สำเร็จ');
+  };
   if($('btnCopySkinPayload'))$('btnCopySkinPayload').onclick=()=>safeCopy(skinSyncLastResult&&skinSyncLastResult.payload?JSON.stringify(skinSyncLastResult.payload,null,2):'','Copy payload แล้ว');
   if($('btnCopySkinLiveUrl'))$('btnCopySkinLiveUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',false),'Copy Live URL แล้ว');
   if($('btnCopySkinSummaryUrl'))$('btnCopySkinSummaryUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',false),'Copy Summary URL แล้ว');
   if($('btnCopySkinLiveDebugUrl'))$('btnCopySkinLiveDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',true),'Copy Live Debug URL แล้ว');
   if($('btnCopySkinSummaryDebugUrl'))$('btnCopySkinSummaryDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',true),'Copy Summary Debug URL แล้ว');
+  if(skinSyncController&&skinSyncController.stop)skinSyncController.stop();
   if(window.ScoreboardSkinSync&&window.ScoreboardSkinSync.installScoreboardSkinAutoSync){
     skinSyncController=window.ScoreboardSkinSync.installScoreboardSkinAutoSync(
       ()=>currentDockStateForSkinSync(),
