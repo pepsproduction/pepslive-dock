@@ -382,3 +382,23 @@ http://127.0.0.1:8123/pepslive-dock/PepsLive_Dock_V1.html
 - ถ้า Relay เปิดอยู่: `Copy Live URL` / `Copy Summary URL` จะ copy URL ที่มี `?relay=` ให้เอง
 - ถ้า Relay ไม่เปิด: จะ fallback เป็น portable/same-origin URL ปกติ
 - ถ้า Skin Studio ส่ง URL ล่าสุดมาแล้ว: Dock จะใช้ skin/theme ล่าสุดนั้นเป็นฐาน URL ก่อน
+
+
+## Phase 5.0 Embedded Skin Popup Workflow
+
+PepsLive Dock V1 now has a short **Skin** button near Settings. It opens PepsLive Scoreboard Skin Studio inside a popup iframe with `?embed=1`.
+
+Recommended fast workflow:
+
+1. Open `PepsLive_Dock_V1.html`.
+2. Click **Skin**.
+3. Choose a scoreboard skin, adjust theme/display options, and preview inside the popup.
+4. Click **Apply Both Sources** if OBS WebSocket is connected, or copy the Live/Summary URL manually.
+5. Keep controlling score, team, clock, and match status from Dock V1 as usual.
+
+Notes:
+
+- The Skin popup only controls scoreboard appearance and Browser Source URLs.
+- Dock V1 remains the source of truth for score/time/team data.
+- Skin Studio sends URL updates back to Dock V1 by `postMessage`, BroadcastChannel, and localStorage fallback.
+- For OBS Browser Source, Relay URL mode is still recommended when OBS does not share the same browser profile as the Dock page.
