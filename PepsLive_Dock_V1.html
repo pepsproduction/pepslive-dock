@@ -83,6 +83,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
 .skin-studio-btn{background:linear-gradient(135deg,#ff7a12,#ffc266)!important;color:#140a02!important;border:1px solid rgba(255,194,102,.85)!important;box-shadow:0 10px 26px rgba(255,122,18,.22);font-weight:900;letter-spacing:.02em}
 .skin-studio-modal{width:min(1220px,calc(100vw - 24px));height:min(900px,calc(100vh - 24px));display:flex;flex-direction:column;gap:10px;padding:12px;background:linear-gradient(180deg,rgba(7,12,20,.96),rgba(5,8,14,.98))!important;border-color:rgba(255,126,39,.25)!important}
 .skin-studio-modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:2px 4px 0}.skin-studio-modal-head h3{margin:0;font-size:18px}.skin-studio-modal-head p{margin:3px 0 0;color:#aeb8c6;font-size:12px}.skin-studio-modal-status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}.skin-studio-status-card{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);border-radius:14px;padding:8px 10px;min-width:0}.skin-studio-status-card span{display:block;color:#8ea0b8;font-size:11px}.skin-studio-status-card strong{display:block;color:#eef5ff;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.skin-studio-frame{flex:1 1 auto;min-height:420px;width:100%;border:1px solid rgba(255,126,39,.22);border-radius:18px;background:#050a12;box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}.skin-studio-modal-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end}.skin-studio-modal-actions .push-left{margin-right:auto}.skin-studio-modal-note{color:#aeb8c6;font-size:12px;line-height:1.4}.skin-studio-modal-note b{color:#ffd0b4}
+.skin-studio-modal .toast,.toast{z-index:260}
 @media(max-width:760px){.skin-studio-modal{height:calc(100vh - 12px);width:calc(100vw - 12px);padding:8px;border-radius:18px}.skin-studio-modal-status{grid-template-columns:1fr 1fr}.skin-studio-frame{min-height:360px}.skin-studio-modal-actions{justify-content:stretch}.skin-studio-modal-actions button{flex:1 1 145px}.skin-studio-modal-actions .push-left{margin-right:0}}
 
 </style>
@@ -916,13 +917,17 @@ function closeSkinStudioPopup(){
   if(modal)modal.classList.remove('show');
 }
 async function applySkinStudioSources(kind){
+  const status=$('skinStudioEmbedStatus');
+  if(status)status.textContent='Applying...';
   if(kind==='both'){
     const live=await setSkinBrowserSourceUrl('live');
     const summary=await setSkinBrowserSourceUrl('summary');
+    if(status)status.textContent=live||summary?'Applied':'Manual URL';
     toast(live||summary?'Skin Browser Sources updated':'OBS not connected. Copy URL manually.');
     return;
   }
   const ok=await setSkinBrowserSourceUrl(kind==='summary'?'summary':'live');
+  if(status)status.textContent=ok?'Applied':'Manual URL';
   toast(ok?'Skin Browser Source updated':'OBS not connected. Copy URL manually.');
 }
 function handleSkinStudioWindowMessage(event){
@@ -968,14 +973,27 @@ function studioSyncedUrlFor(kind,debug){
 }
 function skinBrowserSourceSize(kind){return kind==='summary'?{width:1920,height:1080}:{width:900,height:180}}
 async function setSkinBrowserSourceUrl(kind){
-  if(!(await ensureObs()))return false;
+  if(!(await ensureObs())){toast('OBS not connected. Copy URL manually.');return false;}
   const inputName=kind==='summary'?(settings.sources.SkinSummary||'PEPS_SKIN_SUMMARY_BOARD'):(settings.sources.SkinLive||'PEPS_SKIN_LIVE_SCOREBOARD');
   const size=skinBrowserSourceSize(kind);
   const url=makeBestSkinStudioOverlayUrl(kind,false);
+  const inputSettings={url,width:size.width,height:size.height,shutdown:false,restart_when_active:true};
   try{
-    await obsRequest('SetInputSettings',{inputName,inputSettings:{url,width:size.width,height:size.height,shutdown:false,restart_when_active:true},overlay:true});
+    await obsRequest('GetInputSettings',{inputName});
+    await obsRequest('SetInputSettings',{inputName,inputSettings,overlay:true});
     return true;
-  }catch(e){log('Skin Studio Browser Source update skipped: '+inputName+' | '+e.message);return false}
+  }catch(e){
+    try{
+      const sceneName=await currentScene();
+      await obsRequest('CreateInput',{sceneName,inputName,inputKind:'browser_source',inputSettings,sceneItemEnabled:true});
+      log('Skin Studio Browser Source created: '+inputName);
+      return true;
+    }catch(createError){
+      log('Skin Studio Browser Source update failed: '+inputName+' | '+((createError&&createError.message)||e.message));
+      toast('Skin Source update failed: '+inputName);
+      return false;
+    }
+  }
 }
 function makeSkinStudioOverlayUrl(kind,debug){
   const normalizedKind=kind==='summary'?'summary':'live';
