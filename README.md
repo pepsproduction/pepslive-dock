@@ -292,3 +292,52 @@ Notes:
 - Dock V1 still controls score/team/time. Skin Studio only controls scoreboard appearance.
 - For live updates, open Dock V1 and overlay under the same origin, or use a relay URL.
 - If no Studio URL has been received yet, Dock V1 falls back to default `FB-LIVE-01` / `FB-SUM-01` URLs.
+
+## Scoreboard Skin Studio Reliable Relay
+
+ใช้โหมดนี้เมื่อ Dock V1 กับ OBS Browser Source ไม่ได้แชร์ browser profile เดียวกัน ทำให้ `BroadcastChannel` / `localStorage` ไม่ส่งถึงกัน แม้จะเป็น URL เดียวกันก็ตาม
+
+### Local QA Relay
+
+```bash
+node scripts/serve-same-origin.mjs
+```
+
+จากนั้นใน Dock:
+
+1. เปิด `Enable Sync`
+2. เปิด `Enable Relay Publisher`
+3. กด `Use Local QA Relay`
+4. กด `Publish Relay Now`
+5. Copy `Relay Live URL` หรือ `Relay Summary URL` ไปใส่ OBS Browser Source
+
+Local relay endpoint:
+
+```text
+http://127.0.0.1:8123/pepslive-relay/state.json
+```
+
+### Apps Script Relay
+
+ถ้าใช้ Google Apps Script webhook ของ Dock อยู่แล้ว ให้อัปเดตสคริปต์จากไฟล์:
+
+```text
+bridge/google_apps_script_save_result.gs
+```
+
+จากนั้นใน Dock:
+
+1. ใส่ Apps Script Web App URL ใน Settings > Google Sheet
+2. กด `Use Apps Script Relay`
+3. เปิด `Enable Relay Publisher`
+4. Copy `Relay Live URL` หรือ `Relay Summary URL`
+
+Dock จะส่ง payload ด้วย action `scoreboardSkinRelaySet` และ overlay จะอ่านด้วย `scoreboardSkinRelayGet`.
+
+### Relay Smoke Test
+
+```bash
+node scripts/check-scoreboard-skin-relay.mjs
+```
+
+สคริปต์นี้จะ start local server, POST payload เข้า relay, GET payload กลับมา และเช็ก overlay URL ที่มี `?relay=`.

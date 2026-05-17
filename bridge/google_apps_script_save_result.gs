@@ -11,7 +11,8 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-05-15.3';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-05-17.1';
+var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
 
 function parseJson_(value, fallback) {
   if (value && typeof value === 'object') return value;
@@ -38,6 +39,8 @@ function doPost(e) {
     if (action === 'remoteStateSet') return json_(remoteStateSet_(requestPayload_(payload)));
     if (action === 'remoteStateGet') return json_(remoteStateGet_(requestPayload_(payload)));
     if (action === 'remotePing') return json_(remotePing_(requestPayload_(payload)));
+    if (action === 'scoreboardSkinRelaySet') return json_(scoreboardSkinRelaySet_(requestPayload_(payload)));
+    if (action === 'scoreboardSkinRelayGet') return json_(scoreboardSkinRelayGet_());
     if (action === 'presenceHeartbeat') return json_(presenceHeartbeat_(requestPayload_(payload)));
     if (action === 'presenceList') return json_(presenceList_());
     if (action === 'presenceOffline') return json_(presenceOffline_(requestPayload_(payload)));
@@ -59,6 +62,8 @@ function doGet(e) {
     if (action === 'remoteStateSet') return jsonp_(remoteStateSet_(payload), callback);
     if (action === 'remoteStateGet') return jsonp_(remoteStateGet_(payload), callback);
     if (action === 'remotePing') return jsonp_(remotePing_(payload), callback);
+    if (action === 'scoreboardSkinRelaySet') return jsonp_(scoreboardSkinRelaySet_(payload), callback);
+    if (action === 'scoreboardSkinRelayGet') return jsonp_(scoreboardSkinRelayGet_(), callback);
     if (action === 'saveResult') return jsonp_(saveResult_(payload), callback);
     if (action === 'presenceHeartbeat') return jsonp_(presenceHeartbeat_(payload), callback);
     if (action === 'presenceList') return jsonp_(presenceList_(), callback);
@@ -86,7 +91,8 @@ function webhookInfo_() {
       mobileRemote: true,
       mobileRemoteFallback: true,
       mobileRemoteState: true,
-      mobileRemotePresence: true
+      mobileRemotePresence: true,
+      scoreboardSkinRelay: true
     }
   };
 }
@@ -548,6 +554,35 @@ function remotePoll_(payload) {
   commands.sort(function(a, b) { return a.seq - b.seq; });
   if (commands.length > 30) commands = commands.slice(commands.length - 30);
   return { ok: true, room: room, commands: commands, lastSeq: lastSeq, polledAt: new Date().toISOString(), deviceCount: summary.deviceCount, devices: summary.devices };
+}
+
+function scoreboardSkinRelaySet_(payload) {
+  payload = payload || {};
+  var state = payload.payload || payload.state || payload;
+  if (!state || typeof state !== 'object') return { ok: false, error: 'invalid_payload' };
+  if (String(state.protocol || '') !== 'PEPSLIVE_SCOREBOARD_STATE_V1') {
+    return { ok: false, error: 'invalid_protocol', protocol: String(state.protocol || '') };
+  }
+  if (String(state.source || '') !== 'pepslive-dock') state.source = 'pepslive-dock';
+  if (!state.timestamp) state.timestamp = new Date().toISOString();
+  PropertiesService.getScriptProperties().setProperty(SCOREBOARD_SKIN_RELAY_PROPERTY_KEY, JSON.stringify(state));
+  return {
+    ok: true,
+    action: 'scoreboardSkinRelaySet',
+    protocol: state.protocol,
+    source: state.source,
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function scoreboardSkinRelayGet_() {
+  var raw = PropertiesService.getScriptProperties().getProperty(SCOREBOARD_SKIN_RELAY_PROPERTY_KEY);
+  if (!raw) return { ok: false, error: 'no_relay_state' };
+  try {
+    return JSON.parse(raw);
+  } catch (err) {
+    return { ok: false, error: 'bad_relay_state_json' };
+  }
 }
 
 function json_(obj) {

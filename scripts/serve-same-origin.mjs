@@ -8,6 +8,8 @@ const __dirname = path.dirname(__filename);
 
 const DEFAULT_DOCK_ROOT = path.resolve(__dirname, '..');
 const DEFAULT_SKIN_ROOT = path.resolve('D:/pepslive-scoreboard-skin-studio/pepslive-scoreboard-skin-studio');
+let relayState = null;
+let relayUpdatedAt = '';
 
 function mimeType(filePath) {
   const ext = path.extname(filePath).toLowerCase();
@@ -72,6 +74,71 @@ function serveFile(res, filePath) {
   });
 }
 
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type,Accept'
+  });
+  res.end(JSON.stringify(data));
+}
+
+function readRequestBody(req, limitBytes = 1_000_000) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.setEncoding('utf8');
+    req.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > limitBytes) {
+        reject(new Error('request_body_too_large'));
+        req.destroy();
+      }
+    });
+    req.on('end', () => resolve(body));
+    req.on('error', reject);
+  });
+}
+
+async function handleRelayEndpoint(req, res) {
+  if (req.method === 'OPTIONS') {
+    sendJson(res, 204, {});
+    return true;
+  }
+
+  if (req.method === 'GET') {
+    if (!relayState) {
+      sendJson(res, 404, { ok: false, error: 'no_relay_state', updatedAt: relayUpdatedAt || null });
+      return true;
+    }
+    sendJson(res, 200, relayState);
+    return true;
+  }
+
+  if (req.method === 'POST') {
+    try {
+      const body = await readRequestBody(req);
+      const parsed = body ? JSON.parse(body) : {};
+      const payload = parsed && parsed.payload ? parsed.payload : parsed;
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        sendJson(res, 400, { ok: false, error: 'invalid_payload' });
+        return true;
+      }
+      relayState = payload;
+      relayUpdatedAt = new Date().toISOString();
+      sendJson(res, 200, { ok: true, updatedAt: relayUpdatedAt, protocol: payload.protocol || null, source: payload.source || null });
+      return true;
+    } catch (error) {
+      sendJson(res, 400, { ok: false, error: error && error.message ? error.message : String(error) });
+      return true;
+    }
+  }
+
+  sendJson(res, 405, { ok: false, error: 'method_not_allowed' });
+  return true;
+}
+
 function renderIndex(host, port) {
   return `<!doctype html>
 <html lang="th">
@@ -96,6 +163,7 @@ function renderIndex(host, port) {
       <li><a href="/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=FB-SUM-01&debug=1">Football Summary Debug</a></li>
       <li><a href="/pepslive-scoreboard-skin-studio/overlays/live.html?skin=BB-LIVE-01&debug=1">Basketball Live Debug</a></li>
       <li><a href="/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=BB-SUM-01&debug=1">Basketball Summary Debug</a></li>
+      <li><a href="/pepslive-relay/state.json">Local relay endpoint</a> <code>/pepslive-relay/state.json</code></li>
     </ul>
   </div>
 </body>
@@ -115,6 +183,11 @@ export function createSameOriginServer(options = {}) {
     if (pathname === '/' || pathname === '/index.html') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(renderIndex(host, port));
+      return;
+    }
+
+    if (pathname === '/pepslive-relay/state.json') {
+      handleRelayEndpoint(req, res);
       return;
     }
 

@@ -153,7 +153,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
     <aside class="side-panel">
       <section class="card dock-module" id="moduleResult" data-module="result"><div class="section-title"><h2>Result</h2><span id="dirtyBadge" class="pill">Saved</span></div><div class="grid"><button class="soft" id="btnSaveResult">Save Result</button><button class="success" id="btnFinishMatch">Finish Match</button><button class="primary" id="btnNextMatch">Load Next Match</button></div></section>
       <section class="card dock-module" id="moduleSystem" data-module="system"><div class="section-title"><h2>System Status</h2></div><div class="ready-list small muted"><div class="ready-row"><span>OBS</span><strong id="miniObsStatus">Off</strong></div><div class="ready-row"><span>Sheet</span><strong id="miniSheetStatus">Not loaded</strong></div><div class="ready-row"><span>Save</span><strong id="miniSaveStatus">Local</strong></div></div></section>
-      <section class="card dock-module" id="moduleSkinSync"><div class="section-title"><h2>Scoreboard Skin Studio Sync</h2><span id="skinSyncStatusBadge" class="pill">Off</span></div><div class="grid small"><label><input id="skinSyncEnabled" type="checkbox"> Enable Sync</label><div class="ready-list small muted"><div class="ready-row"><span>Status</span><strong id="skinSyncStatusText">Off</strong></div><div class="ready-row"><span>Last Sync</span><strong id="skinSyncLastTime">-</strong></div></div><div class="action-row"><button class="soft" id="btnPublishSkinSync">Publish Current State</button><button class="ghost" id="btnCopySkinLiveUrl">Copy Live URL</button><button class="ghost" id="btnCopySkinSummaryUrl">Copy Summary URL</button></div><div class="action-row"><button class="ghost" id="btnCopySkinLiveDebugUrl">Copy Live Debug URL</button><button class="ghost" id="btnCopySkinSummaryDebugUrl">Copy Summary Debug URL</button><button class="soft" id="btnCopySkinPayload">Copy Last Payload</button></div><div class="settings-hint small">Same-origin แนะนำให้เปิด Dock และ Skin Studio ภายใต้โดเมนเดียวกัน เช่น github.io โดเมนเดียว เพื่อให้ BroadcastChannel/localStorage sync ได้ดีที่สุด</div><pre id="skinSyncPayloadPreview" class="small muted" style="margin:0;max-height:160px;overflow:auto">No payload yet</pre></div></section>
+      <section class="card dock-module" id="moduleSkinSync"><div class="section-title"><h2>Scoreboard Skin Studio Sync</h2><span id="skinSyncStatusBadge" class="pill">Off</span></div><div class="grid small"><label><input id="skinSyncEnabled" type="checkbox"> Enable Sync</label><div class="ready-list small muted"><div class="ready-row"><span>Status</span><strong id="skinSyncStatusText">Off</strong></div><div class="ready-row"><span>Last Sync</span><strong id="skinSyncLastTime">-</strong></div></div><div class="action-row"><button class="soft" id="btnPublishSkinSync">Publish Current State</button><button class="ghost" id="btnCopySkinLiveUrl">Copy Live URL</button><button class="ghost" id="btnCopySkinSummaryUrl">Copy Summary URL</button></div><div class="action-row"><button class="ghost" id="btnCopySkinLiveDebugUrl">Copy Live Debug URL</button><button class="ghost" id="btnCopySkinSummaryDebugUrl">Copy Summary Debug URL</button><button class="soft" id="btnCopySkinPayload">Copy Last Payload</button></div><div class="settings-hint small">Same-origin แนะนำให้เปิด Dock และ Skin Studio ภายใต้โดเมนเดียวกัน เช่น github.io โดเมนเดียว เพื่อให้ BroadcastChannel/localStorage sync ได้ดีที่สุด</div><pre id="skinSyncPayloadPreview" class="small muted" style="margin:0;max-height:160px;overflow:auto">No payload yet</pre><div class="settings-hint small"><strong>Reliable Relay Mode</strong><br>Use this when Dock UI and OBS Browser Source do not share the same browser profile. Enter a relay endpoint, then copy a Relay URL into OBS.</div><label><input id="skinRelayEnabled" type="checkbox"> Enable Relay Publisher</label><label>Relay Endpoint URL<input id="skinRelayUrlInput" placeholder="http://127.0.0.1:8123/pepslive-relay/state.json"></label><div class="ready-list small muted"><div class="ready-row"><span>Relay</span><strong id="skinRelayStatusText">Off</strong></div><div class="ready-row"><span>Last Relay</span><strong id="skinRelayLastTime">-</strong></div></div><div class="action-row"><button class="soft" id="btnPublishSkinRelay">Publish Relay Now</button><button class="ghost" id="btnCopySkinRelayLiveUrl">Copy Relay Live URL</button><button class="ghost" id="btnCopySkinRelaySummaryUrl">Copy Relay Summary URL</button></div><div class="action-row"><button class="ghost" id="btnCopySkinRelayLiveDebugUrl">Copy Relay Live Debug URL</button><button class="ghost" id="btnCopySkinRelaySummaryDebugUrl">Copy Relay Summary Debug URL</button><button class="soft" id="btnUseLocalRelayUrl">Use Local QA Relay</button></div><div class="action-row"><button class="soft" id="btnUseWebhookRelayUrl">Use Apps Script Relay</button><button class="ghost" id="btnCopySkinRelayEndpoint">Copy Relay Endpoint</button><button class="ghost" id="btnCopySkinRelayReadUrl">Copy Relay Read URL</button></div></div></section>
     </aside>
   </div>
 </div>
@@ -787,11 +787,52 @@ renderLogos=function(){
 
 const SKIN_SYNC_ENABLED_KEY='pepslive.scoreboardSkinSync.enabled';
 const SKIN_STUDIO_BASE_URL='https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/';
+const SKIN_RELAY_ENABLED_KEY='pepslive.scoreboardSkinRelay.enabled';
+const SKIN_RELAY_URL_KEY='pepslive.scoreboardSkinRelay.url';
 let skinSyncController=null;
 let skinSyncLastResult=null;
 let skinSyncPanelInited=false;
+let skinRelayLastResult=null;
+let skinRelayPublishTimer=null;
+let skinRelayLastPublishAt=0;
 function isSkinSyncEnabled(){const raw=localStorage.getItem(SKIN_SYNC_ENABLED_KEY);return raw===null?true:raw==='true'}
 function setSkinSyncEnabled(next){localStorage.setItem(SKIN_SYNC_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus()}
+function defaultLocalSkinRelayUrl(){
+  try{
+    if(location.origin&&location.origin.startsWith('http'))return new URL('/pepslive-relay/state.json',location.origin).toString();
+  }catch(_){}
+  return 'http://127.0.0.1:8123/pepslive-relay/state.json';
+}
+function isSkinRelayEnabled(){return localStorage.getItem(SKIN_RELAY_ENABLED_KEY)==='true'}
+function setSkinRelayEnabled(next){localStorage.setItem(SKIN_RELAY_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus()}
+function getSkinRelayUrl(){return (localStorage.getItem(SKIN_RELAY_URL_KEY)||'').trim()}
+function setSkinRelayUrl(url){localStorage.setItem(SKIN_RELAY_URL_KEY,String(url||'').trim());renderSkinSyncStatus()}
+function skinRelayReadUrl(){
+  const raw=getSkinRelayUrl();
+  if(!raw)return '';
+  try{
+    const url=new URL(raw);
+    const host=url.hostname.toLowerCase();
+    if(host.includes('script.google.com')){
+      if(!url.searchParams.get('action'))url.searchParams.set('action','scoreboardSkinRelayGet');
+      if(url.searchParams.get('action')==='scoreboardSkinRelaySet')url.searchParams.set('action','scoreboardSkinRelayGet');
+    }
+    return url.toString();
+  }catch(_){return ''}
+}
+function skinRelayWriteUrl(){
+  const raw=getSkinRelayUrl();
+  if(!raw)return '';
+  try{
+    const url=new URL(raw);
+    const host=url.hostname.toLowerCase();
+    if(host.includes('script.google.com')){
+      if(!url.searchParams.get('action'))url.searchParams.set('action','scoreboardSkinRelaySet');
+      if(url.searchParams.get('action')==='scoreboardSkinRelayGet')url.searchParams.set('action','scoreboardSkinRelaySet');
+    }
+    return url.toString();
+  }catch(_){return ''}
+}
 function currentDockStateForSkinSync(){
   return {
     sport: state.sport,
@@ -875,6 +916,15 @@ function makeSkinStudioOverlayUrl(kind,debug){
   if(debug)url.searchParams.set('debug','1');
   return url.toString();
 }
+function makeSkinStudioRelayOverlayUrl(kind,debug){
+  const relayUrl=skinRelayReadUrl();
+  if(!relayUrl)return '';
+  const url=new URL(makeSkinStudioOverlayUrl(kind,debug));
+  url.searchParams.set('relay',encodeURIComponent(relayUrl));
+  url.searchParams.set('v',String(Date.now()));
+  if(debug)url.searchParams.set('debug','1');else url.searchParams.delete('debug');
+  return url.toString();
+}
 function safeCopy(text,okMsg){
   const value=String(text||'').trim();
   if(!value)return;
@@ -896,9 +946,17 @@ function renderSkinSyncStatus(){
   const lastTime=$('skinSyncLastTime');
   const payloadPreview=$('skinSyncPayloadPreview');
   const toggle=$('skinSyncEnabled');
+  const relayToggle=$('skinRelayEnabled');
+  const relayUrlInput=$('skinRelayUrlInput');
+  const relayStatusText=$('skinRelayStatusText');
+  const relayLastTime=$('skinRelayLastTime');
   const publishBtn=$('btnPublishSkinSync');
+  const relayPublishBtn=$('btnPublishSkinRelay');
   if(toggle)toggle.checked=enabled;
+  if(relayToggle)relayToggle.checked=isSkinRelayEnabled();
+  if(relayUrlInput&&document.activeElement!==relayUrlInput)relayUrlInput.value=getSkinRelayUrl();
   if(publishBtn)publishBtn.disabled=!enabled;
+  if(relayPublishBtn)relayPublishBtn.disabled=!isSkinRelayEnabled();
   if(badge){badge.textContent=enabled?'Ready':'Off';}
   if(statusText){
     if(!enabled)statusText.textContent='Off';
@@ -906,7 +964,15 @@ function renderSkinSyncStatus(){
     else if(skinSyncLastResult&&skinSyncLastResult.ok)statusText.textContent='Publishing';
     else statusText.textContent='Ready';
   }
+  if(relayStatusText){
+    if(!isSkinRelayEnabled())relayStatusText.textContent='Off';
+    else if(!skinRelayReadUrl())relayStatusText.textContent='Missing URL';
+    else if(skinRelayLastResult&&skinRelayLastResult.ok)relayStatusText.textContent='Publishing';
+    else if(skinRelayLastResult&&skinRelayLastResult.error)relayStatusText.textContent='Error: '+skinRelayLastResult.error;
+    else relayStatusText.textContent='Ready';
+  }
   if(lastTime)lastTime.textContent=skinSyncLastResult&&skinSyncLastResult.payload?new Date(skinSyncLastResult.payload.timestamp||Date.now()).toLocaleTimeString():'-';
+  if(relayLastTime)relayLastTime.textContent=skinRelayLastResult&&skinRelayLastResult.timestamp?new Date(skinRelayLastResult.timestamp).toLocaleTimeString():'-';
   if(payloadPreview&&skinSyncLastResult&&skinSyncLastResult.payload){
     payloadPreview.textContent=JSON.stringify(skinSyncLastResult.payload,null,2);
   }else if(payloadPreview){
@@ -924,7 +990,65 @@ function publishSkinSyncNow(){
   const result=window.ScoreboardSkinSync.publishScoreboardSkinState(currentDockStateForSkinSync());
   skinSyncLastResult=result;
   renderSkinSyncStatus();
+  if(result&&result.ok)scheduleSkinRelayPublish(80);
   return result;
+}
+function currentSkinPayloadForRelay(){
+  if(window.ScoreboardSkinSync&&window.ScoreboardSkinSync.createSkinStudioPayloadFromDockState){
+    return window.ScoreboardSkinSync.createSkinStudioPayloadFromDockState(currentDockStateForSkinSync());
+  }
+  return skinSyncLastResult&&skinSyncLastResult.payload?skinSyncLastResult.payload:null;
+}
+async function publishSkinRelayNow(options={}){
+  const silent=!!options.silent;
+  if(!isSkinRelayEnabled()){
+    skinRelayLastResult={ok:false,error:'relay_disabled',timestamp:new Date().toISOString()};
+    renderSkinSyncStatus();
+    return skinRelayLastResult;
+  }
+  const relayUrl=skinRelayWriteUrl();
+  if(!relayUrl){
+    skinRelayLastResult={ok:false,error:'missing_relay_url',timestamp:new Date().toISOString()};
+    renderSkinSyncStatus();
+    if(!silent)toast('Relay URL is empty');
+    return skinRelayLastResult;
+  }
+  const payload=currentSkinPayloadForRelay();
+  if(!payload){
+    skinRelayLastResult={ok:false,error:'payload_missing',timestamp:new Date().toISOString()};
+    renderSkinSyncStatus();
+    if(!silent)toast('Skin payload missing');
+    return skinRelayLastResult;
+  }
+  try{
+    const res=await fetch(relayUrl,{
+      method:'POST',
+      mode:'cors',
+      cache:'no-store',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'scoreboardSkinRelaySet',payload})
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    let body=null;
+    try{body=await res.json()}catch(_){body={ok:true}}
+    skinRelayLastPublishAt=Date.now();
+    skinRelayLastResult={ok:true,timestamp:new Date().toISOString(),url:relayUrl,response:body,payload};
+    renderSkinSyncStatus();
+    if(!silent)toast('Relay publish OK');
+    return skinRelayLastResult;
+  }catch(e){
+    skinRelayLastResult={ok:false,error:e&&e.message?e.message:String(e),timestamp:new Date().toISOString(),url:relayUrl,payload};
+    renderSkinSyncStatus();
+    if(!silent)toast('Relay publish failed: '+skinRelayLastResult.error);
+    return skinRelayLastResult;
+  }
+}
+function scheduleSkinRelayPublish(delay=150){
+  if(!isSkinRelayEnabled()||!skinRelayReadUrl())return;
+  if(skinRelayPublishTimer)clearTimeout(skinRelayPublishTimer);
+  const now=Date.now();
+  const wait=Math.max(delay,1000-(now-skinRelayLastPublishAt));
+  skinRelayPublishTimer=setTimeout(()=>{skinRelayPublishTimer=null;publishSkinRelayNow({silent:true})},Math.max(0,wait));
 }
 function initSkinSyncPanel(){
   if(!$('moduleSkinSync'))return;
@@ -932,6 +1056,10 @@ function initSkinSyncPanel(){
   if(skinSyncPanelInited){renderSkinSyncStatus();return;}
   skinSyncPanelInited=true;
   if($('skinSyncEnabled'))$('skinSyncEnabled').onchange=e=>setSkinSyncEnabled(!!(e&&e.target&&e.target.checked));
+  if($('skinRelayEnabled'))$('skinRelayEnabled').onchange=e=>setSkinRelayEnabled(!!(e&&e.target&&e.target.checked));
+  if($('skinRelayUrlInput'))$('skinRelayUrlInput').onchange=e=>setSkinRelayUrl(e&&e.target?e.target.value:'');
+  if($('btnUseLocalRelayUrl'))$('btnUseLocalRelayUrl').onclick=()=>{setSkinRelayUrl(defaultLocalSkinRelayUrl());setSkinRelayEnabled(true);toast('Local relay URL ready')};
+  if($('btnUseWebhookRelayUrl'))$('btnUseWebhookRelayUrl').onclick=()=>{if(!settings.webhookUrl){toast('Set Apps Script Webhook URL first');return;}setSkinRelayUrl(settings.webhookUrl);setSkinRelayEnabled(true);toast('Apps Script relay URL ready')};
   if($('btnPublishSkinSync'))$('btnPublishSkinSync').onclick=()=>{
     const r=publishSkinSyncNow();
     if(r&&r.error==='sync_disabled'){toast('Sync �Դ���� �Դ Enable Sync ��͹');return;}
@@ -942,6 +1070,13 @@ function initSkinSyncPanel(){
   if($('btnCopySkinSummaryUrl'))$('btnCopySkinSummaryUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',false),'Copy Summary URL ����');
   if($('btnCopySkinLiveDebugUrl'))$('btnCopySkinLiveDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',true),'Copy Live Debug URL ����');
   if($('btnCopySkinSummaryDebugUrl'))$('btnCopySkinSummaryDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',true),'Copy Summary Debug URL ����');
+  if($('btnPublishSkinRelay'))$('btnPublishSkinRelay').onclick=()=>publishSkinRelayNow();
+  if($('btnCopySkinRelayLiveUrl'))$('btnCopySkinRelayLiveUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('live',false),'Copy Relay Live URL');
+  if($('btnCopySkinRelaySummaryUrl'))$('btnCopySkinRelaySummaryUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('summary',false),'Copy Relay Summary URL');
+  if($('btnCopySkinRelayLiveDebugUrl'))$('btnCopySkinRelayLiveDebugUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('live',true),'Copy Relay Live Debug URL');
+  if($('btnCopySkinRelaySummaryDebugUrl'))$('btnCopySkinRelaySummaryDebugUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('summary',true),'Copy Relay Summary Debug URL');
+  if($('btnCopySkinRelayEndpoint'))$('btnCopySkinRelayEndpoint').onclick=()=>safeCopy(skinRelayWriteUrl()||getSkinRelayUrl(),'Copy Relay Endpoint');
+  if($('btnCopySkinRelayReadUrl'))$('btnCopySkinRelayReadUrl').onclick=()=>safeCopy(skinRelayReadUrl(),'Copy Relay Read URL');
   if(skinSyncController&&skinSyncController.stop)skinSyncController.stop();
   if(window.ScoreboardSkinSync&&window.ScoreboardSkinSync.installScoreboardSkinAutoSync){
     skinSyncController=window.ScoreboardSkinSync.installScoreboardSkinAutoSync(
@@ -951,7 +1086,7 @@ function initSkinSyncPanel(){
         debounceMs: 120,
         timerMinIntervalMs: 1000,
         enabled: ()=>isSkinSyncEnabled(),
-        onPublished: (result)=>{skinSyncLastResult=result;renderSkinSyncStatus()}
+        onPublished: (result)=>{skinSyncLastResult=result;if(result&&result.ok)scheduleSkinRelayPublish(80);renderSkinSyncStatus()}
       }
     );
   }else{
