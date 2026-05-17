@@ -273,3 +273,22 @@ node scripts/check-skin-sync-browser.mjs
 - เช็ก HTTP 200 ของ Dock + overlay URLs
 - ถ้ามี Playwright จะรัน browser automation ต่อ
 - ถ้าไม่มี Playwright จะพิมพ์ manual checklist ให้อัตโนมัติ
+
+## Scoreboard Skin Studio URL Handoff
+
+PepsLive Dock V1 now also listens for the Skin Studio URL handoff channel:
+
+- Channel: `PEPSLIVE_STUDIO_SYNC`
+- Protocol: `PEPSLIVE_STUDIO_SYNC_V1`
+- localStorage key: `pepslive.scoreboardSkinStudio.lastUrls`
+
+Workflow:
+1. Open PepsLive Scoreboard Skin Studio and choose a skin/theme/display options.
+2. Skin Studio broadcasts the latest Live/Summary portable Browser Source URLs.
+3. In Dock V1, use `Copy Live URL` / `Copy Summary URL`, or create the `SkinLive` / `SkinSummary` Browser sources from OBS Tags / Sources.
+4. Paste the copied URL into OBS Browser Source if using manual mode.
+
+Notes:
+- Dock V1 still controls score/team/time. Skin Studio only controls scoreboard appearance.
+- For live updates, open Dock V1 and overlay under the same origin, or use a relay URL.
+- If no Studio URL has been received yet, Dock V1 falls back to default `FB-LIVE-01` / `FB-SUM-01` URLs.

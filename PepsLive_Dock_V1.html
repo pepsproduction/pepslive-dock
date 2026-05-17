@@ -180,10 +180,10 @@ const $=id=>document.getElementById(id);
 const nowText=()=>new Date().toLocaleString('sv-SE');
 const pad2=n=>String(Math.max(0,Math.floor(n))).padStart(2,'0');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const sourceKeys=['TeamA','TeamB','ScoreA','ScoreB','Clock','Period','Status','Label1','Label2','Label3','Label4','Label5','LogoA','LogoB','CommandBus','TeamA_PrimaryColor','TeamA_SecondaryColor','TeamB_PrimaryColor','TeamB_SecondaryColor'];
+const sourceKeys=['TeamA','TeamB','ScoreA','ScoreB','Clock','Period','Status','Label1','Label2','Label3','Label4','Label5','LogoA','LogoB','CommandBus','TeamA_PrimaryColor','TeamA_SecondaryColor','TeamB_PrimaryColor','TeamB_SecondaryColor','SkinLive','SkinSummary'];
 const SCHEMA=['MatchID','LogoA','TeamA','LogoB','TeamB','Label1','Label2','Label3','Label4','Label5','ScoreA','ScoreB','FinalScore','MatchStatus','Winner','FinishedAt','UpdatedAt','UpdatedBy','Note'];
 const SPORT_PRESETS={football:{label:'ฟุตบอล',mode:'up',defaultSec:0,periods:['1st Half','Half Time','2nd Half','Extra Time','Penalty','Full Time'],buttons:[[ 'GOAL +1',1,'success'],['-1',-1,'danger']]},basket3:{label:'บาส 3x3',mode:'down',defaultSec:600,periods:['Game','OT','Full Time'],buttons:[['+1',1,'soft'],['+2',2,'primary'],['-1',-1,'danger'],['Foul',0,'ghost']]},basket5:{label:'บาส 5v5',mode:'down',defaultSec:600,periods:['Q1','Q2','Q3','Q4','OT','Full Time'],buttons:[['+1',1,'soft'],['+2',2,'primary'],['+3',3,'success'],['-1',-1,'danger']]}};
-const defaultSettings={sheetUrl:'',sheetGid:'0',webhookUrl:'',obsHost:'127.0.0.1',obsPort:'4455',obsPassword:'',obsScene:'',sources:{TeamA:'PEPS_TeamA',TeamB:'PEPS_TeamB',ScoreA:'PEPS_ScoreA',ScoreB:'PEPS_ScoreB',Clock:'PEPS_Clock',Period:'PEPS_Period',Status:'PEPS_Status',Label1:'PEPS_Label1',Label2:'PEPS_Label2',Label3:'PEPS_Label3',Label4:'PEPS_Label4',Label5:'PEPS_Label5',LogoA:'PEPS_LogoA',LogoB:'PEPS_LogoB',CommandBus:'PEPS_CommandBus',TeamA_PrimaryColor:'PEPS_TeamA_PrimaryColor',TeamA_SecondaryColor:'PEPS_TeamA_SecondaryColor',TeamB_PrimaryColor:'PEPS_TeamB_PrimaryColor',TeamB_SecondaryColor:'PEPS_TeamB_SecondaryColor'},fx:{teamA:'PEPS_TeamA_FX',teamB:'PEPS_TeamB_FX',autoHideSec:0},timeBySport:{football:{mode:'up',sec:0},basket3:{mode:'down',sec:600},basket5:{mode:'down',sec:600}},antiMs:420,timerDefault:'sport',logo:{mode:'local',basePath:'logos/',folderPath:'',exts:'png,jpg,jpeg,webp,svg'},teamColors:{aPrimary:'#ff6a00',aSecondary:'#111111',bPrimary:'#0057ff',bSecondary:'#ffffff'},actions:[{label:'Open',source:'PEPS_OpenFX',mode:'toggle',autoHide:0},{label:'Sponsor',source:'PEPS_Sponsor',mode:'toggle',autoHide:0},{label:'Lower',source:'PEPS_LowerThird',mode:'pulse',autoHide:6},{label:'Stats',source:'PEPS_Stats',mode:'toggle',autoHide:0},{label:'Break',source:'PEPS_Break',mode:'show',autoHide:0},{label:'Clear',source:'*',mode:'hideAll',autoHide:0}],layout:[{key:'quick',label:'Quick Match',show:true,order:1},{key:'score',label:'Score / Result',show:true,order:2},{key:'clock',label:'Clock / Status',show:true,order:3},{key:'actions',label:'Source Actions',show:true,order:4},{key:'result',label:'Result',show:true,order:5},{key:'system',label:'System Status',show:true,order:6}]};
+const defaultSettings={sheetUrl:'',sheetGid:'0',webhookUrl:'',obsHost:'127.0.0.1',obsPort:'4455',obsPassword:'',obsScene:'',sources:{TeamA:'PEPS_TeamA',TeamB:'PEPS_TeamB',ScoreA:'PEPS_ScoreA',ScoreB:'PEPS_ScoreB',Clock:'PEPS_Clock',Period:'PEPS_Period',Status:'PEPS_Status',Label1:'PEPS_Label1',Label2:'PEPS_Label2',Label3:'PEPS_Label3',Label4:'PEPS_Label4',Label5:'PEPS_Label5',LogoA:'PEPS_LogoA',LogoB:'PEPS_LogoB',CommandBus:'PEPS_CommandBus',TeamA_PrimaryColor:'PEPS_TeamA_PrimaryColor',TeamA_SecondaryColor:'PEPS_TeamA_SecondaryColor',TeamB_PrimaryColor:'PEPS_TeamB_PrimaryColor',TeamB_SecondaryColor:'PEPS_TeamB_SecondaryColor',SkinLive:'PEPS_SKIN_LIVE_SCOREBOARD',SkinSummary:'PEPS_SKIN_SUMMARY_BOARD'},fx:{teamA:'PEPS_TeamA_FX',teamB:'PEPS_TeamB_FX',autoHideSec:0},timeBySport:{football:{mode:'up',sec:0},basket3:{mode:'down',sec:600},basket5:{mode:'down',sec:600}},antiMs:420,timerDefault:'sport',logo:{mode:'local',basePath:'logos/',folderPath:'',exts:'png,jpg,jpeg,webp,svg'},teamColors:{aPrimary:'#ff6a00',aSecondary:'#111111',bPrimary:'#0057ff',bSecondary:'#ffffff'},actions:[{label:'Open',source:'PEPS_OpenFX',mode:'toggle',autoHide:0},{label:'Sponsor',source:'PEPS_Sponsor',mode:'toggle',autoHide:0},{label:'Lower',source:'PEPS_LowerThird',mode:'pulse',autoHide:6},{label:'Stats',source:'PEPS_Stats',mode:'toggle',autoHide:0},{label:'Break',source:'PEPS_Break',mode:'show',autoHide:0},{label:'Clear',source:'*',mode:'hideAll',autoHide:0}],layout:[{key:'quick',label:'Quick Match',show:true,order:1},{key:'score',label:'Score / Result',show:true,order:2},{key:'clock',label:'Clock / Status',show:true,order:3},{key:'actions',label:'Source Actions',show:true,order:4},{key:'result',label:'Result',show:true,order:5},{key:'system',label:'System Status',show:true,order:6}]};
 const defaultState={sheetRows:[],filteredRows:[],selectedIndex:-1,currentIndex:-1,sport:'football',dirty:false,lastSavedResult:null,match:{MatchID:'',LogoA:'',TeamA:'TEAM A',LogoB:'',TeamB:'TEAM B',Label1:'',Label2:'',Label3:'',Label4:'',Label5:'',ScoreA:'',ScoreB:'',FinalScore:'',MatchStatus:''},scoreA:0,scoreB:0,clockSec:0,clockMode:'up',timerRunning:false,period:'1st Half',status:'LIVE',history:[],logs:[],lastCmd:{key:'',t:0},logoMap:{},logoChecked:false,lastRemoteCommandId:'',lastCommandBusText:''};
 let settings=merge(defaultSettings,loadJson(SETTINGS_KEY,{}));
 let state=merge(defaultState,loadJson(STORE_KEY,{}));
@@ -407,7 +407,7 @@ function bind(){initDrawer();on('btnOpenSettings',openDrawer);on('btnCloseDrawer
 
 // ===== PepsLive Dock V1 final feature overrides =====
 const OBS_TAGS=[
- ['TeamA','Text(GDI+)'],['TeamB','Text(GDI+)'],['ScoreA','Text(GDI+)'],['ScoreB','Text(GDI+)'],['Clock','Text(GDI+)'],['Period','Text(GDI+)'],['Status','Text(GDI+)'],['Label1','Text(GDI+)'],['Label2','Text(GDI+)'],['Label3','Text(GDI+)'],['Label4','Text(GDI+)'],['Label5','Text(GDI+)'],['LogoA','Logo'],['LogoB','Logo'],['TeamA_FX','Media'],['TeamB_FX','Media'],['CommandBus','Text(GDI+)'],['TeamA_PrimaryColor','Text(GDI+)'],['TeamA_SecondaryColor','Text(GDI+)'],['TeamB_PrimaryColor','Text(GDI+)'],['TeamB_SecondaryColor','Text(GDI+)']
+ ['TeamA','Text(GDI+)'],['TeamB','Text(GDI+)'],['ScoreA','Text(GDI+)'],['ScoreB','Text(GDI+)'],['Clock','Text(GDI+)'],['Period','Text(GDI+)'],['Status','Text(GDI+)'],['Label1','Text(GDI+)'],['Label2','Text(GDI+)'],['Label3','Text(GDI+)'],['Label4','Text(GDI+)'],['Label5','Text(GDI+)'],['LogoA','Logo'],['LogoB','Logo'],['TeamA_FX','Media'],['TeamB_FX','Media'],['CommandBus','Text(GDI+)'],['TeamA_PrimaryColor','Text(GDI+)'],['TeamA_SecondaryColor','Text(GDI+)'],['TeamB_PrimaryColor','Text(GDI+)'],['TeamB_SecondaryColor','Text(GDI+)'],['SkinLive','Browser'],['SkinSummary','Browser']
 ];
 const HELP_TEXT={
  match:'วิธีการใช้งาน Match Loader\n1. โหลด Google Sheet ก่อน\n2. พิมพ์ค้นหา MatchID / ชื่อทีม / สนาม / รอบ\n3. คลิกเลือกคู่ที่ต้องการ\n4. กด Load Match เพื่อส่งชื่อทีม คะแนน โลโก้ และ label เข้า OBS\n5. กด Next เพื่อไปคู่ถัดไป',
@@ -419,7 +419,7 @@ const HELP_TEXT={
  layout:'วิธีการใช้งาน Dock Layout\n1. ติ๊กเลือก Module ที่ต้องการแสดง\n2. ใส่เลข Order เพื่อเรียงลำดับ\n3. กด Save Layout\n4. ถ้าอยากกลับค่าเดิมให้กด Reset Layout',
  advanced:'วิธีการใช้งาน Advanced\nใช้สำหรับตั้งค่า Anti-double, Export/Import State และดู Command Log เท่านั้น ถ้าไม่แน่ใจไม่ควร Reset State ระหว่างไลฟ์'
 };
-function normalizeSettingsV1(){settings.logo=settings.logo||{mode:'local',basePath:'logos/',folderPath:'',exts:'png,jpg,jpeg,webp,svg'};settings.logo.mode=settings.logo.mode||'local';settings.logo.basePath=settings.logo.basePath||'logos/';settings.logo.exts=settings.logo.exts||'png,jpg,jpeg,webp,svg';settings.teamColors=settings.teamColors||{aPrimary:'#ff6a00',aSecondary:'#111111',bPrimary:'#0057ff',bSecondary:'#ffffff'};settings.actions=settings.actions||[{label:'Open',source:'PEPS_OpenFX',mode:'toggle',autoHide:0},{label:'Sponsor',source:'PEPS_Sponsor',mode:'toggle',autoHide:0},{label:'Lower',source:'PEPS_LowerThird',mode:'pulse',autoHide:6},{label:'Stats',source:'PEPS_Stats',mode:'toggle',autoHide:0},{label:'Break',source:'PEPS_Break',mode:'show',autoHide:0},{label:'Clear',source:'*',mode:'hideAll',autoHide:0}];while(settings.actions.length<6)settings.actions.push({label:'Action '+(settings.actions.length+1),source:'',mode:'toggle',autoHide:0});settings.layout=settings.layout||[{key:'quick',label:'Quick Match',show:true,order:1},{key:'score',label:'Score / Result',show:true,order:2},{key:'clock',label:'Clock / Status',show:true,order:3},{key:'actions',label:'Source Actions',show:true,order:4},{key:'result',label:'Result',show:true,order:5},{key:'system',label:'System Status',show:true,order:6}];settings.sources.TeamA_PrimaryColor=settings.sources.TeamA_PrimaryColor||'PEPS_TeamA_PrimaryColor';settings.sources.TeamA_SecondaryColor=settings.sources.TeamA_SecondaryColor||'PEPS_TeamA_SecondaryColor';settings.sources.TeamB_PrimaryColor=settings.sources.TeamB_PrimaryColor||'PEPS_TeamB_PrimaryColor';settings.sources.TeamB_SecondaryColor=settings.sources.TeamB_SecondaryColor||'PEPS_TeamB_SecondaryColor';if(settings.fx && settings.fx.autoHideSec===undefined)settings.fx.autoHideSec=0;}
+function normalizeSettingsV1(){settings.logo=settings.logo||{mode:'local',basePath:'logos/',folderPath:'',exts:'png,jpg,jpeg,webp,svg'};settings.logo.mode=settings.logo.mode||'local';settings.logo.basePath=settings.logo.basePath||'logos/';settings.logo.exts=settings.logo.exts||'png,jpg,jpeg,webp,svg';settings.teamColors=settings.teamColors||{aPrimary:'#ff6a00',aSecondary:'#111111',bPrimary:'#0057ff',bSecondary:'#ffffff'};settings.actions=settings.actions||[{label:'Open',source:'PEPS_OpenFX',mode:'toggle',autoHide:0},{label:'Sponsor',source:'PEPS_Sponsor',mode:'toggle',autoHide:0},{label:'Lower',source:'PEPS_LowerThird',mode:'pulse',autoHide:6},{label:'Stats',source:'PEPS_Stats',mode:'toggle',autoHide:0},{label:'Break',source:'PEPS_Break',mode:'show',autoHide:0},{label:'Clear',source:'*',mode:'hideAll',autoHide:0}];while(settings.actions.length<6)settings.actions.push({label:'Action '+(settings.actions.length+1),source:'',mode:'toggle',autoHide:0});settings.layout=settings.layout||[{key:'quick',label:'Quick Match',show:true,order:1},{key:'score',label:'Score / Result',show:true,order:2},{key:'clock',label:'Clock / Status',show:true,order:3},{key:'actions',label:'Source Actions',show:true,order:4},{key:'result',label:'Result',show:true,order:5},{key:'system',label:'System Status',show:true,order:6}];settings.sources.TeamA_PrimaryColor=settings.sources.TeamA_PrimaryColor||'PEPS_TeamA_PrimaryColor';settings.sources.TeamA_SecondaryColor=settings.sources.TeamA_SecondaryColor||'PEPS_TeamA_SecondaryColor';settings.sources.TeamB_PrimaryColor=settings.sources.TeamB_PrimaryColor||'PEPS_TeamB_PrimaryColor';settings.sources.TeamB_SecondaryColor=settings.sources.TeamB_SecondaryColor||'PEPS_TeamB_SecondaryColor';settings.sources.SkinLive=settings.sources.SkinLive||'PEPS_SKIN_LIVE_SCOREBOARD';settings.sources.SkinSummary=settings.sources.SkinSummary||'PEPS_SKIN_SUMMARY_BOARD';if(settings.fx && settings.fx.autoHideSec===undefined)settings.fx.autoHideSec=0;}
 normalizeSettingsV1();
 function showHelp(key){const txt=HELP_TEXT[key]||'ยังไม่มีข้อมูลวิธีการใช้งาน';confirmBox('วิธีการใช้งาน '+key,txt.replace(/\n/g,'\n'),'เข้าใจแล้ว')}
 const oldUpdateSessionDisplay=updateSessionDisplay;updateSessionDisplay=function(){const userText=auth.authenticated?`ผู้ใช้: ${auth.username||'-'} | จังหวัด: ${auth.province||'-'}`:'ล็อกอินก่อนเริ่มใช้งานระบบ';if($('sessionText'))$('sessionText').textContent=userText;if($('btnOnlineUsers')){if(auth.authenticated){$('btnOnlineUsers').style.display='inline-flex';$('btnOnlineUsers').textContent=presence.error?presence.error:`ออนไลน์: ${presence.onlineCount||0} คน`;$('btnOnlineUsers').classList.toggle('offline',!!presence.error)}else{$('btnOnlineUsers').style.display='none'}}};
@@ -503,6 +503,7 @@ function tagInputKind(type){
   if(type==='Media')return 'ffmpeg_source';
   if(type==='Logo')return 'image_source';
   if(type==='Image')return 'image_source';
+  if(type==='Browser')return 'browser_source';
   return 'text_gdiplus_v3';
 }
 function isLikelyRealLocalPath(v){return /^[a-zA-Z]:[\\/]/.test(v)||/^\\\\/.test(v)||/^\//.test(v)}
@@ -563,7 +564,8 @@ async function setLogo(inputName,value){
   }
 }
 
-async function createSourceByTag(k,type){if(!(await ensureObs()))return;const sceneName=await currentScene();const inputName=tagSourceName(k);const kind=tagInputKind(type);let inputSettings={};let enabled=true;if(type==='Text(GDI+)')inputSettings={text:k};if(type==='Logo'){if(kind==='browser_source')inputSettings={url:'about:blank',width:360,height:360};else inputSettings={file:''}}if(type==='Image')inputSettings={file:''};if(type==='Media'){inputSettings={local_file:'',is_local_file:true};enabled=false}try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)} }
+async function createSourceByTag(k,type){if(!(await ensureObs()))return;const sceneName=await currentScene();const inputName=tagSourceName(k);const kind=tagInputKind(type);let inputSettings={};let enabled=true;if(type==='Text(GDI+)')inputSettings={text:k};if(type==='Logo'){if(kind==='browser_source')inputSettings={url:'about:blank',width:360,height:360};else inputSettings={file:''}}if(type==='Image')inputSettings={file:''};if(type==='Media'){inputSettings={local_file:'',is_local_file:true};enabled=false}
+  if(type==='Browser'){const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)} }
 createSources=async function(){if(!(await ensureObs()))return;for(const [k,t] of OBS_TAGS)await createSourceByTag(k,t);toast('สร้าง Source ทั้งหมดเสร็จแล้ว')};
 async function setActionVisible(sourceName,enabled){if(!sourceName||sourceName==='*')return;try{const sceneName=await currentScene();const item=await obsRequest('GetSceneItemId',{sceneName,sourceName});await obsRequest('SetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId,sceneItemEnabled:!!enabled})}catch(e){toast('ไม่พบ Source/Group: '+sourceName)} }
 async function toggleActionSource(sourceName){try{const sceneName=await currentScene();const item=await obsRequest('GetSceneItemId',{sceneName,sourceName});const r=await obsRequest('GetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId});await obsRequest('SetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId,sceneItemEnabled:!r.sceneItemEnabled})}catch(e){toast('Toggle ไม่สำเร็จ: '+sourceName)} }
@@ -582,7 +584,7 @@ function applyDockLayout(){(settings.layout||[]).forEach(m=>{const el=document.q
 const oldRenderAll=renderAll;renderAll=function(){oldRenderAll();normalizeSettingsV1();renderActionButtons();renderObsTagTable();renderSourceActionSettings();renderLayoutSettings();applyDockLayout();};
 const oldRenderSettingsInputs=renderSettingsInputs;renderSettingsInputs=function(){oldRenderSettingsInputs();normalizeSettingsV1();if($('setLogoMode'))$('setLogoMode').value=settings.logo.mode;if($('setLogoBasePath'))$('setLogoBasePath').value=settings.logo.basePath||'logos/';if($('setLogoFolderPath'))$('setLogoFolderPath').value=settings.logo.folderPath||'';if($('setLogoExts'))$('setLogoExts').value=settings.logo.exts||'png,jpg,jpeg,webp,svg';};
 const oldSaveSettingsFromInputs=saveSettingsFromInputs;saveSettingsFromInputs=function(showToast=true){oldSaveSettingsFromInputs(false);normalizeSettingsV1();if($('setLogoMode'))settings.logo.mode=$('setLogoMode').value;if($('setLogoBasePath'))settings.logo.basePath=$('setLogoBasePath').value.trim()||'logos/';if($('setLogoFolderPath'))settings.logo.folderPath=$('setLogoFolderPath').value.trim();if($('setLogoExts'))settings.logo.exts=$('setLogoExts').value.trim()||'png,jpg,jpeg,webp,svg';saveLocal();if(showToast)toast('บันทึก Settings แล้ว')};
-const oldSyncObsAll=syncObsAll;syncObsAll=async function(){await oldSyncObsAll();if(obs.connected){try{await Promise.all([setText(settings.sources.TeamA_PrimaryColor,settings.teamColors.aPrimary),setText(settings.sources.TeamA_SecondaryColor,settings.teamColors.aSecondary),setText(settings.sources.TeamB_PrimaryColor,settings.teamColors.bPrimary),setText(settings.sources.TeamB_SecondaryColor,settings.teamColors.bSecondary)])}catch(e){}}};
+const oldSyncObsAll=syncObsAll;syncObsAll=async function(){await oldSyncObsAll();if(obs.connected){try{await Promise.all([setText(settings.sources.TeamA_PrimaryColor,settings.teamColors.aPrimary),setText(settings.sources.TeamA_SecondaryColor,settings.teamColors.aSecondary),setText(settings.sources.TeamB_PrimaryColor,settings.teamColors.bPrimary),setText(settings.sources.TeamB_SecondaryColor,settings.teamColors.bSecondary),setSkinBrowserSourceUrl('live'),setSkinBrowserSourceUrl('summary')])}catch(e){}}};
 const oldProcessRemoteCommand=processRemoteCommand;processRemoteCommand=async function(cmd){const action=cmd&&(cmd.action||cmd.type||cmd.command);if(action==='sourceAction')return runSourceAction(cmd.slot||1);if(action==='hideAllActions')return hideAllActionSources();return oldProcessRemoteCommand(cmd)};
 
 // Runtime safety patch: keep Settings Drawer and Timer resilient even if optional settings sections change.
@@ -654,6 +656,7 @@ async function createSourceByTag(k,type){
   if(type==='Text(GDI+)')inputSettings={text:k};
   if(type==='Image')inputSettings={file:''};
   if(type==='Media'){inputSettings={local_file:'',is_local_file:true};enabled=false}
+  if(type==='Browser'){const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}
   try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)}
 }
 createSources=async function(){if(!(await ensureObs()))return;for(const [k,t] of OBS_TAGS)await createSourceByTag(k,t);toast('สร้าง/ซ่อม Source ทั้งหมดเสร็จแล้ว')};
@@ -818,8 +821,52 @@ function syncSportToSkinDefault(sport,kind){
   if(s==='basket3'||s==='basket5'||s==='basketball')return isSummary?'BB-SUM-01':'BB-LIVE-01';
   return isSummary?'FB-SUM-01':'FB-LIVE-01';
 }
+const SKIN_STUDIO_URLS_KEY='pepslive.scoreboardSkinStudio.lastUrls';
+const SKIN_STUDIO_SYNC_CHANNEL='PEPSLIVE_STUDIO_SYNC';
+const SKIN_STUDIO_SYNC_PROTOCOL='PEPSLIVE_STUDIO_SYNC_V1';
+let skinStudioLastUrls=loadSkinStudioLastUrls();
+let skinStudioUrlChannel=null;
+function loadSkinStudioLastUrls(){try{return JSON.parse(localStorage.getItem(SKIN_STUDIO_URLS_KEY)||'null')}catch(_){return null}}
+function saveSkinStudioLastUrls(payload){try{skinStudioLastUrls=payload;localStorage.setItem(SKIN_STUDIO_URLS_KEY,JSON.stringify(payload));renderSkinSyncStatus();return true}catch(e){console.warn('[SkinStudioUrlSync] localStorage failed',e);return false}}
+function isValidStudioUrlPayload(payload){return !!payload&&typeof payload==='object'&&payload.protocol===SKIN_STUDIO_SYNC_PROTOCOL&&(payload.liveUrl||payload.summaryUrl)}
+function ingestSkinStudioUrlPayload(payload){if(!isValidStudioUrlPayload(payload))return false;saveSkinStudioLastUrls(payload);return true}
+function initSkinStudioUrlListener(){
+  if(skinStudioUrlChannel)return;
+  try{
+    skinStudioUrlChannel=new BroadcastChannel(SKIN_STUDIO_SYNC_CHANNEL);
+    skinStudioUrlChannel.addEventListener('message',e=>ingestSkinStudioUrlPayload(e.data));
+  }catch(e){console.warn('[SkinStudioUrlSync] BroadcastChannel unavailable',e)}
+  window.addEventListener('storage',e=>{if(e.key===SKIN_STUDIO_URLS_KEY)skinStudioLastUrls=loadSkinStudioLastUrls();renderSkinSyncStatus()});
+}
+function freshStudioUrl(raw,debug){
+  if(!raw)return '';
+  try{
+    const url=new URL(raw,SKIN_STUDIO_BASE_URL);
+    url.searchParams.set('v',String(Date.now()));
+    if(debug)url.searchParams.set('debug','1');else url.searchParams.delete('debug');
+    return url.toString();
+  }catch(_){return raw}
+}
+function studioSyncedUrlFor(kind,debug){
+  const payload=skinStudioLastUrls||loadSkinStudioLastUrls();
+  const raw=kind==='summary'?(payload&&(debug?payload.summaryDebugUrl:payload.summaryUrl)):(payload&&(debug?payload.liveDebugUrl:payload.liveUrl));
+  return freshStudioUrl(raw,debug);
+}
+function skinBrowserSourceSize(kind){return kind==='summary'?{width:1920,height:1080}:{width:900,height:180}}
+async function setSkinBrowserSourceUrl(kind){
+  if(!(await ensureObs()))return false;
+  const inputName=kind==='summary'?(settings.sources.SkinSummary||'PEPS_SKIN_SUMMARY_BOARD'):(settings.sources.SkinLive||'PEPS_SKIN_LIVE_SCOREBOARD');
+  const size=skinBrowserSourceSize(kind);
+  const url=makeSkinStudioOverlayUrl(kind,false);
+  try{
+    await obsRequest('SetInputSettings',{inputName,inputSettings:{url,width:size.width,height:size.height,shutdown:false,restart_when_active:true},overlay:true});
+    return true;
+  }catch(e){log('Skin Studio Browser Source update skipped: '+inputName+' | '+e.message);return false}
+}
 function makeSkinStudioOverlayUrl(kind,debug){
   const normalizedKind=kind==='summary'?'summary':'live';
+  const syncedUrl=studioSyncedUrlFor(normalizedKind,debug);
+  if(syncedUrl)return syncedUrl;
   const st=currentDockStateForSkinSync();
   const skinId=syncSportToSkinDefault(st.sport,normalizedKind);
   const url=new URL('overlays/'+normalizedKind+'.html',SKIN_STUDIO_BASE_URL);
@@ -832,14 +879,14 @@ function safeCopy(text,okMsg){
   const value=String(text||'').trim();
   if(!value)return;
   if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(value).then(()=>toast(okMsg||'Copy ����')).catch(()=>toast('Copy ��������'));
+    navigator.clipboard.writeText(value).then(()=>toast(okMsg||'Copy ����')).catch(()=>toast('Copy ��������'));
     return;
   }
   const ta=document.createElement('textarea');
   ta.value=value;
   document.body.appendChild(ta);
   ta.select();
-  try{document.execCommand('copy');toast(okMsg||'Copy ����')}catch(_){toast('Copy ��������')}
+  try{document.execCommand('copy');toast(okMsg||'Copy ����')}catch(_){toast('Copy ��������')}
   ta.remove();
 }
 function renderSkinSyncStatus(){
@@ -855,6 +902,7 @@ function renderSkinSyncStatus(){
   if(badge){badge.textContent=enabled?'Ready':'Off';}
   if(statusText){
     if(!enabled)statusText.textContent='Off';
+    else if(skinStudioLastUrls&&skinStudioLastUrls.liveUrl)statusText.textContent='Ready + Studio URL';
     else if(skinSyncLastResult&&skinSyncLastResult.ok)statusText.textContent='Publishing';
     else statusText.textContent='Ready';
   }
@@ -880,19 +928,20 @@ function publishSkinSyncNow(){
 }
 function initSkinSyncPanel(){
   if(!$('moduleSkinSync'))return;
+  initSkinStudioUrlListener();
   if(skinSyncPanelInited){renderSkinSyncStatus();return;}
   skinSyncPanelInited=true;
   if($('skinSyncEnabled'))$('skinSyncEnabled').onchange=e=>setSkinSyncEnabled(!!(e&&e.target&&e.target.checked));
   if($('btnPublishSkinSync'))$('btnPublishSkinSync').onclick=()=>{
     const r=publishSkinSyncNow();
-    if(r&&r.error==='sync_disabled'){toast('Sync �Դ���� �Դ Enable Sync ��͹');return;}
-    toast(r&&r.ok?'Publish � Skin Studio ����':'Publish ��������');
+    if(r&&r.error==='sync_disabled'){toast('Sync �Դ���� �Դ Enable Sync ��͹');return;}
+    toast(r&&r.ok?'Publish � Skin Studio ����':'Publish ��������');
   };
-  if($('btnCopySkinPayload'))$('btnCopySkinPayload').onclick=()=>safeCopy(skinSyncLastResult&&skinSyncLastResult.payload?JSON.stringify(skinSyncLastResult.payload,null,2):'','Copy payload ����');
-  if($('btnCopySkinLiveUrl'))$('btnCopySkinLiveUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',false),'Copy Live URL ����');
-  if($('btnCopySkinSummaryUrl'))$('btnCopySkinSummaryUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',false),'Copy Summary URL ����');
-  if($('btnCopySkinLiveDebugUrl'))$('btnCopySkinLiveDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',true),'Copy Live Debug URL ����');
-  if($('btnCopySkinSummaryDebugUrl'))$('btnCopySkinSummaryDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',true),'Copy Summary Debug URL ����');
+  if($('btnCopySkinPayload'))$('btnCopySkinPayload').onclick=()=>safeCopy(skinSyncLastResult&&skinSyncLastResult.payload?JSON.stringify(skinSyncLastResult.payload,null,2):'','Copy payload ����');
+  if($('btnCopySkinLiveUrl'))$('btnCopySkinLiveUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',false),'Copy Live URL ����');
+  if($('btnCopySkinSummaryUrl'))$('btnCopySkinSummaryUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',false),'Copy Summary URL ����');
+  if($('btnCopySkinLiveDebugUrl'))$('btnCopySkinLiveDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',true),'Copy Live Debug URL ����');
+  if($('btnCopySkinSummaryDebugUrl'))$('btnCopySkinSummaryDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',true),'Copy Summary Debug URL ����');
   if(skinSyncController&&skinSyncController.stop)skinSyncController.stop();
   if(window.ScoreboardSkinSync&&window.ScoreboardSkinSync.installScoreboardSkinAutoSync){
     skinSyncController=window.ScoreboardSkinSync.installScoreboardSkinAutoSync(
