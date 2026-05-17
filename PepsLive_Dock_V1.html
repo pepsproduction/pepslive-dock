@@ -565,7 +565,7 @@ async function setLogo(inputName,value){
 }
 
 async function createSourceByTag(k,type){if(!(await ensureObs()))return;const sceneName=await currentScene();const inputName=tagSourceName(k);const kind=tagInputKind(type);let inputSettings={};let enabled=true;if(type==='Text(GDI+)')inputSettings={text:k};if(type==='Logo'){if(kind==='browser_source')inputSettings={url:'about:blank',width:360,height:360};else inputSettings={file:''}}if(type==='Image')inputSettings={file:''};if(type==='Media'){inputSettings={local_file:'',is_local_file:true};enabled=false}
-  if(type==='Browser'){const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)} }
+  if(type==='Browser'){const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeBestSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)} }
 createSources=async function(){if(!(await ensureObs()))return;for(const [k,t] of OBS_TAGS)await createSourceByTag(k,t);toast('สร้าง Source ทั้งหมดเสร็จแล้ว')};
 async function setActionVisible(sourceName,enabled){if(!sourceName||sourceName==='*')return;try{const sceneName=await currentScene();const item=await obsRequest('GetSceneItemId',{sceneName,sourceName});await obsRequest('SetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId,sceneItemEnabled:!!enabled})}catch(e){toast('ไม่พบ Source/Group: '+sourceName)} }
 async function toggleActionSource(sourceName){try{const sceneName=await currentScene();const item=await obsRequest('GetSceneItemId',{sceneName,sourceName});const r=await obsRequest('GetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId});await obsRequest('SetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId,sceneItemEnabled:!r.sceneItemEnabled})}catch(e){toast('Toggle ไม่สำเร็จ: '+sourceName)} }
@@ -656,7 +656,7 @@ async function createSourceByTag(k,type){
   if(type==='Text(GDI+)')inputSettings={text:k};
   if(type==='Image')inputSettings={file:''};
   if(type==='Media'){inputSettings={local_file:'',is_local_file:true};enabled=false}
-  if(type==='Browser'){const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}
+  if(type==='Browser'){const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeBestSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}
   try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)}
 }
 createSources=async function(){if(!(await ensureObs()))return;for(const [k,t] of OBS_TAGS)await createSourceByTag(k,t);toast('สร้าง/ซ่อม Source ทั้งหมดเสร็จแล้ว')};
@@ -898,7 +898,7 @@ async function setSkinBrowserSourceUrl(kind){
   if(!(await ensureObs()))return false;
   const inputName=kind==='summary'?(settings.sources.SkinSummary||'PEPS_SKIN_SUMMARY_BOARD'):(settings.sources.SkinLive||'PEPS_SKIN_LIVE_SCOREBOARD');
   const size=skinBrowserSourceSize(kind);
-  const url=makeSkinStudioOverlayUrl(kind,false);
+  const url=makeBestSkinStudioOverlayUrl(kind,false);
   try{
     await obsRequest('SetInputSettings',{inputName,inputSettings:{url,width:size.width,height:size.height,shutdown:false,restart_when_active:true},overlay:true});
     return true;
@@ -924,6 +924,10 @@ function makeSkinStudioRelayOverlayUrl(kind,debug){
   url.searchParams.set('v',String(Date.now()));
   if(debug)url.searchParams.set('debug','1');else url.searchParams.delete('debug');
   return url.toString();
+}
+function makeBestSkinStudioOverlayUrl(kind,debug){
+  const relayUrl=isSkinRelayEnabled()?makeSkinStudioRelayOverlayUrl(kind,debug):'';
+  return relayUrl||makeSkinStudioOverlayUrl(kind,debug);
 }
 function safeCopy(text,okMsg){
   const value=String(text||'').trim();
@@ -978,6 +982,16 @@ function renderSkinSyncStatus(){
   }else if(payloadPreview){
     payloadPreview.textContent='No payload yet';
   }
+}
+async function useSkinRelayPreset(url,label){
+  const relayUrl=String(url||'').trim();
+  if(!relayUrl){toast('Relay URL is empty');return;}
+  setSkinSyncEnabled(true);
+  setSkinRelayUrl(relayUrl);
+  setSkinRelayEnabled(true);
+  publishSkinSyncNow();
+  const result=await publishSkinRelayNow({silent:true});
+  toast(result&&result.ok?(label+' ready. Copy Live URL or Summary URL.'):('Relay setup saved, but publish failed: '+((result&&result.error)||'unknown')));
 }
 function publishSkinSyncNow(){
   if(!isSkinSyncEnabled()){
@@ -1058,18 +1072,18 @@ function initSkinSyncPanel(){
   if($('skinSyncEnabled'))$('skinSyncEnabled').onchange=e=>setSkinSyncEnabled(!!(e&&e.target&&e.target.checked));
   if($('skinRelayEnabled'))$('skinRelayEnabled').onchange=e=>setSkinRelayEnabled(!!(e&&e.target&&e.target.checked));
   if($('skinRelayUrlInput'))$('skinRelayUrlInput').onchange=e=>setSkinRelayUrl(e&&e.target?e.target.value:'');
-  if($('btnUseLocalRelayUrl'))$('btnUseLocalRelayUrl').onclick=()=>{setSkinRelayUrl(defaultLocalSkinRelayUrl());setSkinRelayEnabled(true);toast('Local relay URL ready')};
-  if($('btnUseWebhookRelayUrl'))$('btnUseWebhookRelayUrl').onclick=()=>{if(!settings.webhookUrl){toast('Set Apps Script Webhook URL first');return;}setSkinRelayUrl(settings.webhookUrl);setSkinRelayEnabled(true);toast('Apps Script relay URL ready')};
+  if($('btnUseLocalRelayUrl'))$('btnUseLocalRelayUrl').onclick=()=>useSkinRelayPreset(defaultLocalSkinRelayUrl(),'Local relay');
+  if($('btnUseWebhookRelayUrl'))$('btnUseWebhookRelayUrl').onclick=()=>{if(!settings.webhookUrl){toast('Set Apps Script Webhook URL first');return;}useSkinRelayPreset(settings.webhookUrl,'Apps Script relay')};
   if($('btnPublishSkinSync'))$('btnPublishSkinSync').onclick=()=>{
     const r=publishSkinSyncNow();
     if(r&&r.error==='sync_disabled'){toast('Sync �Դ���� �Դ Enable Sync ��͹');return;}
     toast(r&&r.ok?'Publish � Skin Studio ����':'Publish ��������');
   };
   if($('btnCopySkinPayload'))$('btnCopySkinPayload').onclick=()=>safeCopy(skinSyncLastResult&&skinSyncLastResult.payload?JSON.stringify(skinSyncLastResult.payload,null,2):'','Copy payload ����');
-  if($('btnCopySkinLiveUrl'))$('btnCopySkinLiveUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',false),'Copy Live URL ����');
-  if($('btnCopySkinSummaryUrl'))$('btnCopySkinSummaryUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',false),'Copy Summary URL ����');
-  if($('btnCopySkinLiveDebugUrl'))$('btnCopySkinLiveDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('live',true),'Copy Live Debug URL ����');
-  if($('btnCopySkinSummaryDebugUrl'))$('btnCopySkinSummaryDebugUrl').onclick=()=>safeCopy(makeSkinStudioOverlayUrl('summary',true),'Copy Summary Debug URL ����');
+  if($('btnCopySkinLiveUrl'))$('btnCopySkinLiveUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('live',false),'Copy Live URL ����');
+  if($('btnCopySkinSummaryUrl'))$('btnCopySkinSummaryUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('summary',false),'Copy Summary URL ����');
+  if($('btnCopySkinLiveDebugUrl'))$('btnCopySkinLiveDebugUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('live',true),'Copy Live Debug URL ����');
+  if($('btnCopySkinSummaryDebugUrl'))$('btnCopySkinSummaryDebugUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('summary',true),'Copy Summary Debug URL ����');
   if($('btnPublishSkinRelay'))$('btnPublishSkinRelay').onclick=()=>publishSkinRelayNow();
   if($('btnCopySkinRelayLiveUrl'))$('btnCopySkinRelayLiveUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('live',false),'Copy Relay Live URL');
   if($('btnCopySkinRelaySummaryUrl'))$('btnCopySkinRelaySummaryUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('summary',false),'Copy Relay Summary URL');

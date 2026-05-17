@@ -341,3 +341,44 @@ node scripts/check-scoreboard-skin-relay.mjs
 ```
 
 สคริปต์นี้จะ start local server, POST payload เข้า relay, GET payload กลับมา และเช็ก overlay URL ที่มี `?relay=`.
+
+## Quick Start: Skin Studio + Dock V1 แบบขั้นตอนน้อยที่สุด
+
+วิธีแนะนำสำหรับใช้งานจริงกับ OBS คือใช้ **Relay URL** เพราะเสถียรกว่าเมื่อ OBS Browser Source ไม่ได้แชร์ browser profile กับหน้า Dock
+
+### ครั้งแรกเท่านั้น
+
+1. เปิด `PepsLive_Dock_V1.html`
+2. ไปที่ Settings > Google Sheet แล้วใส่ Apps Script Web App URL
+3. อัปเดต Apps Script จากไฟล์ `bridge/google_apps_script_save_result.gs`
+
+### เวลาใช้งานจริง
+
+1. เปิด Dock V1 แล้วเลือกแมตช์ตาม workflow เดิม
+2. ในกล่อง `Scoreboard Skin Studio Sync` กด `Use Apps Script Relay`
+3. กด `Copy Live URL` หรือ `Copy Summary URL`
+4. วาง URL ใน OBS Browser Source
+
+หลังจากนั้นให้ควบคุมคะแนน/เวลา/ทีมจาก Dock V1 เหมือนเดิม ระบบจะ publish payload ไปให้ overlay อัตโนมัติประมาณวินาทีละ 1 ครั้งตอน timer เดิน
+
+### โหมดทดสอบในเครื่อง
+
+ถ้ายังไม่มี Apps Script ให้รัน local relay ก่อน:
+
+```bash
+node scripts/serve-same-origin.mjs
+```
+
+จากนั้นเปิด Dock จาก:
+
+```text
+http://127.0.0.1:8123/pepslive-dock/PepsLive_Dock_V1.html
+```
+
+แล้วกด `Use Local QA Relay` จากนั้น Copy Live URL / Summary URL ไปทดสอบได้ทันที
+
+### ปุ่ม Copy URL ตอนนี้ทำงานแบบ Smart URL
+
+- ถ้า Relay เปิดอยู่: `Copy Live URL` / `Copy Summary URL` จะ copy URL ที่มี `?relay=` ให้เอง
+- ถ้า Relay ไม่เปิด: จะ fallback เป็น portable/same-origin URL ปกติ
+- ถ้า Skin Studio ส่ง URL ล่าสุดมาแล้ว: Dock จะใช้ skin/theme ล่าสุดนั้นเป็นฐาน URL ก่อน
