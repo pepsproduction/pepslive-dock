@@ -36,7 +36,7 @@ function printManualChecklist() {
   log(`2) Open Dock: ${BASE}/pepslive-dock/PepsLive_Dock_V1.html`);
   log(`3) Open Live Debug: ${BASE}/pepslive-scoreboard-skin-studio/overlays/live.html?skin=FB-LIVE-01&debug=1`);
   log(`4) Open Summary Debug: ${BASE}/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=FB-SUM-01&debug=1`);
-  log('5) In Dock: enable sync, click Publish Current State, then change score/time/status.');
+  log('5) In Dock: open the Skin popup if needed, then change score/time/status normally.');
   log('6) Verify overlay debug source=pepslive-dock and values update.');
   log('7) Check localStorage key pepslive.scoreboard.sharedState.v1 on same origin.');
 }
@@ -62,16 +62,14 @@ async function tryPlaywrightAutomation() {
         username: 'QA Bot',
         province: 'กรุงเทพมหานคร'
       }));
-      localStorage.setItem('pepslive.scoreboardSkinSync.enabled', 'true');
     });
 
     await dock.goto(`${BASE}/pepslive-dock/PepsLive_Dock_V1.html`, { waitUntil: 'domcontentloaded' });
-    await dock.waitForSelector('#btnPublishSkinSync', { timeout: 10000 });
+    await dock.waitForSelector('#scoreBtnsA button', { timeout: 10000 });
 
     await overlay.goto(`${BASE}/pepslive-scoreboard-skin-studio/overlays/live.html?skin=FB-LIVE-01&debug=1`, { waitUntil: 'domcontentloaded' });
     await overlay.waitForTimeout(700);
 
-    await dock.click('#btnPublishSkinSync');
     await dock.click('#scoreBtnsA button');
     await dock.waitForTimeout(1200);
 
@@ -96,7 +94,7 @@ async function tryPlaywrightAutomation() {
       throw new Error('overlay debug signal not found');
     }
 
-    log('PASS browser automation: publish + overlay debug signal');
+    log('PASS browser automation: background sync + overlay debug signal');
     return { supported: true, passed: true };
   } finally {
     await context.close();

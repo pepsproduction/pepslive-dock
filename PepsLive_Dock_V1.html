@@ -160,7 +160,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
     <aside class="side-panel">
       <section class="card dock-module" id="moduleResult" data-module="result"><div class="section-title"><h2>Result</h2><span id="dirtyBadge" class="pill">Saved</span></div><div class="grid"><button class="soft" id="btnSaveResult">Save Result</button><button class="success" id="btnFinishMatch">Finish Match</button><button class="primary" id="btnNextMatch">Load Next Match</button></div></section>
       <section class="card dock-module" id="moduleSystem" data-module="system"><div class="section-title"><h2>System Status</h2></div><div class="ready-list small muted"><div class="ready-row"><span>OBS</span><strong id="miniObsStatus">Off</strong></div><div class="ready-row"><span>Sheet</span><strong id="miniSheetStatus">Not loaded</strong></div><div class="ready-row"><span>Save</span><strong id="miniSaveStatus">Local</strong></div></div></section>
-      <section class="card dock-module" id="moduleSkinSync"><div class="section-title"><h2>Scoreboard Skin Studio Sync</h2><span id="skinSyncStatusBadge" class="pill">Off</span></div><div class="grid small"><label><input id="skinSyncEnabled" type="checkbox"> Enable Sync</label><div class="ready-list small muted"><div class="ready-row"><span>Status</span><strong id="skinSyncStatusText">Off</strong></div><div class="ready-row"><span>Last Sync</span><strong id="skinSyncLastTime">-</strong></div></div><div class="action-row"><button class="soft" id="btnPublishSkinSync">Publish Current State</button><button class="ghost" id="btnCopySkinLiveUrl">Copy Live URL</button><button class="ghost" id="btnCopySkinSummaryUrl">Copy Summary URL</button></div><div class="action-row"><button class="ghost" id="btnCopySkinLiveDebugUrl">Copy Live Debug URL</button><button class="ghost" id="btnCopySkinSummaryDebugUrl">Copy Summary Debug URL</button><button class="soft" id="btnCopySkinPayload">Copy Last Payload</button></div><div class="settings-hint small">Same-origin แนะนำให้เปิด Dock และ Skin Studio ภายใต้โดเมนเดียวกัน เช่น github.io โดเมนเดียว เพื่อให้ BroadcastChannel/localStorage sync ได้ดีที่สุด</div><pre id="skinSyncPayloadPreview" class="small muted" style="margin:0;max-height:160px;overflow:auto">No payload yet</pre><div class="settings-hint small"><strong>Reliable Relay Mode</strong><br>Use this when Dock UI and OBS Browser Source do not share the same browser profile. Enter a relay endpoint, then copy a Relay URL into OBS.</div><label><input id="skinRelayEnabled" type="checkbox"> Enable Relay Publisher</label><label>Relay Endpoint URL<input id="skinRelayUrlInput" placeholder="http://127.0.0.1:8123/pepslive-relay/state.json"></label><div class="ready-list small muted"><div class="ready-row"><span>Relay</span><strong id="skinRelayStatusText">Off</strong></div><div class="ready-row"><span>Last Relay</span><strong id="skinRelayLastTime">-</strong></div></div><div class="action-row"><button class="soft" id="btnPublishSkinRelay">Publish Relay Now</button><button class="ghost" id="btnCopySkinRelayLiveUrl">Copy Relay Live URL</button><button class="ghost" id="btnCopySkinRelaySummaryUrl">Copy Relay Summary URL</button></div><div class="action-row"><button class="ghost" id="btnCopySkinRelayLiveDebugUrl">Copy Relay Live Debug URL</button><button class="ghost" id="btnCopySkinRelaySummaryDebugUrl">Copy Relay Summary Debug URL</button><button class="soft" id="btnUseLocalRelayUrl">Use Local QA Relay</button></div><div class="action-row"><button class="soft" id="btnUseWebhookRelayUrl">Use Apps Script Relay</button><button class="ghost" id="btnCopySkinRelayEndpoint">Copy Relay Endpoint</button><button class="ghost" id="btnCopySkinRelayReadUrl">Copy Relay Read URL</button></div></div></section>
+
     </aside>
   </div>
 </div>
@@ -803,7 +803,8 @@ let skinSyncPanelInited=false;
 let skinRelayLastResult=null;
 let skinRelayPublishTimer=null;
 let skinRelayLastPublishAt=0;
-function isSkinSyncEnabled(){const raw=localStorage.getItem(SKIN_SYNC_ENABLED_KEY);return raw===null?true:raw==='true'}
+function hasSkinSyncPanel(){return !!$('moduleSkinSync')}
+function isSkinSyncEnabled(){if(!hasSkinSyncPanel())return true;const raw=localStorage.getItem(SKIN_SYNC_ENABLED_KEY);return raw===null?true:raw==='true'}
 function setSkinSyncEnabled(next){localStorage.setItem(SKIN_SYNC_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus()}
 function defaultLocalSkinRelayUrl(){
   try{
@@ -811,9 +812,9 @@ function defaultLocalSkinRelayUrl(){
   }catch(_){}
   return 'http://127.0.0.1:8123/pepslive-relay/state.json';
 }
-function isSkinRelayEnabled(){return localStorage.getItem(SKIN_RELAY_ENABLED_KEY)==='true'}
+function isSkinRelayEnabled(){if(!hasSkinSyncPanel()&&(getSkinRelayUrl()||settings.webhookUrl))return true;return localStorage.getItem(SKIN_RELAY_ENABLED_KEY)==='true'}
 function setSkinRelayEnabled(next){localStorage.setItem(SKIN_RELAY_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus()}
-function getSkinRelayUrl(){return (localStorage.getItem(SKIN_RELAY_URL_KEY)||'').trim()}
+function getSkinRelayUrl(){const stored=(localStorage.getItem(SKIN_RELAY_URL_KEY)||'').trim();if(stored)return stored;if(!hasSkinSyncPanel()&&settings.webhookUrl)return String(settings.webhookUrl||'').trim();return ''}
 function setSkinRelayUrl(url){localStorage.setItem(SKIN_RELAY_URL_KEY,String(url||'').trim());renderSkinSyncStatus()}
 function skinRelayReadUrl(){
   const raw=getSkinRelayUrl();
@@ -1156,32 +1157,33 @@ function scheduleSkinRelayPublish(delay=150){
   skinRelayPublishTimer=setTimeout(()=>{skinRelayPublishTimer=null;publishSkinRelayNow({silent:true})},Math.max(0,wait));
 }
 function initSkinSyncPanel(){
-  if(!$('moduleSkinSync'))return;
   initSkinStudioUrlListener();
   if(skinSyncPanelInited){renderSkinSyncStatus();return;}
   skinSyncPanelInited=true;
-  if($('skinSyncEnabled'))$('skinSyncEnabled').onchange=e=>setSkinSyncEnabled(!!(e&&e.target&&e.target.checked));
-  if($('skinRelayEnabled'))$('skinRelayEnabled').onchange=e=>setSkinRelayEnabled(!!(e&&e.target&&e.target.checked));
-  if($('skinRelayUrlInput'))$('skinRelayUrlInput').onchange=e=>setSkinRelayUrl(e&&e.target?e.target.value:'');
-  if($('btnUseLocalRelayUrl'))$('btnUseLocalRelayUrl').onclick=()=>useSkinRelayPreset(defaultLocalSkinRelayUrl(),'Local relay');
-  if($('btnUseWebhookRelayUrl'))$('btnUseWebhookRelayUrl').onclick=()=>{if(!settings.webhookUrl){toast('Set Apps Script Webhook URL first');return;}useSkinRelayPreset(settings.webhookUrl,'Apps Script relay')};
-  if($('btnPublishSkinSync'))$('btnPublishSkinSync').onclick=()=>{
-    const r=publishSkinSyncNow();
-    if(r&&r.error==='sync_disabled'){toast('Sync �Դ���� �Դ Enable Sync ��͹');return;}
-    toast(r&&r.ok?'Publish � Skin Studio ����':'Publish ��������');
-  };
-  if($('btnCopySkinPayload'))$('btnCopySkinPayload').onclick=()=>safeCopy(skinSyncLastResult&&skinSyncLastResult.payload?JSON.stringify(skinSyncLastResult.payload,null,2):'','Copy payload ����');
-  if($('btnCopySkinLiveUrl'))$('btnCopySkinLiveUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('live',false),'Copy Live URL ����');
-  if($('btnCopySkinSummaryUrl'))$('btnCopySkinSummaryUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('summary',false),'Copy Summary URL ����');
-  if($('btnCopySkinLiveDebugUrl'))$('btnCopySkinLiveDebugUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('live',true),'Copy Live Debug URL ����');
-  if($('btnCopySkinSummaryDebugUrl'))$('btnCopySkinSummaryDebugUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('summary',true),'Copy Summary Debug URL ����');
-  if($('btnPublishSkinRelay'))$('btnPublishSkinRelay').onclick=()=>publishSkinRelayNow();
-  if($('btnCopySkinRelayLiveUrl'))$('btnCopySkinRelayLiveUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('live',false),'Copy Relay Live URL');
-  if($('btnCopySkinRelaySummaryUrl'))$('btnCopySkinRelaySummaryUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('summary',false),'Copy Relay Summary URL');
-  if($('btnCopySkinRelayLiveDebugUrl'))$('btnCopySkinRelayLiveDebugUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('live',true),'Copy Relay Live Debug URL');
-  if($('btnCopySkinRelaySummaryDebugUrl'))$('btnCopySkinRelaySummaryDebugUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('summary',true),'Copy Relay Summary Debug URL');
-  if($('btnCopySkinRelayEndpoint'))$('btnCopySkinRelayEndpoint').onclick=()=>safeCopy(skinRelayWriteUrl()||getSkinRelayUrl(),'Copy Relay Endpoint');
-  if($('btnCopySkinRelayReadUrl'))$('btnCopySkinRelayReadUrl').onclick=()=>safeCopy(skinRelayReadUrl(),'Copy Relay Read URL');
+  if(hasSkinSyncPanel()){
+    if($('skinSyncEnabled'))$('skinSyncEnabled').onchange=e=>setSkinSyncEnabled(!!(e&&e.target&&e.target.checked));
+    if($('skinRelayEnabled'))$('skinRelayEnabled').onchange=e=>setSkinRelayEnabled(!!(e&&e.target&&e.target.checked));
+    if($('skinRelayUrlInput'))$('skinRelayUrlInput').onchange=e=>setSkinRelayUrl(e&&e.target?e.target.value:'');
+    if($('btnUseLocalRelayUrl'))$('btnUseLocalRelayUrl').onclick=()=>useSkinRelayPreset(defaultLocalSkinRelayUrl(),'Local relay');
+    if($('btnUseWebhookRelayUrl'))$('btnUseWebhookRelayUrl').onclick=()=>{if(!settings.webhookUrl){toast('Set Apps Script Webhook URL first');return;}useSkinRelayPreset(settings.webhookUrl,'Apps Script relay')};
+    if($('btnPublishSkinSync'))$('btnPublishSkinSync').onclick=()=>{
+      const r=publishSkinSyncNow();
+      if(r&&r.error==='sync_disabled'){toast('Sync is off. Enable sync first.');return;}
+      toast(r&&r.ok?'Published to Skin Studio':'Publish failed');
+    };
+    if($('btnCopySkinPayload'))$('btnCopySkinPayload').onclick=()=>safeCopy(skinSyncLastResult&&skinSyncLastResult.payload?JSON.stringify(skinSyncLastResult.payload,null,2):'','Copy payload OK');
+    if($('btnCopySkinLiveUrl'))$('btnCopySkinLiveUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('live',false),'Copy Live URL OK');
+    if($('btnCopySkinSummaryUrl'))$('btnCopySkinSummaryUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('summary',false),'Copy Summary URL OK');
+    if($('btnCopySkinLiveDebugUrl'))$('btnCopySkinLiveDebugUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('live',true),'Copy Live Debug URL OK');
+    if($('btnCopySkinSummaryDebugUrl'))$('btnCopySkinSummaryDebugUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('summary',true),'Copy Summary Debug URL OK');
+    if($('btnPublishSkinRelay'))$('btnPublishSkinRelay').onclick=()=>publishSkinRelayNow();
+    if($('btnCopySkinRelayLiveUrl'))$('btnCopySkinRelayLiveUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('live',false),'Copy Relay Live URL');
+    if($('btnCopySkinRelaySummaryUrl'))$('btnCopySkinRelaySummaryUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('summary',false),'Copy Relay Summary URL');
+    if($('btnCopySkinRelayLiveDebugUrl'))$('btnCopySkinRelayLiveDebugUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('live',true),'Copy Relay Live Debug URL');
+    if($('btnCopySkinRelaySummaryDebugUrl'))$('btnCopySkinRelaySummaryDebugUrl').onclick=()=>safeCopy(makeSkinStudioRelayOverlayUrl('summary',true),'Copy Relay Summary Debug URL');
+    if($('btnCopySkinRelayEndpoint'))$('btnCopySkinRelayEndpoint').onclick=()=>safeCopy(skinRelayWriteUrl()||getSkinRelayUrl(),'Copy Relay Endpoint');
+    if($('btnCopySkinRelayReadUrl'))$('btnCopySkinRelayReadUrl').onclick=()=>safeCopy(skinRelayReadUrl(),'Copy Relay Read URL');
+  }
   if(skinSyncController&&skinSyncController.stop)skinSyncController.stop();
   if(window.ScoreboardSkinSync&&window.ScoreboardSkinSync.installScoreboardSkinAutoSync){
     skinSyncController=window.ScoreboardSkinSync.installScoreboardSkinAutoSync(

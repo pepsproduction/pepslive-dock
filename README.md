@@ -195,9 +195,12 @@ PepsLive Dock can now publish match state to **PepsLive Scoreboard Skin Studio**
 - `custom event`: `pepslive:scoreboard-state-updated`
 - `source`: `pepslive-dock`
 
-### Enable / Disable
-- Toggle in Dock panel: **Scoreboard Skin Studio Sync** (Enable Sync)
-- Or set localStorage key: `pepslive.scoreboardSkinSync.enabled` (`true` / `false`)
+### Background Sync
+- The old visible **Scoreboard Skin Studio Sync** panel has been removed from the Dock UI.
+- Sync now starts automatically in the background when Dock V1 loads.
+- Use the **Skin** popup to choose skins, copy URLs, or apply OBS Browser Sources.
+- If an Apps Script Webhook URL is configured, Dock V1 can use it as the relay endpoint automatically for OBS Browser Source URLs.
+- Advanced localStorage keys still exist for legacy/debug workflows, but normal users do not need to touch them.
 
 ### Exported Fields (summary)
 - Event: `eventName`, `eventLogo`
@@ -402,3 +405,13 @@ Notes:
 - Dock V1 remains the source of truth for score/time/team data.
 - Skin Studio sends URL updates back to Dock V1 by `postMessage`, BroadcastChannel, and localStorage fallback.
 - For OBS Browser Source, Relay URL mode is still recommended when OBS does not share the same browser profile as the Dock page.
+
+## Current Skin Workflow
+
+1. Open Dock V1.
+2. Click **Skin**.
+3. Choose/customize the scoreboard skin in the popup.
+4. Click **Apply Both Sources** if OBS WebSocket is connected, or copy Live/Summary URL manually.
+5. Control score, teams, and clock from Dock V1 as usual.
+
+The visible Sync panel is no longer shown. Background sync still publishes Dock state to the scoreboard overlay.
