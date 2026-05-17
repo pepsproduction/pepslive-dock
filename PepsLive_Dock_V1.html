@@ -958,23 +958,61 @@ function initSkinStudioUrlListener(){
   }catch(e){console.warn('[SkinStudioUrlSync] BroadcastChannel unavailable',e)}
   window.addEventListener('storage',e=>{if(e.key===SKIN_STUDIO_URLS_KEY)skinStudioLastUrls=loadSkinStudioLastUrls();renderSkinSyncStatus()});
 }
-function freshStudioUrl(raw,debug){
+function skinEncodePortableState(obj){
+  try{
+    const json=JSON.stringify(obj||{});
+    return btoa(unescape(encodeURIComponent(json))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }catch(_){return ''}
+}
+function skinDecodePortableState(raw){
+  if(!raw)return {};
+  try{
+    const base64=String(raw).replace(/-/g,'+').replace(/_/g,'/');
+    return JSON.parse(decodeURIComponent(escape(atob(base64))));
+  }catch(_){return {}}
+}
+function attachCurrentDockStateToSkinUrl(raw,kind){
+  if(!raw)return '';
+  try{
+    const normalizedKind=kind==='summary'?'summary':'live';
+    const url=new URL(raw,SKIN_STUDIO_BASE_URL);
+    const payload=currentSkinPayloadForRelay();
+    const matchData=payload&&payload.matchData?payload.matchData:{};
+    const existingState=skinDecodePortableState(url.searchParams.get('state')||'');
+    const skinId=existingState.skinId||url.searchParams.get('skin')||syncSportToSkinDefault(payload&&payload.sport,normalizedKind);
+    const stateObj={
+      ...existingState,
+      skinId,
+      sport:(payload&&payload.sport)||existingState.sport||'football',
+      type:normalizedKind,
+      matchData
+    };
+    const encoded=skinEncodePortableState(stateObj);
+    if(encoded)url.searchParams.set('state',encoded);
+    url.searchParams.set('skin',skinId);
+    url.searchParams.set('v',String(Date.now()));
+    return url.toString();
+  }catch(_){return raw}
+}
+function freshStudioUrl(raw,debug,kind){
   if(!raw)return '';
   try{
     const url=new URL(raw,SKIN_STUDIO_BASE_URL);
     url.searchParams.set('v',String(Date.now()));
     if(debug)url.searchParams.set('debug','1');else url.searchParams.delete('debug');
-    return url.toString();
+    return attachCurrentDockStateToSkinUrl(url.toString(),kind);
   }catch(_){return raw}
 }
 function studioSyncedUrlFor(kind,debug){
   const payload=skinStudioLastUrls||loadSkinStudioLastUrls();
   const raw=kind==='summary'?(payload&&(debug?payload.summaryDebugUrl:payload.summaryUrl)):(payload&&(debug?payload.liveDebugUrl:payload.liveUrl));
-  return freshStudioUrl(raw,debug);
+  return freshStudioUrl(raw,debug,kind);
 }
 function skinBrowserSourceSize(kind){return kind==='summary'?{width:1920,height:1080}:{width:900,height:180}}
 async function setSkinBrowserSourceUrl(kind){
   if(!(await ensureObs())){toast('OBS not connected. Copy URL manually.');return false;}
+  publishSkinSyncNow();
+  if(isSkinRelayEnabled())await publishSkinRelayNow({silent:true});
   const inputName=kind==='summary'?(settings.sources.SkinSummary||'PEPS_SKIN_SUMMARY_BOARD'):(settings.sources.SkinLive||'PEPS_SKIN_LIVE_SCOREBOARD');
   const size=skinBrowserSourceSize(kind);
   const url=makeBestSkinStudioOverlayUrl(kind,false);
@@ -1006,13 +1044,14 @@ function makeSkinStudioOverlayUrl(kind,debug){
   url.searchParams.set('skin',skinId);
   url.searchParams.set('v',String(Date.now()));
   if(debug)url.searchParams.set('debug','1');
-  return url.toString();
+  return attachCurrentDockStateToSkinUrl(url.toString(),normalizedKind);
 }
 function makeSkinStudioRelayOverlayUrl(kind,debug){
   const relayUrl=skinRelayReadUrl();
   if(!relayUrl)return '';
   const url=new URL(makeSkinStudioOverlayUrl(kind,debug));
   url.searchParams.set('relay',encodeURIComponent(relayUrl));
+  url.searchParams.set('poll','1');
   url.searchParams.set('v',String(Date.now()));
   if(debug)url.searchParams.set('debug','1');else url.searchParams.delete('debug');
   return url.toString();

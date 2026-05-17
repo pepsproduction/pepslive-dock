@@ -415,3 +415,12 @@ Notes:
 5. Control score, teams, and clock from Dock V1 as usual.
 
 The visible Sync panel is no longer shown. Background sync still publishes Dock state to the scoreboard overlay.
+
+
+## Current Stable Skin Source URL Behavior
+
+- The visible `Scoreboard Skin Studio Sync` card is removed from Dock V1.
+- Click **Skin** to choose the scoreboard style, then click **Apply Both Sources** or copy the Live/Summary URL.
+- Dock V1 now embeds the current score/team/clock snapshot into the Skin Studio Browser Source URL.
+- If an Apps Script Webhook URL is configured, Dock V1 publishes the latest relay payload before applying the OBS Browser Source URL.
+- Relay URLs use 1 second polling, so score changes should update without jumping back to the mock preview screen.
