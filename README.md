@@ -396,7 +396,7 @@ Recommended fast workflow:
 1. Open `PepsLive_Dock_V1.html`.
 2. Click **Skin**.
 3. Choose a scoreboard skin, adjust theme/display options, and preview inside the popup.
-4. Click **Apply Both Sources** if OBS WebSocket is connected, or copy the Live/Summary URL manually.
+4. Click **Apply Live Scoreboard Source** or **Apply Summary Board Source** if OBS WebSocket is connected, or copy the Live/Summary URL manually.
 5. Keep controlling score, team, clock, and match status from Dock V1 as usual.
 
 Notes:
@@ -411,7 +411,7 @@ Notes:
 1. Open Dock V1.
 2. Click **Skin**.
 3. Choose/customize the scoreboard skin in the popup.
-4. Click **Apply Both Sources** if OBS WebSocket is connected, or copy Live/Summary URL manually.
+4. Click **Apply Live Scoreboard Source** or **Apply Summary Board Source** if OBS WebSocket is connected, or copy Live/Summary URL manually.
 5. Control score, teams, and clock from Dock V1 as usual.
 
 The visible Sync panel is no longer shown. Background sync still publishes Dock state to the scoreboard overlay.
@@ -420,7 +420,7 @@ The visible Sync panel is no longer shown. Background sync still publishes Dock 
 ## Current Stable Skin Source URL Behavior
 
 - The visible `Scoreboard Skin Studio Sync` card is removed from Dock V1.
-- Click **Skin** to choose the scoreboard style, then click **Apply Both Sources** or copy the Live/Summary URL.
+- Click **Skin** to choose the scoreboard style, then click **Apply Live Scoreboard Source** or **Apply Summary Board Source**, or copy the Live/Summary URL.
 - Dock V1 now embeds the current score/team/clock snapshot into the Skin Studio Browser Source URL.
 - If an Apps Script Webhook URL is configured, Dock V1 publishes the latest relay payload before applying the OBS Browser Source URL.
 - Relay URLs use 1 second polling, so score changes should update without jumping back to the mock preview screen.

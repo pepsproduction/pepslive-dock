@@ -2,6 +2,12 @@
 
 # Changelog
 
+## Phase 5.5 - Separate Skin Source Apply Actions
+
+- Removed the combined **Apply Both Sources** action from the embedded Skin Studio popup.
+- Live Scoreboard and Summary Board Browser Sources are now applied separately to reduce OBS update lag and keep each source workflow isolated.
+- Updated the Skin popup copy so score/time control remains clearly owned by Dock V1.
+
 ## Phase 5.4 - No-Flash Skin Payload Guard
 
 - Added monotonic `seq` values to Scoreboard Skin Studio payloads so overlays can ignore stale Dock/relay updates.
