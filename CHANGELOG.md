@@ -2,6 +2,12 @@
 
 # Changelog
 
+## Phase 5.3 - Stable Skin Relay Publishing
+
+- Scoreboard Skin Relay publishes score/team/clock changes faster while timer-driven updates remain throttled by the Skin Sync adapter.
+- Applying Skin Studio Browser Sources now avoids resetting OBS Browser Source URLs when only live match data changed.
+- Updated the Apps Script webhook guidance and script version for Scoreboard Skin Relay support.
+
 ## Phase 5.2 - Stable Skin Source URLs
 
 - Skin Studio Browser Source URLs now include the current Dock V1 match snapshot in the portable `state` parameter.

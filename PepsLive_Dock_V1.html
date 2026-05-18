@@ -167,7 +167,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
 <div id="drawerBackdrop" class="drawer-backdrop"></div>
 <aside id="drawer" class="drawer"><div class="drawer-head"><h2>Settings Drawer</h2><button class="ghost tiny" id="btnCloseDrawer">ปิด</button></div><div class="tabs" id="tabs"></div><div class="drawer-body">
   <div id="tabMatch" class="tabpage grid"><section class="card"><div class="section-title"><h2>Match Loader</h2><button class="ghost tiny help-btn" data-help="match">วิธีการใช้งาน Match Loader</button></div><p class="small muted">ผลค้นหาแบบ realtime จากช่องค้นหาบนหน้า Dock คลิกเลือกคู่ได้ทันที แล้วกด Load Match</p><div class="match-results" id="matchResults"></div><div class="action-row"><button class="success" id="btnLoadMatchDrawer">Load Match</button><button class="primary" id="btnNextMatchDrawer">Next</button><button class="ghost" id="btnRefreshMatchResults">Refresh Results</button></div></section></div>
-  <div id="tabSheet" class="tabpage grid"><section class="card"><div class="section-title"><h2>Google Sheet</h2><button class="ghost tiny help-btn" data-help="sheet">วิธีการใช้งาน Sheet</button></div><div class="settings-hint small">โหลดแบบฟอร์มไปใช้ได้ทันที แล้วนำ Apps Script ไปวางในส่วนขยายของ Google Sheet เพื่อเปิด Save Result และรายชื่อ Online Users</div><div class="form-grid one"><label><span class="settings-label-title">Google Sheet URL <a class="settings-link" href="sample_sheet/PepsLive_Sheet_Template.xlsx" download="PepsLive_Sheet_Template.xlsx">แบบฟอร์ม</a></span><input id="setSheetUrl"></label><label><span class="settings-label-title">Apps Script Webhook URL สำหรับ Save Result <a class="settings-link" href="bridge/google_apps_script_save_result.gs" download="google_apps_script_save_result.txt">โหลดสคริป</a></span><input id="setWebhookUrl" placeholder="วาง URL Web App จาก Apps Script"></label></div><div class="form-grid"><label>Default GID<input id="setSheetGid" placeholder="0"></label></div><div class="action-row"><button class="primary" id="btnLoadSheet2">โหลด Sheet</button><button class="soft" id="btnSaveSettingsSheet">บันทึกค่า</button><button class="soft" id="btnTestWebhook">ทดสอบ Webhook</button><button class="ghost" id="btnPendingResults">ดู pending</button></div></section><section class="card"><div class="section-title"><h2>Sheet Schema</h2></div><p class="small muted">ใช้หัวตาราง: MatchID, LogoA, TeamA, LogoB, TeamB, Label1-Label5, ScoreA, ScoreB, FinalScore, MatchStatus, Winner, FinishedAt, UpdatedAt, UpdatedBy, Note. กีฬา/เวลา/FX เลือกจากหน้า Dock ไม่อยู่ใน Sheet แล้ว.</p></section></div>
+  <div id="tabSheet" class="tabpage grid"><section class="card"><div class="section-title"><h2>Google Sheet</h2><button class="ghost tiny help-btn" data-help="sheet">วิธีการใช้งาน Sheet</button></div><div class="settings-hint small">โหลดแบบฟอร์มไปใช้ได้ทันที แล้วนำ Apps Script ไปวางในส่วนขยายของ Google Sheet เพื่อเปิด Save Result, Online Users และ Scoreboard Skin Relay</div><div class="form-grid one"><label><span class="settings-label-title">Google Sheet URL <a class="settings-link" href="sample_sheet/PepsLive_Sheet_Template.xlsx" download="PepsLive_Sheet_Template.xlsx">แบบฟอร์ม</a></span><input id="setSheetUrl"></label><label><span class="settings-label-title">Apps Script Webhook URL สำหรับ Save Result / Online Users / Scoreboard Skin Relay <a class="settings-link" href="bridge/google_apps_script_save_result.gs" download="google_apps_script_save_result.txt">โหลดสคริปต์ล่าสุด</a></span><input id="setWebhookUrl" placeholder="วาง URL Web App จาก Apps Script"></label></div><div class="form-grid"><label>Default GID<input id="setSheetGid" placeholder="0"></label></div><div class="action-row"><button class="primary" id="btnLoadSheet2">โหลด Sheet</button><button class="soft" id="btnSaveSettingsSheet">บันทึกค่า</button><button class="soft" id="btnTestWebhook">ทดสอบ Webhook</button><button class="ghost" id="btnPendingResults">ดู pending</button></div></section><section class="card"><div class="section-title"><h2>Sheet Schema</h2></div><p class="small muted">ใช้หัวตาราง: MatchID, LogoA, TeamA, LogoB, TeamB, Label1-Label5, ScoreA, ScoreB, FinalScore, MatchStatus, Winner, FinishedAt, UpdatedAt, UpdatedBy, Note. กีฬา/เวลา/FX เลือกจากหน้า Dock ไม่อยู่ใน Sheet แล้ว.</p></section></div>
   <div id="tabObs" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>OBS WebSocket</h2><button class="ghost tiny help-btn" data-help="obs">วิธีการใช้งาน OBS</button></div><div class="form-grid"><label>Host<input id="setObsHost"></label><label>Port<input id="setObsPort"></label></div><div class="form-grid"><label>Password<input id="setObsPass" type="password"></label><label>Scene Name<input id="setObsScene" placeholder="เว้นว่าง = current scene"></label></div><div class="action-row"><button class="primary" id="btnObsConnect2">Connect</button><button class="soft" id="btnCreateSources">สร้างทั้งหมด</button><button class="ghost" id="btnTestText">Test Text</button><button class="success" id="btnSyncObs">Sync OBS</button></div></section><section class="card"><div class="section-title"><h2>OBS Tags / Sources</h2><button class="ghost tiny" id="btnCheckObsSources">ตรวจ Source</button></div><div class="tag-table" id="obsTagTable"></div></section></div>
   <div id="tabLogos" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>Logos</h2><button class="ghost tiny help-btn" data-help="logos">วิธีการใช้งาน Logos</button></div><p class="small muted">เลือกวิธีใช้โลโก้ได้ 2 แบบ: GitHub/URL สำหรับ Pages หรือ Local Folder สำหรับเครื่องงานจริง</p><div class="form-grid"><label>Logo Mode<select id="setLogoMode"><option value="github">GitHub / URL</option><option value="local">Local Folder</option></select></label><label>Logo Base Path / Folder<input id="setLogoBasePath" placeholder="logos/"></label></div><div class="form-grid"><label>Local Folder Path<input id="setLogoFolderPath" placeholder="C:/PepsLive/logos/"></label><label>Extensions<input id="setLogoExts" placeholder="png,jpg,jpeg,webp,svg"></label></div><div class="action-row"><button class="primary" id="btnPickLogoFolder">เลือกโฟลเดอร์โลโก้</button><button class="soft" id="btnLogoCheck2">ตรวจโลโก้</button><button class="ghost" id="btnSaveLogoSettings">บันทึกค่าโลโก้</button><button class="soft" id="btnRepairLogoSources">ซ่อม Logo Image Sources</button></div><input id="logoFolderInput" type="file" webkitdirectory directory multiple style="display:none"></section><section class="card"><div class="section-title"><h2>Logo Ready / Preview</h2></div><div class="logo-note">ถ้าใช้ GitHub Pages แนะนำวางไฟล์ไว้ใน <b>logos/</b> แล้วใส่รหัสใน Sheet เช่น A1 → logos/A1.png<br>ถ้าเลือกโฟลเดอร์จากเครื่อง ระบบใช้โฟลเดอร์ที่เลือกสำหรับ Preview ใน Dock เท่านั้น ส่วน OBS Image Source ต้องใช้ Logo Folder Path จริง เช่น C:/PepsLive/logos/</div><div id="logoReady" class="ready-list small muted">ยังไม่ได้เช็ก</div><div id="logoPreviewGrid" class="logo-preview-grid"></div></section></div>
   <div id="tabGraphics" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>FX Sources</h2><button class="ghost tiny help-btn" data-help="fx">วิธีการใช้งาน FX</button></div><div class="form-grid"><label>Team A FX Source<input id="setTeamAFx"></label><label>Team B FX Source<input id="setTeamBFx"></label><label>Auto Hide FX วินาที<input id="setFxHide" type="number" min="0" step="0.5"></label><label>คำอธิบาย<input value="0 = เปิดไว้ตลอด" disabled></label></div><div class="action-row"><button class="soft" id="btnSaveFxSettings">Save FX Settings</button><button class="primary" id="btnTestTeamAFx">Test Team A FX</button><button class="success" id="btnTestTeamBFx">Test Team B FX</button></div><div class="action-row"><button class="ghost" id="btnHideFx">Hide All FX</button></div></section></div>
@@ -418,7 +418,7 @@ const OBS_TAGS=[
 ];
 const HELP_TEXT={
  match:'วิธีการใช้งาน Match Loader\n1. โหลด Google Sheet ก่อน\n2. พิมพ์ค้นหา MatchID / ชื่อทีม / สนาม / รอบ\n3. คลิกเลือกคู่ที่ต้องการ\n4. กด Load Match เพื่อส่งชื่อทีม คะแนน โลโก้ และ label เข้า OBS\n5. กด Next เพื่อไปคู่ถัดไป',
- sheet:'วิธีการใช้งาน Sheet\n1. ใส่ Google Sheet URL หรือ CSV export URL\n2. ใส่ Apps Script Webhook URL สำหรับ Save Result และ Online Users\n3. กดโหลด Sheet\n4. หัวตารางต้องตรงตาม Schema\n5. Finish Match จะอัปเดตคะแนนกลับไปที่แถวเดิมตาม MatchID',
+ sheet:'วิธีการใช้งาน Sheet\n1. ใส่ Google Sheet URL หรือ CSV export URL\n2. ใส่ Apps Script Webhook URL สำหรับ Save Result, Online Users และ Scoreboard Skin Relay\n3. กดโหลด Sheet\n4. หัวตารางต้องตรงตาม Schema\n5. Finish Match จะอัปเดตคะแนนกลับไปที่แถวเดิมตาม MatchID',
  obs:'วิธีการใช้งาน OBS\n1. เปิด OBS WebSocket ที่ port 4455\n2. ใส่ Host / Port / Password\n3. กด Connect\n4. ในตาราง OBS Tags กด + เพื่อสร้าง Source รายตัว\n5. Text จะสร้างเป็น Text(GDI+), Logo จะสร้างเป็น Image Source สำหรับ GitHub/URL หรือ Image Source สำหรับ Local Path, FX จะสร้างเป็น Media\n6. กด Sync OBS เพื่อทดสอบส่งข้อมูล',
  logos:'วิธีการใช้งาน Logos\n1. ใน Sheet ใส่ LogoA / LogoB เป็นรหัส เช่น A1\n2. ถ้าใช้ GitHub Pages ให้วางไฟล์ไว้ใน logos/ เช่น logos/A1.png\n3. ถ้าใช้ Local Folder ให้เลือกโหมด Local และกรอก path โฟลเดอร์\n4. กดตรวจโลโก้ ระบบจะลองหา png/jpg/webp/svg\n5. ถ้าไม่พบจะใช้ default.svg แทน\n6. ถ้าโลโก้ไม่ขึ้นใน OBS ให้กด ซ่อม Logo Image Sources เพื่อบังคับ PEPS_LogoA/PEPS_LogoB เป็น Image Source และกรอก Logo Folder Path จริง',
  fx:'วิธีการใช้งาน FX\n1. ตั้งชื่อ Source ของ Team A FX และ Team B FX\n2. ค่า Auto Hide = 0 คือเปิดค้าง\n3. ค่า 1 ขึ้นไปคือซ่อนอัตโนมัติหลังครบวินาที\n4. ปุ่ม Test ใช้ตรวจว่า source เล่นใน OBS ได้หรือไม่',
@@ -1009,6 +1009,27 @@ function studioSyncedUrlFor(kind,debug){
   return freshStudioUrl(raw,debug,kind);
 }
 function skinBrowserSourceSize(kind){return kind==='summary'?{width:1920,height:1080}:{width:900,height:180}}
+function skinComparableOverlayUrl(raw){
+  if(!raw)return '';
+  try{
+    const url=new URL(raw,SKIN_STUDIO_BASE_URL);
+    url.searchParams.delete('v');
+    const stateParam=url.searchParams.get('state')||'';
+    if(stateParam){
+      const stateObj=skinDecodePortableState(stateParam);
+      if(stateObj&&typeof stateObj==='object'){
+        delete stateObj.matchData;
+        delete stateObj.timestamp;
+        delete stateObj.createdAt;
+        delete stateObj.updatedAt;
+        const encoded=skinEncodePortableState(stateObj);
+        if(encoded)url.searchParams.set('state',encoded);
+        else url.searchParams.delete('state');
+      }
+    }
+    return url.toString();
+  }catch(_){return String(raw||'')}
+}
 async function setSkinBrowserSourceUrl(kind){
   if(!(await ensureObs())){toast('OBS not connected. Copy URL manually.');return false;}
   publishSkinSyncNow();
@@ -1018,7 +1039,12 @@ async function setSkinBrowserSourceUrl(kind){
   const url=makeBestSkinStudioOverlayUrl(kind,false);
   const inputSettings={url,width:size.width,height:size.height,shutdown:false,restart_when_active:true};
   try{
-    await obsRequest('GetInputSettings',{inputName});
+    const existing=await obsRequest('GetInputSettings',{inputName});
+    const currentUrl=existing&&existing.inputSettings?existing.inputSettings.url:'';
+    if(skinComparableOverlayUrl(currentUrl)===skinComparableOverlayUrl(url)){
+      log('Skin Studio Browser Source unchanged: '+inputName);
+      return true;
+    }
     await obsRequest('SetInputSettings',{inputName,inputSettings,overlay:true});
     return true;
   }catch(e){
@@ -1191,8 +1217,7 @@ async function publishSkinRelayNow(options={}){
 function scheduleSkinRelayPublish(delay=150){
   if(!isSkinRelayEnabled()||!skinRelayReadUrl())return;
   if(skinRelayPublishTimer)clearTimeout(skinRelayPublishTimer);
-  const now=Date.now();
-  const wait=Math.max(delay,1000-(now-skinRelayLastPublishAt));
+  const wait=Math.max(60,Math.min(250,Number(delay)||120));
   skinRelayPublishTimer=setTimeout(()=>{skinRelayPublishTimer=null;publishSkinRelayNow({silent:true})},Math.max(0,wait));
 }
 function initSkinSyncPanel(){

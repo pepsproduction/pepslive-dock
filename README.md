@@ -74,7 +74,7 @@ bridge/google_apps_script_save_result.gs
 
 ### Mobile Remote
 
-1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook OK v2026-05-15.3` หรือใหม่กว่า
+1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook OK v2026-05-18.1` หรือใหม่กว่า
 2. กดปุ่มรูปมือถือบนแถบบนของ Dock
 3. สแกน QR Code ด้วยมือถือ หรือ copy link ไปเปิดในมือถือ
 4. มือถือจะเปิดหน้า Remote แยก พร้อมปุ่มควบคุมคะแนน เวลา Save Result, Finish Match, Load Next Match, Sync OBS และ Source Actions
@@ -424,3 +424,9 @@ The visible Sync panel is no longer shown. Background sync still publishes Dock 
 - Dock V1 now embeds the current score/team/clock snapshot into the Skin Studio Browser Source URL.
 - If an Apps Script Webhook URL is configured, Dock V1 publishes the latest relay payload before applying the OBS Browser Source URL.
 - Relay URLs use 1 second polling, so score changes should update without jumping back to the mock preview screen.
+
+
+### Apps Script Webhook Update Note
+
+- Use the latest `bridge/google_apps_script_save_result.gs` script for Save Result, Presence, and Scoreboard Skin Relay.
+- Latest expected webhook version: `2026-05-18.1`.

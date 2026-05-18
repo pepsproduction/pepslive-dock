@@ -8,10 +8,11 @@
  * - presenceOffline: ตั้งสถานะผู้ใช้ให้ offline เมื่อออกจากระบบ
  * - webhookInfo: ตรวจเวอร์ชันและฟีเจอร์ของสคริปต์ที่ deploy อยู่
  * - remoteOpen / remoteSend / remotePoll: ห้องควบคุมผ่านมือถือ
+ * - scoreboardSkinRelaySet / scoreboardSkinRelayGet: relay payload ให้ PepsLive Scoreboard Skin Studio overlay
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-05-17.1';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-05-18.1';
 var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
 
 function parseJson_(value, fallback) {
