@@ -7,6 +7,7 @@
   var STORAGE_KEY = 'pepslive.scoreboard.sharedState.v1';
   var EVENT_NAME = 'pepslive:scoreboard-state-updated';
   var SOURCE = 'pepslive-dock';
+  var publishSeq = 0;
 
   function safeWarn(message, error){
     try {
@@ -149,6 +150,7 @@
         version: VERSION,
         source: SOURCE,
         timestamp: new Date().toISOString(),
+        seq: ++publishSeq,
         sport: sport,
         type: normalizeType(firstValue(input, ['type', 'viewType'], ''), statusLabel),
         skinId: firstValue(input, ['skinId', 'activeSkinId', 'match.skinId'], ''),

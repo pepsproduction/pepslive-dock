@@ -2,6 +2,12 @@
 
 # Changelog
 
+## Phase 5.4 - No-Flash Skin Payload Guard
+
+- Added monotonic `seq` values to Scoreboard Skin Studio payloads so overlays can ignore stale Dock/relay updates.
+- Reduced Skin Studio sync debounce and relay publish delay to make score/time changes reach overlays faster without changing Dock V1 controls.
+- Kept timer updates capped to one publish per second to avoid flooding OBS/relay paths.
+
 ## Phase 5.3 - Stable Skin Relay Publishing
 
 - Scoreboard Skin Relay publishes score/team/clock changes faster while timer-driven updates remain throttled by the Skin Sync adapter.

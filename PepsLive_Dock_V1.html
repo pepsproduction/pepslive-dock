@@ -1161,7 +1161,7 @@ function publishSkinSyncNow(){
   const result=window.ScoreboardSkinSync.publishScoreboardSkinState(currentDockStateForSkinSync());
   skinSyncLastResult=result;
   renderSkinSyncStatus();
-  if(result&&result.ok)scheduleSkinRelayPublish(80);
+  if(result&&result.ok)scheduleSkinRelayPublish(20);
   return result;
 }
 function currentSkinPayloadForRelay(){
@@ -1253,11 +1253,11 @@ function initSkinSyncPanel(){
     skinSyncController=window.ScoreboardSkinSync.installScoreboardSkinAutoSync(
       ()=>currentDockStateForSkinSync(),
       {
-        intervalMs: 250,
-        debounceMs: 120,
+        intervalMs: 150,
+        debounceMs: 60,
         timerMinIntervalMs: 1000,
         enabled: ()=>isSkinSyncEnabled(),
-        onPublished: (result)=>{skinSyncLastResult=result;if(result&&result.ok)scheduleSkinRelayPublish(80);renderSkinSyncStatus()}
+        onPublished: (result)=>{skinSyncLastResult=result;if(result&&result.ok)scheduleSkinRelayPublish(20);renderSkinSyncStatus()}
       }
     );
   }else{
