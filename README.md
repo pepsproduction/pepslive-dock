@@ -47,6 +47,8 @@ MatchID, LogoA, TeamA, LogoB, TeamB, Label1, Label2, Label3, Label4, Label5, Sco
 bridge/google_apps_script_save_result.gs
 ```
 
+คู่มือติดตั้งแบบละเอียดสำหรับ Google Sheet ของผู้ใช้เองอยู่ที่ [docs/GOOGLE_APPS_SCRIPT_WEBHOOK_INSTALL_TH.md](docs/GOOGLE_APPS_SCRIPT_WEBHOOK_INSTALL_TH.md)
+
 ### ติดตั้งให้คนภายนอกใช้ Google Sheet ของตัวเอง
 
 วิธีแนะนำคือให้ผู้ใช้สร้าง/คัดลอก Google Sheet ของตัวเองก่อน แล้ววางสคริปต์นี้เป็น bound Apps Script ในชีตนั้น:
