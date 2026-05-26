@@ -12,8 +12,91 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-05-18.1';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-05-26.1';
+var PEPSLIVE_SPREADSHEET_ID_KEY = 'PEPSLIVE_SPREADSHEET_ID';
+var PEPSLIVE_WEBHOOK_TOKEN_KEY = 'PEPSLIVE_WEBHOOK_TOKEN';
 var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
+var PEPSLIVE_MATCH_SCHEMA = [
+  'MatchID','LogoA','TeamA','LogoB','TeamB',
+  'Label1','Label2','Label3','Label4','Label5',
+  'ScoreA','ScoreB','FinalScore','MatchStatus','Winner',
+  'FinishedAt','UpdatedAt','UpdatedBy','Note'
+];
+var PEPSLIVE_SYSTEM_SHEETS = {
+  PepsLiveConfig: true,
+  PepsLiveUsers: true,
+  PepsLiveRemote: true,
+  PepsLiveRemoteState: true,
+  PepsLiveRemoteDevices: true
+};
+
+function onOpen() {
+  try {
+    SpreadsheetApp.getUi()
+      .createMenu('PepsLive')
+      .addItem('Install / Repair Sheet', 'pepsliveInstall')
+      .addItem('Repair Sheet Schema', 'pepsliveRepair')
+      .addItem('Generate Webhook Token', 'pepsliveGenerateWebhookToken')
+      .addItem('Show Setup Status', 'pepsliveShowSetup')
+      .addToUi();
+  } catch (err) {}
+}
+
+function pepsliveInstall() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) throw new Error('open_this_script_from_the_target_google_sheet');
+  PropertiesService.getScriptProperties().setProperty(PEPSLIVE_SPREADSHEET_ID_KEY, ss.getId());
+  var result = setupRepair_({ skipTokenCheck: true });
+  pepsliveAlert_(
+    'PepsLive install complete',
+    'Spreadsheet: ' + result.spreadsheetName + '\n' +
+    'Match sheet: ' + result.matchSheet + '\n' +
+    'Schema: ' + (result.missingColumns.length ? 'missing ' + result.missingColumns.join(', ') : 'OK') + '\n' +
+    'Deploy this Apps Script as a Web App, then paste the Web App URL into PepsLive Dock.'
+  );
+  return result;
+}
+
+function pepsliveRepair() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) PropertiesService.getScriptProperties().setProperty(PEPSLIVE_SPREADSHEET_ID_KEY, ss.getId());
+  var result = setupRepair_({ skipTokenCheck: true });
+  pepsliveAlert_('PepsLive repair complete', 'Schema and support sheets are ready.');
+  return result;
+}
+
+function pepsliveGenerateWebhookToken() {
+  var token = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '').slice(0, 16);
+  PropertiesService.getScriptProperties().setProperty(PEPSLIVE_WEBHOOK_TOKEN_KEY, token);
+  try {
+    var ss = targetSpreadsheet_();
+    writeConfigSheet_(ss, token);
+  } catch (err) {}
+  pepsliveAlert_(
+    'Webhook token generated',
+    'Copy this token into PepsLive Dock > Settings > Sheet > Webhook Token:\n\n' + token
+  );
+  return token;
+}
+
+function pepsliveShowSetup() {
+  var result = setupCheck_();
+  pepsliveAlert_(
+    'PepsLive setup status',
+    'Ready: ' + (result.ok ? 'YES' : 'NO') + '\n' +
+    'Spreadsheet: ' + (result.spreadsheetName || '-') + '\n' +
+    'Match sheet: ' + (result.matchSheet || '-') + '\n' +
+    'Missing columns: ' + ((result.missingColumns || []).join(', ') || '-') + '\n' +
+    'Webhook token: ' + (result.tokenEnabled ? 'enabled' : 'not set')
+  );
+  return result;
+}
+
+function pepsliveAlert_(title, message) {
+  try {
+    SpreadsheetApp.getUi().alert(title, message, SpreadsheetApp.getUi().ButtonSet.OK);
+  } catch (err) {}
+}
 
 function parseJson_(value, fallback) {
   if (value && typeof value === 'object') return value;
@@ -26,7 +109,174 @@ function parseJson_(value, fallback) {
 
 function requestPayload_(payload) {
   if (!payload) return {};
-  return parseJson_(payload.payload != null ? payload.payload : payload, {});
+  var body = parseJson_(payload.payload != null ? payload.payload : payload, {});
+  if (payload.token != null && body.token == null) body.token = payload.token;
+  if (payload.authToken != null && body.authToken == null) body.authToken = payload.authToken;
+  return body;
+}
+
+function scriptProperties_() {
+  return PropertiesService.getScriptProperties();
+}
+
+function targetSpreadsheet_() {
+  var props = scriptProperties_();
+  var id = String(props.getProperty(PEPSLIVE_SPREADSHEET_ID_KEY) || '').trim();
+  if (id) return SpreadsheetApp.openById(id);
+
+  var ss = null;
+  try {
+    ss = SpreadsheetApp.getActiveSpreadsheet();
+  } catch (err) {}
+  if (ss) {
+    props.setProperty(PEPSLIVE_SPREADSHEET_ID_KEY, ss.getId());
+    return ss;
+  }
+  throw new Error('run_pepslive_install_first');
+}
+
+function webhookToken_() {
+  var propsToken = String(scriptProperties_().getProperty(PEPSLIVE_WEBHOOK_TOKEN_KEY) || '').trim();
+  if (propsToken) return propsToken;
+  try {
+    return String(configValue_('WebhookToken') || '').trim();
+  } catch (err) {
+    return '';
+  }
+}
+
+function assertWebhookToken_(payload) {
+  var expected = webhookToken_();
+  if (!expected) return true;
+  payload = payload || {};
+  var actual = String(payload.token || payload.authToken || '').trim();
+  if (actual !== expected) throw new Error('invalid_webhook_token');
+  return true;
+}
+
+function authorizedPayload_(payload) {
+  payload = payload || {};
+  assertWebhookToken_(payload);
+  return payload;
+}
+
+function configValue_(key) {
+  var ss = targetSpreadsheet_();
+  var sheet = ss.getSheetByName('PepsLiveConfig');
+  if (!sheet) return '';
+  var values = sheet.getDataRange().getValues();
+  for (var i = 1; i < values.length; i++) {
+    if (String(values[i][0] || '').trim() === key) return values[i][1];
+  }
+  return '';
+}
+
+function writeConfigSheet_(ss, token) {
+  ss = ss || targetSpreadsheet_();
+  var sheet = ss.getSheetByName('PepsLiveConfig');
+  if (!sheet) sheet = ss.insertSheet('PepsLiveConfig');
+  var currentToken = token != null ? String(token || '') : String(configValueSafe_(ss, 'WebhookToken') || '');
+  var rows = [
+    ['Key', 'Value', 'Note'],
+    ['SpreadsheetId', ss.getId(), 'Created by PepsLive > Install / Repair Sheet.'],
+    ['WebhookToken', currentToken, 'Optional. If filled, paste the same token into PepsLive Dock settings.'],
+    ['WebhookVersion', PEPSLIVE_WEBHOOK_VERSION, 'Expected Apps Script webhook version.']
+  ];
+  sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+  sheet.setFrozenRows(1);
+  return sheet;
+}
+
+function configValueSafe_(ss, key) {
+  try {
+    var sheet = ss.getSheetByName('PepsLiveConfig');
+    if (!sheet) return '';
+    var values = sheet.getDataRange().getValues();
+    for (var i = 1; i < values.length; i++) {
+      if (String(values[i][0] || '').trim() === key) return values[i][1];
+    }
+  } catch (err) {}
+  return '';
+}
+
+function matchSheet_(ss) {
+  ss = ss || targetSpreadsheet_();
+  var sheets = ss.getSheets();
+  for (var i = 0; i < sheets.length; i++) {
+    var first = sheets[i].getLastColumn() ? sheets[i].getRange(1, 1, 1, sheets[i].getLastColumn()).getValues()[0] : [];
+    var headers = first.map(function(h) { return String(h || '').trim(); });
+    if (headers.indexOf('MatchID') !== -1) return sheets[i];
+  }
+  for (var j = 0; j < sheets.length; j++) {
+    if (!PEPSLIVE_SYSTEM_SHEETS[sheets[j].getName()]) return sheets[j];
+  }
+  return ss.insertSheet('Matches');
+}
+
+function ensureMatchSchema_(sheet, repair) {
+  var schema = PEPSLIVE_MATCH_SCHEMA;
+  var width = Math.max(sheet.getLastColumn(), schema.length);
+  var first = width ? sheet.getRange(1, 1, 1, width).getValues()[0] : [];
+  var headers = first.map(function(h) { return String(h || '').trim(); });
+  var blankHeader = headers.join('').trim() === '';
+  if (blankHeader) {
+    sheet.getRange(1, 1, 1, schema.length).setValues([schema]);
+    return { missing: [], repaired: true };
+  }
+  var missing = schema.filter(function(h) { return headers.indexOf(h) === -1; });
+  if (repair && missing.length) {
+    sheet.getRange(1, headers.length + 1, 1, missing.length).setValues([missing]);
+    missing = [];
+  }
+  return { missing: missing, repaired: repair };
+}
+
+function setupCheck_() {
+  try {
+    var ss = targetSpreadsheet_();
+    var sheet = matchSheet_(ss);
+    var schema = ensureMatchSchema_(sheet, false);
+    return {
+      ok: !schema.missing.length,
+      version: PEPSLIVE_WEBHOOK_VERSION,
+      spreadsheetReady: true,
+      spreadsheetId: ss.getId(),
+      spreadsheetName: ss.getName(),
+      matchSheet: sheet.getName(),
+      missingColumns: schema.missing,
+      tokenEnabled: !!webhookToken_(),
+      sheets: {
+        config: !!ss.getSheetByName('PepsLiveConfig'),
+        users: !!ss.getSheetByName('PepsLiveUsers'),
+        remote: !!ss.getSheetByName('PepsLiveRemote'),
+        remoteState: !!ss.getSheetByName('PepsLiveRemoteState'),
+        remoteDevices: !!ss.getSheetByName('PepsLiveRemoteDevices')
+      }
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      version: PEPSLIVE_WEBHOOK_VERSION,
+      spreadsheetReady: false,
+      error: String(err && err.message || err),
+      missingColumns: PEPSLIVE_MATCH_SCHEMA
+    };
+  }
+}
+
+function setupRepair_(options) {
+  options = options || {};
+  if (!options.skipTokenCheck) assertWebhookToken_(options);
+  var ss = targetSpreadsheet_();
+  scriptProperties_().setProperty(PEPSLIVE_SPREADSHEET_ID_KEY, ss.getId());
+  writeConfigSheet_(ss);
+  var sheet = matchSheet_(ss);
+  ensureMatchSchema_(sheet, true);
+  usersSheet_();
+  remoteSheet_();
+  remoteStateSheet_();
+  remoteDevicesSheet_();
+  return setupCheck_();
 }
 
 function doPost(e) {
@@ -34,18 +284,20 @@ function doPost(e) {
     var payload = parseJson_((e && e.postData && e.postData.contents) || '{}', {});
     var action = String(payload.action || '').trim();
     if (action === 'webhookInfo') return json_(webhookInfo_());
-    if (action === 'remoteOpen') return json_(remoteOpen_(requestPayload_(payload)));
-    if (action === 'remoteSend') return json_(remoteSend_(requestPayload_(payload)));
-    if (action === 'remotePoll') return json_(remotePoll_(requestPayload_(payload)));
-    if (action === 'remoteStateSet') return json_(remoteStateSet_(requestPayload_(payload)));
-    if (action === 'remoteStateGet') return json_(remoteStateGet_(requestPayload_(payload)));
-    if (action === 'remotePing') return json_(remotePing_(requestPayload_(payload)));
-    if (action === 'scoreboardSkinRelaySet') return json_(scoreboardSkinRelaySet_(requestPayload_(payload)));
-    if (action === 'scoreboardSkinRelayGet') return json_(scoreboardSkinRelayGet_());
-    if (action === 'presenceHeartbeat') return json_(presenceHeartbeat_(requestPayload_(payload)));
-    if (action === 'presenceList') return json_(presenceList_());
-    if (action === 'presenceOffline') return json_(presenceOffline_(requestPayload_(payload)));
-    return json_(saveResult_(payload));
+    if (action === 'setupCheck') return json_(setupCheck_());
+    if (action === 'setupRepair') return json_(setupRepair_(requestPayload_(payload)));
+    if (action === 'remoteOpen') return json_(remoteOpen_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'remoteSend') return json_(remoteSend_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'remotePoll') return json_(remotePoll_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'remoteStateSet') return json_(remoteStateSet_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'remoteStateGet') return json_(remoteStateGet_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'remotePing') return json_(remotePing_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'scoreboardSkinRelaySet') return json_(scoreboardSkinRelaySet_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'scoreboardSkinRelayGet') return json_(scoreboardSkinRelayGet_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'presenceHeartbeat') return json_(presenceHeartbeat_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'presenceList') return json_(presenceList_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'presenceOffline') return json_(presenceOffline_(authorizedPayload_(requestPayload_(payload))));
+    return json_(saveResult_(authorizedPayload_(requestPayload_(payload))));
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
   }
@@ -56,19 +308,23 @@ function doGet(e) {
   try {
     var action = String((e && e.parameter && e.parameter.action) || '').trim();
     var payload = parseJson_(String((e && e.parameter && e.parameter.payload) || '{}'), {});
+    if (e && e.parameter && e.parameter.token != null && payload.token == null) payload.token = e.parameter.token;
+    if (e && e.parameter && e.parameter.authToken != null && payload.authToken == null) payload.authToken = e.parameter.authToken;
     if (action === 'webhookInfo') return jsonp_(webhookInfo_(), callback);
-    if (action === 'remoteOpen') return jsonp_(remoteOpen_(payload), callback);
-    if (action === 'remoteSend') return jsonp_(remoteSend_(payload), callback);
-    if (action === 'remotePoll') return jsonp_(remotePoll_(payload), callback);
-    if (action === 'remoteStateSet') return jsonp_(remoteStateSet_(payload), callback);
-    if (action === 'remoteStateGet') return jsonp_(remoteStateGet_(payload), callback);
-    if (action === 'remotePing') return jsonp_(remotePing_(payload), callback);
-    if (action === 'scoreboardSkinRelaySet') return jsonp_(scoreboardSkinRelaySet_(payload), callback);
-    if (action === 'scoreboardSkinRelayGet') return jsonp_(scoreboardSkinRelayGet_(), callback);
-    if (action === 'saveResult') return jsonp_(saveResult_(payload), callback);
-    if (action === 'presenceHeartbeat') return jsonp_(presenceHeartbeat_(payload), callback);
-    if (action === 'presenceList') return jsonp_(presenceList_(), callback);
-    if (action === 'presenceOffline') return jsonp_(presenceOffline_(payload), callback);
+    if (action === 'setupCheck') return jsonp_(setupCheck_(), callback);
+    if (action === 'setupRepair') return jsonp_(setupRepair_(payload), callback);
+    if (action === 'remoteOpen') return jsonp_(remoteOpen_(authorizedPayload_(payload)), callback);
+    if (action === 'remoteSend') return jsonp_(remoteSend_(authorizedPayload_(payload)), callback);
+    if (action === 'remotePoll') return jsonp_(remotePoll_(authorizedPayload_(payload)), callback);
+    if (action === 'remoteStateSet') return jsonp_(remoteStateSet_(authorizedPayload_(payload)), callback);
+    if (action === 'remoteStateGet') return jsonp_(remoteStateGet_(authorizedPayload_(payload)), callback);
+    if (action === 'remotePing') return jsonp_(remotePing_(authorizedPayload_(payload)), callback);
+    if (action === 'scoreboardSkinRelaySet') return jsonp_(scoreboardSkinRelaySet_(authorizedPayload_(payload)), callback);
+    if (action === 'scoreboardSkinRelayGet') return jsonp_(scoreboardSkinRelayGet_(authorizedPayload_(payload)), callback);
+    if (action === 'saveResult') return jsonp_(saveResult_(authorizedPayload_(payload)), callback);
+    if (action === 'presenceHeartbeat') return jsonp_(presenceHeartbeat_(authorizedPayload_(payload)), callback);
+    if (action === 'presenceList') return jsonp_(presenceList_(authorizedPayload_(payload)), callback);
+    if (action === 'presenceOffline') return jsonp_(presenceOffline_(authorizedPayload_(payload)), callback);
     throw new Error('unsupported_action: ' + action);
   } catch (err) {
     return jsonp_({ ok: false, error: String(err && err.message || err) }, callback);
@@ -93,8 +349,13 @@ function webhookInfo_() {
       mobileRemoteFallback: true,
       mobileRemoteState: true,
       mobileRemotePresence: true,
-      scoreboardSkinRelay: true
-    }
+      scoreboardSkinRelay: true,
+      setupCheck: true,
+      setupRepair: true,
+      spreadsheetIdBinding: true,
+      optionalWebhookToken: true
+    },
+    setup: setupCheck_()
   };
 }
 
@@ -104,17 +365,12 @@ function saveResult_(payload) {
   var matchId = String(payload.matchId || '').trim();
   if (!matchId) return { ok: false, error: 'missing_matchId' };
 
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+  var sheet = matchSheet_();
   var data = sheet.getDataRange().getValues();
   if (!data.length) return { ok: false, error: 'empty_sheet' };
 
   var headers = data[0].map(function(h) { return String(h || '').trim(); });
-  var schema = [
-    'MatchID','LogoA','TeamA','LogoB','TeamB',
-    'Label1','Label2','Label3','Label4','Label5',
-    'ScoreA','ScoreB','FinalScore','MatchStatus','Winner',
-    'FinishedAt','UpdatedAt','UpdatedBy','Note'
-  ];
+  var schema = PEPSLIVE_MATCH_SCHEMA;
   var missing = schema.filter(function(h) { return headers.indexOf(h) === -1; });
   if (missing.length) return { ok: false, error: 'schema_missing_columns', missing: missing };
 
@@ -140,7 +396,7 @@ function saveResult_(payload) {
 }
 
 function usersSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = targetSpreadsheet_();
   var sheet = ss.getSheetByName('PepsLiveUsers');
   if (!sheet) sheet = ss.insertSheet('PepsLiveUsers');
   var headers = ['SessionID','Username','Province','FirstSeen','LastSeen','OfflineAt','Version','UserAgent','Status','LastAction'];
@@ -312,7 +568,7 @@ function presenceList_() {
 }
 
 function remoteSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = targetSpreadsheet_();
   var sheet = ss.getSheetByName('PepsLiveRemote');
   if (!sheet) sheet = ss.insertSheet('PepsLiveRemote');
   var headers = ['Seq','Room','CommandID','CommandJson','Sender','CreatedAt'];
@@ -341,14 +597,14 @@ function ensureRemoteHeaders_(sheet, headers) {
 }
 
 function remoteStateSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = targetSpreadsheet_();
   var sheet = ss.getSheetByName('PepsLiveRemoteState');
   if (!sheet) sheet = ss.insertSheet('PepsLiveRemoteState');
   return ensureRemoteHeaders_(sheet, ['Room','RoomName','StateJson','UpdatedAt']);
 }
 
 function remoteDevicesSheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = targetSpreadsheet_();
   var sheet = ss.getSheetByName('PepsLiveRemoteDevices');
   if (!sheet) sheet = ss.insertSheet('PepsLiveRemoteDevices');
   return ensureRemoteHeaders_(sheet, ['Room','Sender','Label','Status','LastSeen','UserAgent']);

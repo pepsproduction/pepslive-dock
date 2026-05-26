@@ -47,6 +47,23 @@ MatchID, LogoA, TeamA, LogoB, TeamB, Label1, Label2, Label3, Label4, Label5, Sco
 bridge/google_apps_script_save_result.gs
 ```
 
+### ติดตั้งให้คนภายนอกใช้ Google Sheet ของตัวเอง
+
+วิธีแนะนำคือให้ผู้ใช้สร้าง/คัดลอก Google Sheet ของตัวเองก่อน แล้ววางสคริปต์นี้เป็น bound Apps Script ในชีตนั้น:
+
+1. เปิด Google Sheet ของผู้ใช้เอง
+2. ไปที่ Extensions > Apps Script
+3. วางโค้ดจาก `bridge/google_apps_script_save_result.gs`
+4. กลับไปที่ Google Sheet แล้ว reload หน้า 1 ครั้ง
+5. เปิดเมนู `PepsLive > Install / Repair Sheet`
+6. Deploy เป็น Web App โดยเลือก Execute as: Me และ Who has access: Anyone with the link
+7. นำ Web App URL ไปใส่ใน Dock > Settings > Sheet > Apps Script Webhook URL
+8. กด `Setup Check` หรือ `ทดสอบ Webhook`
+
+ถ้าชีตขาดหัวตาราง ให้กด `Repair Sheet` ใน Dock หรือเมนู `PepsLive > Repair Sheet Schema` ใน Google Sheet ระบบจะเติมหัวตารางหลักและสร้างชีตเสริม `PepsLiveUsers`, `PepsLiveRemote`, `PepsLiveRemoteState`, `PepsLiveRemoteDevices` ให้เอง
+
+Webhook Token เป็นทางเลือกเสริมสำหรับงานที่ต้องการกันคนอื่นยิง Webhook ถ้าต้องใช้ ให้เปิดเมนู `PepsLive > Generate Webhook Token` แล้วนำ token ไปใส่ใน Dock ช่อง `Webhook Token`
+
 ระบบนี้ใช้ Apps Script ตัวเดียวสำหรับ:
 
 - Save Result
@@ -74,7 +91,7 @@ bridge/google_apps_script_save_result.gs
 
 ### Mobile Remote
 
-1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook OK v2026-05-18.1` หรือใหม่กว่า
+1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook OK v2026-05-26.1` หรือใหม่กว่า
 2. กดปุ่มรูปมือถือบนแถบบนของ Dock
 3. สแกน QR Code ด้วยมือถือ หรือ copy link ไปเปิดในมือถือ
 4. มือถือจะเปิดหน้า Remote แยก พร้อมปุ่มควบคุมคะแนน เวลา Save Result, Finish Match, Load Next Match, Sync OBS และ Source Actions
@@ -429,4 +446,4 @@ The visible Sync panel is no longer shown. Background sync still publishes Dock 
 ### Apps Script Webhook Update Note
 
 - Use the latest `bridge/google_apps_script_save_result.gs` script for Save Result, Presence, and Scoreboard Skin Relay.
-- Latest expected webhook version: `2026-05-18.1`.
+- Latest expected webhook version: `2026-05-26.1`.

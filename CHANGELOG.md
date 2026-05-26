@@ -2,6 +2,13 @@
 
 # Changelog
 
+## Phase 5.6 - Self-Install Google Sheet Webhook
+
+- Added PepsLive Apps Script install/repair menu actions for user-owned Google Sheets.
+- Added webhook `setupCheck` / `setupRepair`, Spreadsheet ID binding, support-sheet repair, and optional webhook token support.
+- Added Dock Sheet setup controls for token entry, setup check, and schema repair.
+- Updated setup guidance for external users copying the Dock to their own Google Sheet.
+
 ## Phase 5.5 - Separate Skin Source Apply Actions
 
 - Removed the combined **Apply Both Sources** action from the embedded Skin Studio popup.
