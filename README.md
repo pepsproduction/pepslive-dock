@@ -226,15 +226,15 @@ If opened on different origins (`localhost` different port, `file://`, other dom
 
 ## Real Browser Sync Test (Phase 3.1.1)
 
-∑¥ Õ∫ Sync ·∫∫ browser-to-browser „ÀÈ„™È **origin ‡¥’¬«°—π** ‡∑Ë“π—Èπ
+‡∏ó‡∏î‡∏™‡∏≠‡∏ö Sync ‡πÅ‡∏ö‡∏ö browser-to-browser ‡πÉ‡∏´‡πâ‡πÉ‡∏ä‡πâ **origin ‡πÄ‡∏î‡∏µ‡∏¢‡∏ß‡∏Å‡∏±‡∏ô** ‡πÄ‡∏ó‡πà‡∏≤‡∏ô‡∏±‡πâ‡∏ô
 
-### 1) ‡ª‘¥ Same-Origin Local Server
+### 1) ‡πÄ‡∏õ‡∏¥‡∏î Same-Origin Local Server
 
 ```bash
 node scripts/serve-same-origin.mjs
 ```
 
-### 2) URL  ”À√—∫∑¥ Õ∫
+### 2) URL ‡∏™‡∏≥‡∏´‡∏£‡∏±‡∏ö‡∏ó‡∏î‡∏™‡∏≠‡∏ö
 
 - Dock UI: [http://127.0.0.1:8123/pepslive-dock/PepsLive_Dock_V1.html](http://127.0.0.1:8123/pepslive-dock/PepsLive_Dock_V1.html)
 - Live overlay debug (Football): [http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/live.html?skin=FB-LIVE-01&debug=1](http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/live.html?skin=FB-LIVE-01&debug=1)
@@ -242,28 +242,28 @@ node scripts/serve-same-origin.mjs
 - Live overlay debug (Basketball): [http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/live.html?skin=BB-LIVE-01&debug=1](http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/live.html?skin=BB-LIVE-01&debug=1)
 - Summary overlay debug (Basketball): [http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=BB-SUM-01&debug=1](http://127.0.0.1:8123/pepslive-scoreboard-skin-studio/overlays/summary.html?skin=BB-SUM-01&debug=1)
 
-### 3) «‘∏’∑¥ Õ∫ Sync
+### 3) ‡∏ß‡∏¥‡∏ò‡∏µ‡∏ó‡∏î‡∏™‡∏≠‡∏ö Sync
 
-1. ‡¢È“ Dock ·≈È«‡ª‘¥ `Enable Sync`
-2. °¥ `Publish Current State`
-3. ‡ª≈’Ë¬π§–·ππ/‡«≈“/ ∂“π–®“° workflow ‡¥‘¡¢Õß Dock
-4. ¥Ÿ overlay debug box «Ë“ source ‡ªÁπ `pepslive-dock`
-5. µ√«®§Ë“ score/team/clock/status «Ë“Õ—ª‡¥µµ“¡ Dock
+1. ‡πÄ‡∏Ç‡πâ‡∏≤ Dock ‡πÅ‡∏•‡πâ‡∏ß‡πÄ‡∏õ‡∏¥‡∏î `Enable Sync`
+2. ‡∏Å‡∏î `Publish Current State`
+3. ‡πÄ‡∏õ‡∏•‡∏µ‡πà‡∏¢‡∏ô‡∏Ñ‡∏∞‡πÅ‡∏ô‡∏ô/‡πÄ‡∏ß‡∏•‡∏≤/‡∏™‡∏ñ‡∏≤‡∏ô‡∏∞‡∏à‡∏≤‡∏Å workflow ‡πÄ‡∏î‡∏¥‡∏°‡∏Ç‡∏≠‡∏á Dock
+4. ‡∏î‡∏π overlay debug box ‡∏ß‡πà‡∏≤ source ‡πÄ‡∏õ‡πá‡∏ô `pepslive-dock`
+5. ‡∏ï‡∏£‡∏ß‡∏à‡∏Ñ‡πà‡∏≤ score/team/clock/status ‡∏ß‡πà‡∏≤‡∏≠‡∏±‡∏õ‡πÄ‡∏î‡∏ï‡∏ï‡∏≤‡∏° Dock
 
-### 4) µ√«® localStorage
+### 4) ‡∏ï‡∏£‡∏ß‡∏à localStorage
 
 - key: `pepslive.scoreboard.sharedState.v1`
-- µÈÕß¡’ payload ∑’Ë `protocol = PEPSLIVE_SCOREBOARD_STATE_V1`
-- `source` µÈÕß‡ªÁπ `pepslive-dock`
+- ‡∏ï‡πâ‡∏≠‡∏á‡∏°‡∏µ payload ‡∏ó‡∏µ‡πà `protocol = PEPSLIVE_SCOREBOARD_STATE_V1`
+- `source` ‡∏ï‡πâ‡∏≠‡∏á‡πÄ‡∏õ‡πá‡∏ô `pepslive-dock`
 
 ### 5) Same-Origin Warning
 
-°√≥’‡À≈Ë“π’ÈÕ“®‰¡Ë sync:
-- Dock ‡ª‘¥®“° `file://`
-- Dock ‡ª‘¥∑’Ë `localhost:xxxx` ·µË overlay ‡ª‘¥∑’Ë `127.0.0.1:yyyy`
-- Dock/overlay §π≈– domain
+‡∏Å‡∏£‡∏ì‡∏µ‡πÄ‡∏´‡∏•‡πà‡∏≤‡∏ô‡∏µ‡πâ‡∏≠‡∏≤‡∏à‡πÑ‡∏°‡πà sync:
+- Dock ‡πÄ‡∏õ‡∏¥‡∏î‡∏à‡∏≤‡∏Å `file://`
+- Dock ‡πÄ‡∏õ‡∏¥‡∏î‡∏ó‡∏µ‡πà `localhost:xxxx` ‡πÅ‡∏ï‡πà overlay ‡πÄ‡∏õ‡∏¥‡∏î‡∏ó‡∏µ‡πà `127.0.0.1:yyyy`
+- Dock/overlay ‡∏Ñ‡∏ô‡∏•‡∏∞ domain
 
-BroadcastChannel/localStorage ®–∑”ß“π‰¥È¥’ ÿ¥‡¡◊ËÕ∑—Èß ÕßÀπÈ“Õ¬ŸË origin ‡¥’¬«°—π
+BroadcastChannel/localStorage ‡∏à‡∏∞‡∏ó‡∏≥‡∏á‡∏≤‡∏ô‡πÑ‡∏î‡πâ‡∏î‡∏µ‡∏ó‡∏µ‡πà‡∏™‡∏∏‡∏î‡πÄ‡∏°‡∏∑‡πà‡∏≠‡∏ó‡∏±‡πâ‡∏á‡∏™‡∏≠‡∏á‡∏´‡∏ô‡πâ‡∏≤‡∏≠‡∏¢‡∏π‡πà origin ‡πÄ‡∏î‡∏µ‡∏¢‡∏ß‡∏Å‡∏±‡∏ô
 
 ### 6) Smoke Script
 
@@ -271,11 +271,11 @@ BroadcastChannel/localStorage ®–∑”ß“π‰¥È¥’ ÿ¥‡¡◊ËÕ∑—Èß ÕßÀπÈ“Õ¬ŸË origin ‡¥’¬«°—
 node scripts/check-skin-sync-browser.mjs
 ```
 
- §√‘ªµÏπ’È®–:
+‡∏™‡∏Ñ‡∏£‡∏¥‡∏õ‡∏ï‡πå‡∏ô‡∏µ‡πâ‡∏à‡∏∞:
 - start same-origin server
-- ‡™Á° HTTP 200 ¢Õß Dock + overlay URLs
-- ∂È“¡’ Playwright ®–√—π browser automation µËÕ
-- ∂È“‰¡Ë¡’ Playwright ®–æ‘¡æÏ manual checklist „ÀÈÕ—µ‚π¡—µ‘
+- ‡πÄ‡∏ä‡πá‡∏Å HTTP 200 ‡∏Ç‡∏≠‡∏á Dock + overlay URLs
+- ‡∏ñ‡πâ‡∏≤‡∏°‡∏µ Playwright ‡∏à‡∏∞‡∏£‡∏±‡∏ô browser automation ‡∏ï‡πà‡∏≠
+- ‡∏ñ‡πâ‡∏≤‡πÑ‡∏°‡πà‡∏°‡∏µ Playwright ‡∏à‡∏∞‡∏û‡∏¥‡∏°‡∏û‡πå manual checklist ‡πÉ‡∏´‡πâ‡∏≠‡∏±‡∏ï‡πÇ‡∏ô‡∏°‡∏±‡∏ï‡∏¥
 
 ## Scoreboard Skin Studio URL Handoff
 

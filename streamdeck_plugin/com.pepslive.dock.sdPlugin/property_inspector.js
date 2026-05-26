@@ -6,10 +6,16 @@
   let action = null;
   let context = null;
   const $ = id => document.getElementById(id);
+  function parseActionInfo(raw){
+    if(!raw) return {};
+    if(typeof raw === 'object') return raw;
+    try{ return JSON.parse(raw); }catch(_){}
+    try{ return JSON.parse(decodeURIComponent(raw)); }catch(_){}
+    return {};
+  }
   function parseArgs(){
     const qs = new URLSearchParams(location.search);
-    let actionInfo = {};
-    try{ actionInfo = JSON.parse(decodeURIComponent(qs.get('actionInfo') || '{}')); }catch(_){}
+    const actionInfo = parseActionInfo(qs.get('actionInfo') || '{}');
     return {
       port: qs.get('port') || qs.get('inPort'),
       pluginUUID: qs.get('pluginUUID') || qs.get('uuid'),
@@ -34,6 +40,9 @@
   }
   window.connectElgatoStreamDeckSocket = function(inPort, inUUID, inRegisterEvent, inInfo, inActionInfo){
     uuid = inUUID;
+    const actionInfo = parseActionInfo(inActionInfo);
+    action = actionInfo.action || action;
+    context = actionInfo.context || context;
     websocket = new WebSocket('ws://127.0.0.1:' + inPort);
     websocket.onopen = () => {
       send({event:inRegisterEvent, uuid:inUUID});

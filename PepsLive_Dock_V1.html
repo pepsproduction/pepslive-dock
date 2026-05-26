@@ -1082,14 +1082,14 @@ function safeCopy(text,okMsg){
   const value=String(text||'').trim();
   if(!value)return;
   if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(value).then(()=>toast(okMsg||'Copy ����')).catch(()=>toast('Copy ��������'));
+    navigator.clipboard.writeText(value).then(()=>toast(okMsg||'Copy OK')).catch(()=>toast('Copy failed'));
     return;
   }
   const ta=document.createElement('textarea');
   ta.value=value;
   document.body.appendChild(ta);
   ta.select();
-  try{document.execCommand('copy');toast(okMsg||'Copy ����')}catch(_){toast('Copy ��������')}
+  try{document.execCommand('copy');toast(okMsg||'Copy OK')}catch(_){toast('Copy failed')}
   ta.remove();
 }
 function renderSkinSyncStatus(){
