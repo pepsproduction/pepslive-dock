@@ -86,10 +86,86 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
 .skin-studio-modal .toast,.toast{z-index:260}
 @media(max-width:760px){.skin-studio-modal{height:calc(100vh - 12px);width:calc(100vw - 12px);padding:8px;border-radius:18px}.skin-studio-modal-status{grid-template-columns:1fr 1fr}.skin-studio-frame{min-height:360px}.skin-studio-modal-actions{justify-content:stretch}.skin-studio-modal-actions button{flex:1 1 145px}.skin-studio-modal-actions .push-left{margin-right:0}}
 
+/* Compact OBS Dock-first local preview */
+body.dock-compact-ui{background:#080b10!important;overflow:hidden}
+body.dock-compact-ui::before{background:linear-gradient(180deg,rgba(8,10,14,.92),rgba(8,10,14,.97)),url('assets/login_theme_reference.png') center/cover no-repeat;filter:saturate(.88) brightness(.78)}
+body.dock-compact-ui::after{background:rgba(0,0,0,.20);backdrop-filter:blur(7px)}
+.dock-compact-ui .app{max-width:none;width:100%;height:100vh;overflow:hidden;padding:6px;display:none}
+.dock-compact-ui .app.ready{display:grid;grid-template-rows:auto 1fr;gap:6px}
+.dock-compact-ui .top{margin:0;display:grid;grid-template-columns:1fr;gap:6px}
+.dock-compact-ui .brand{display:none}
+.dock-compact-ui .statusbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto auto auto auto;gap:4px;align-items:center}
+.dock-compact-ui .status{min-height:28px;padding:4px 6px;border-radius:9px;font-size:10px;justify-content:center;overflow:hidden;text-overflow:ellipsis}
+.dock-compact-ui .status::before{width:6px;height:6px;flex:0 0 6px}
+.dock-compact-ui .top-settings,.dock-compact-ui .icon-btn,.dock-compact-ui #btnLogout{min-height:28px;height:28px;border-radius:9px;padding:4px 6px;font-size:10px;box-shadow:none!important}
+.dock-compact-ui #btnDonate,.dock-compact-ui #btnLogout{display:none!important}
+.dock-compact-ui .icon-btn{width:28px;min-width:28px}
+.dock-compact-ui .icon-btn svg{width:14px;height:14px}
+.dock-compact-ui .main{height:100%;min-height:0;display:grid!important;grid-template-columns:1fr!important;grid-auto-rows:min-content;gap:6px;overflow:hidden}
+.dock-compact-ui .main>main,.dock-compact-ui .main>.side-panel{display:contents}
+.dock-compact-ui .card{border-radius:10px!important;padding:7px!important;box-shadow:0 10px 24px rgba(0,0,0,.22)!important;background:linear-gradient(180deg,rgba(18,22,30,.88),rgba(10,13,20,.92))!important}
+.dock-compact-ui .section-title{margin:0 0 5px;min-height:0}
+.dock-compact-ui .section-title h2{font-size:11px;letter-spacing:.02em;text-transform:uppercase}
+.dock-compact-ui .section-title .small,.dock-compact-ui .section-title .muted{display:none}
+.dock-compact-ui button{min-height:32px;border-radius:9px;padding:6px 7px;font-size:11px;font-weight:800}
+.dock-compact-ui button.tiny{min-height:25px;border-radius:8px;padding:4px 6px;font-size:10px}
+.dock-compact-ui input,.dock-compact-ui select{min-height:30px;border-radius:9px;padding:5px 7px;font-size:11px}
+.dock-compact-ui label{font-size:9px;gap:3px}
+.dock-compact-ui #moduleQuick{order:1!important}
+.dock-compact-ui #moduleScore{order:2!important}
+.dock-compact-ui #moduleClock{order:3!important}
+.dock-compact-ui #moduleResult{order:4!important}
+.dock-compact-ui #moduleActions{order:5!important}
+.dock-compact-ui #moduleSystem{display:none!important}
+.dock-compact-ui .sport-row{grid-template-columns:74px 1fr 72px;gap:4px;margin:0 0 5px}
+.dock-compact-ui .matchbar{grid-template-columns:1fr 66px 48px;gap:4px}
+.dock-compact-ui .match-meta{display:none}
+.dock-compact-ui #currentMatchStatus{width:100%;margin-top:5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-radius:9px;padding:5px 7px;font-size:10px}
+.dock-compact-ui .teams{grid-template-columns:minmax(0,1fr) 82px minmax(0,1fr);gap:6px;align-items:stretch}
+.dock-compact-ui .team{gap:4px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.035);border-radius:10px;padding:6px;min-width:0}
+.dock-compact-ui .team.right{text-align:right}
+.dock-compact-ui .team-name{font-size:13px!important;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0;margin:0}
+.dock-compact-ui .team-sub{font-size:9px;line-height:1.05;min-height:10px}
+.dock-compact-ui .logo-preview{display:none}
+.dock-compact-ui .score-mid{min-width:0;display:grid;align-content:center;gap:4px}
+.dock-compact-ui .score-mid{order:0!important}
+.dock-compact-ui .vs{font-size:8px;letter-spacing:.12em}
+.dock-compact-ui .scoreline{font-size:32px!important;line-height:.95;letter-spacing:-.05em}
+.dock-compact-ui #btnUndo{min-height:25px;font-size:9px;padding:4px}
+.dock-compact-ui .score-buttons{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:4px;margin-top:0}
+.dock-compact-ui .score-buttons button{min-height:33px;font-size:12px;padding:5px 4px}
+.dock-compact-ui .timerbox{gap:5px}
+.dock-compact-ui .clock{font-size:38px!important;border-radius:11px;padding:6px;line-height:.9}
+.dock-compact-ui .time-edit{grid-template-columns:1fr 1fr 66px;gap:4px}
+.dock-compact-ui .period-row,.dock-compact-ui .action-row{grid-template-columns:1fr 1fr;gap:4px}
+.dock-compact-ui .timerbox .action-row{grid-template-columns:1fr 1fr 1fr}
+.dock-compact-ui #moduleResult .dock-action-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.dock-compact-ui #moduleResult .section-title{margin-bottom:5px}
+.dock-compact-ui #dirtyBadge{font-size:10px;padding:4px 6px}
+.dock-compact-ui .action-buttons{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.dock-compact-ui .action-buttons button{min-height:31px;font-size:10px;padding:5px 4px}
+.dock-compact-ui .drawer{width:min(620px,100%)}
+@media(max-height:650px){
+  .dock-compact-ui .section-title{display:none}
+  .dock-compact-ui .card{padding:6px!important}
+  .dock-compact-ui .clock{font-size:32px!important}
+  .dock-compact-ui .scoreline{font-size:28px!important}
+  .dock-compact-ui .time-edit{display:none}
+  .dock-compact-ui #moduleActions{display:none!important}
+}
+@media(max-width:390px){
+  .dock-compact-ui .statusbar{grid-template-columns:repeat(4,minmax(0,1fr));}
+  .dock-compact-ui .top-settings,.dock-compact-ui .icon-btn,.dock-compact-ui #btnLogout{min-width:0}
+  .dock-compact-ui .teams{grid-template-columns:minmax(0,1fr) 72px minmax(0,1fr)}
+  .dock-compact-ui .scoreline{font-size:28px!important}
+  .dock-compact-ui .sport-row{grid-template-columns:1fr 1fr}
+  .dock-compact-ui .sport-row #btnLoadSheet{grid-column:span 2}
+}
+
 </style>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
-<body>
+<body class="dock-compact-ui">
 
 <div class="login-gate" id="loginGate">
   <div class="login-card">
@@ -158,7 +234,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
       </section>
     </main>
     <aside class="side-panel">
-      <section class="card dock-module" id="moduleResult" data-module="result"><div class="section-title"><h2>Result</h2><span id="dirtyBadge" class="pill">Saved</span></div><div class="grid"><button class="soft" id="btnSaveResult">Save Result</button><button class="success" id="btnFinishMatch">Finish Match</button><button class="primary" id="btnNextMatch">Load Next Match</button></div></section>
+      <section class="card dock-module" id="moduleResult" data-module="result"><div class="section-title"><h2>Live Actions</h2><span id="dirtyBadge" class="pill">Saved</span></div><div class="dock-action-grid"><button class="primary" id="btnSyncObsDock" type="button">Sync OBS</button><button class="ghost" id="btnHideFxDock" type="button">Hide FX</button><button class="soft" id="btnSaveResult">Save</button><button class="success" id="btnFinishMatch">Finish</button><button class="primary" id="btnNextMatch">Next</button><button class="ghost" id="btnOpenMatchDock" type="button">Match</button></div></section>
       <section class="card dock-module" id="moduleSystem" data-module="system"><div class="section-title"><h2>System Status</h2></div><div class="ready-list small muted"><div class="ready-row"><span>OBS</span><strong id="miniObsStatus">Off</strong></div><div class="ready-row"><span>Sheet</span><strong id="miniSheetStatus">Not loaded</strong></div><div class="ready-row"><span>Save</span><strong id="miniSaveStatus">Local</strong></div></div></section>
 
     </aside>
@@ -175,7 +251,7 @@ input:focus,select:focus,textarea:focus{border-color:rgba(255,126,39,.9)!importa
   <div id="tabDockLayout" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>Dock Layout</h2><button class="ghost tiny help-btn" data-help="layout">วิธีการใช้งาน Dock Layout</button></div><p class="small muted">เลือกว่าจะให้หน้า PepsLive Dock แสดงอะไร และเรียงลำดับด้วยเลข Order</p><div id="layoutSettings" class="layout-settings"></div><div class="action-row"><button class="soft" id="btnSaveLayout">Save Layout</button><button class="ghost" id="btnResetLayout">Reset Layout</button></div></section></div>
   <div id="tabAdvanced" class="tabpage grid" style="display:none"><section class="card"><div class="section-title"><h2>Safety</h2><button class="ghost tiny help-btn" data-help="advanced">วิธีการใช้งาน Advanced</button></div><div class="form-grid"><label>Anti-double delay ms<input id="setAntiMs" type="number" min="100"></label><label>Timer Mode<select id="setTimerDefault"><option value="sport">ตามกีฬา</option><option value="up">นับขึ้น</option><option value="down">นับถอยหลัง</option></select></label></div><button class="soft" id="btnSaveSettingsAdvanced">บันทึกค่า</button></section><section class="card"><div class="section-title"><h2>Command Log</h2><button class="ghost tiny" id="btnClearLog">Clear</button></div><div class="quick-log" id="log"></div></section><section class="danger-zone"><div class="section-title"><h2>Danger Zone</h2></div><div class="action-row"><button class="danger" id="btnResetState">Reset Local State</button><button class="ghost" id="btnExportState">Export State</button><button class="ghost" id="btnImportState">Import State</button></div><input id="importFile" type="file" accept="application/json" style="display:none"></section></div>
 </div></aside>
-<div id="skinStudioModalBackdrop" class="modal-backdrop"><div class="modal skin-studio-modal"><div class="skin-studio-modal-head"><div><h3>Scoreboard Skin Studio</h3><p>Choose Skin, adjust style, then apply the generated Browser Source URLs.</p></div><button class="ghost tiny" id="btnCloseSkinStudio" type="button">Close</button></div><div class="skin-studio-modal-status"><div class="skin-studio-status-card"><span>Status</span><strong id="skinStudioEmbedStatus">Waiting</strong></div><div class="skin-studio-status-card"><span>Current Skin</span><strong id="skinStudioEmbedCurrent">-</strong></div><div class="skin-studio-status-card"><span>Live Source</span><strong id="skinStudioEmbedLiveSize">900 x 180</strong></div><div class="skin-studio-status-card"><span>Summary Source</span><strong id="skinStudioEmbedSummarySize">1920 x 1080</strong></div></div><iframe id="skinStudioFrame" class="skin-studio-frame" title="PepsLive Scoreboard Skin Studio" loading="lazy" allow="clipboard-write"></iframe><div class="skin-studio-modal-actions"><div class="skin-studio-modal-note push-left"><b>Tip:</b> keep score/time control in Dock V1. Apply Live and Summary sources separately for smoother OBS updates.</div><button class="primary" id="btnApplySkinLive" type="button">Apply Live Scoreboard Source</button><button class="soft" id="btnApplySkinSummary" type="button">Apply Summary Board Source</button><button class="ghost" id="btnCopySkinPopupLiveUrl" type="button">Copy Live URL</button><button class="ghost" id="btnCopySkinPopupSummaryUrl" type="button">Copy Summary URL</button></div></div></div><div id="modalBackdrop" class="modal-backdrop"><div class="modal"><h3 id="modalTitle">Confirm</h3><p id="modalMessage"></p><div class="modal-actions"><button class="ghost" id="modalCancel">ยกเลิก</button><button class="primary" id="modalOk">ตกลง</button></div></div></div><div id="onlineModalBackdrop" class="modal-backdrop"><div class="modal online-modal"><h3>ผู้ใช้งานออนไลน์</h3><p class="muted small">รายชื่อผู้ใช้งานที่ active ภายใน 90 วินาทีล่าสุด</p><div id="onlineUsersPopup" class="users-list"><div class="small muted">ยังไม่มีข้อมูล</div></div><div class="modal-actions"><button class="ghost" id="btnRefreshOnlinePopup">Refresh</button><button class="primary" id="btnCloseOnlinePopup">ปิด</button></div></div></div><div id="remoteModalBackdrop" class="modal-backdrop"><div class="modal remote-modal"><div class="section-title"><div><h3>Mobile Remote</h3><p class="muted small">สแกน QR เพื่อควบคุม Dock ผ่านมือถือ ซ่อนได้โดยไม่ตัดการเชื่อมต่อ</p></div><button class="ghost tiny" id="btnHideRemotePopup">ซ่อน</button></div><div id="remoteModalBody" class="remote-grid"></div><div class="modal-actions"><button class="ghost" id="btnCopyRemoteLink">Copy Link</button><button class="danger" id="btnCloseRemoteRoom">รีห้องใหม่</button></div></div></div><div id="donateModalBackdrop" class="modal-backdrop"><div class="modal donate-modal"><div class="section-title"><div><h3>Support PepsProduction</h3><p class="muted small">เลือกช่องทางสนับสนุนที่สะดวก</p></div><button class="ghost tiny" id="btnCloseDonate">ปิด</button></div><div class="donate-grid"><a class="donate-card" href="https://easydonate.app/pepsproduction" target="_blank" rel="noopener">EasyDonate (Thailand)<span>เปิดหน้า Donate</span></a><a class="donate-card" href="https://pepsproduction.github.io/pepslive-tools/support.html" target="_blank" rel="noopener">Support Coffee<span>เปิดหน้า Support</span></a></div></div></div><div id="toast" class="toast"></div>
+<div id="skinStudioModalBackdrop" class="modal-backdrop"><div class="modal skin-studio-modal"><div class="skin-studio-modal-head"><div><h3>Scoreboard Skin Studio</h3><p>Choose Skin, adjust style, then apply the generated Browser Source URLs.</p></div><button class="ghost tiny" id="btnCloseSkinStudio" type="button">Close</button></div><div class="skin-studio-modal-status"><div class="skin-studio-status-card"><span>Status</span><strong id="skinStudioEmbedStatus">Waiting</strong></div><div class="skin-studio-status-card"><span>Current Skin</span><strong id="skinStudioEmbedCurrent">-</strong></div><div class="skin-studio-status-card"><span>Live Source</span><strong id="skinStudioEmbedLiveSize">900 x 180</strong></div><div class="skin-studio-status-card"><span>Summary Source</span><strong id="skinStudioEmbedSummarySize">1920 x 1080</strong></div></div><iframe id="skinStudioFrame" class="skin-studio-frame" title="PepsLive Scoreboard Skin Studio" loading="lazy" allow="clipboard-write"></iframe><div class="skin-studio-modal-actions"><div class="skin-studio-modal-note push-left"><b>Tip:</b> keep score/time control in Dock V1. Apply Live and Summary sources separately for smoother OBS updates.</div><button class="primary" id="btnToggleSkinStudioEnabled" type="button">Enable Skin Studio</button><button class="primary" id="btnApplySkinLive" type="button">Apply Live Scoreboard Source</button><button class="soft" id="btnApplySkinSummary" type="button">Apply Summary Board Source</button><button class="ghost" id="btnCopySkinPopupLiveUrl" type="button">Copy Live URL</button><button class="ghost" id="btnCopySkinPopupSummaryUrl" type="button">Copy Summary URL</button></div></div></div><div id="modalBackdrop" class="modal-backdrop"><div class="modal"><h3 id="modalTitle">Confirm</h3><p id="modalMessage"></p><div class="modal-actions"><button class="ghost" id="modalCancel">ยกเลิก</button><button class="primary" id="modalOk">ตกลง</button></div></div></div><div id="onlineModalBackdrop" class="modal-backdrop"><div class="modal online-modal"><h3>ผู้ใช้งานออนไลน์</h3><p class="muted small">รายชื่อผู้ใช้งานที่ active ภายใน 90 วินาทีล่าสุด</p><div id="onlineUsersPopup" class="users-list"><div class="small muted">ยังไม่มีข้อมูล</div></div><div class="modal-actions"><button class="ghost" id="btnRefreshOnlinePopup">Refresh</button><button class="primary" id="btnCloseOnlinePopup">ปิด</button></div></div></div><div id="remoteModalBackdrop" class="modal-backdrop"><div class="modal remote-modal"><div class="section-title"><div><h3>Mobile Remote</h3><p class="muted small">สแกน QR เพื่อควบคุม Dock ผ่านมือถือ ซ่อนได้โดยไม่ตัดการเชื่อมต่อ</p></div><button class="ghost tiny" id="btnHideRemotePopup">ซ่อน</button></div><div id="remoteModalBody" class="remote-grid"></div><div class="modal-actions"><button class="ghost" id="btnCopyRemoteLink">Copy Link</button><button class="danger" id="btnCloseRemoteRoom">รีห้องใหม่</button></div></div></div><div id="donateModalBackdrop" class="modal-backdrop"><div class="modal donate-modal"><div class="section-title"><div><h3>Support PepsProduction</h3><p class="muted small">เลือกช่องทางสนับสนุนที่สะดวก</p></div><button class="ghost tiny" id="btnCloseDonate">ปิด</button></div><div class="donate-grid"><a class="donate-card" href="https://easydonate.app/pepsproduction" target="_blank" rel="noopener">EasyDonate (Thailand)<span>เปิดหน้า Donate</span></a><a class="donate-card" href="https://pepsproduction.github.io/pepslive-tools/support.html" target="_blank" rel="noopener">Support Coffee<span>เปิดหน้า Support</span></a></div></div></div><div id="toast" class="toast"></div>
 <script src="src/scoreboard-skin-sync.js"></script>
 <script>
 (()=>{'use strict';
@@ -582,8 +658,8 @@ async function setLogo(inputName,value){
 }
 
 async function createSourceByTag(k,type){if(!(await ensureObs()))return;const sceneName=await currentScene();const inputName=tagSourceName(k);const kind=tagInputKind(type);let inputSettings={};let enabled=true;if(type==='Text(GDI+)')inputSettings={text:k};if(type==='Logo'){if(kind==='browser_source')inputSettings={url:'about:blank',width:360,height:360};else inputSettings={file:''}}if(type==='Image')inputSettings={file:''};if(type==='Media'){inputSettings={local_file:'',is_local_file:true};enabled=false}
-  if(type==='Browser'){const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeBestSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)} }
-createSources=async function(){if(!(await ensureObs()))return;for(const [k,t] of OBS_TAGS)await createSourceByTag(k,t);toast('สร้าง Source ทั้งหมดเสร็จแล้ว')};
+  if(type==='Browser'){if(!isSkinStudioEnabled())return toast('Scoreboard Skin Studio ปิดอยู่ กด Enable ก่อนสร้าง Skin Source');const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeBestSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)} }
+createSources=async function(){if(!(await ensureObs()))return;const skipSkin=!isSkinStudioEnabled();for(const [k,t] of OBS_TAGS){if(skipSkin&&t==='Browser')continue;await createSourceByTag(k,t)}toast(skipSkin?'สร้าง Source ทั้งหมดเสร็จแล้ว (ข้าม Skin Source เพราะปิดอยู่)':'สร้าง Source ทั้งหมดเสร็จแล้ว')};
 async function setActionVisible(sourceName,enabled){if(!sourceName||sourceName==='*')return;try{const sceneName=await currentScene();const item=await obsRequest('GetSceneItemId',{sceneName,sourceName});await obsRequest('SetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId,sceneItemEnabled:!!enabled})}catch(e){toast('ไม่พบ Source/Group: '+sourceName)} }
 async function toggleActionSource(sourceName){try{const sceneName=await currentScene();const item=await obsRequest('GetSceneItemId',{sceneName,sourceName});const r=await obsRequest('GetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId});await obsRequest('SetSceneItemEnabled',{sceneName,sceneItemId:item.sceneItemId,sceneItemEnabled:!r.sceneItemEnabled})}catch(e){toast('Toggle ไม่สำเร็จ: '+sourceName)} }
 async function hideAllActionSources(){if(!(await ensureObs()))return;for(const a of settings.actions.slice(0,6)){if(a.source&&a.source!=='*')await setActionVisible(a.source,false)}log('Hide all Source Actions')}
@@ -601,7 +677,7 @@ function applyDockLayout(){(settings.layout||[]).forEach(m=>{const el=document.q
 const oldRenderAll=renderAll;renderAll=function(){oldRenderAll();normalizeSettingsV1();renderActionButtons();renderObsTagTable();renderSourceActionSettings();renderLayoutSettings();applyDockLayout();};
 const oldRenderSettingsInputs=renderSettingsInputs;renderSettingsInputs=function(){oldRenderSettingsInputs();normalizeSettingsV1();if($('setLogoMode'))$('setLogoMode').value=settings.logo.mode;if($('setLogoBasePath'))$('setLogoBasePath').value=settings.logo.basePath||'logos/';if($('setLogoFolderPath'))$('setLogoFolderPath').value=settings.logo.folderPath||'';if($('setLogoExts'))$('setLogoExts').value=settings.logo.exts||'png,jpg,jpeg,webp,svg';};
 const oldSaveSettingsFromInputs=saveSettingsFromInputs;saveSettingsFromInputs=function(showToast=true){oldSaveSettingsFromInputs(false);normalizeSettingsV1();if($('setLogoMode'))settings.logo.mode=$('setLogoMode').value;if($('setLogoBasePath'))settings.logo.basePath=$('setLogoBasePath').value.trim()||'logos/';if($('setLogoFolderPath'))settings.logo.folderPath=$('setLogoFolderPath').value.trim();if($('setLogoExts'))settings.logo.exts=$('setLogoExts').value.trim()||'png,jpg,jpeg,webp,svg';saveLocal();renderObsTagTable();if(showToast)toast('บันทึก Settings แล้ว')};
-const oldSyncObsAll=syncObsAll;syncObsAll=async function(){await oldSyncObsAll();if(obs.connected){try{await Promise.all([setText(settings.sources.TeamA_PrimaryColor,settings.teamColors.aPrimary),setText(settings.sources.TeamA_SecondaryColor,settings.teamColors.aSecondary),setText(settings.sources.TeamB_PrimaryColor,settings.teamColors.bPrimary),setText(settings.sources.TeamB_SecondaryColor,settings.teamColors.bSecondary),setSkinBrowserSourceUrl('live'),setSkinBrowserSourceUrl('summary')])}catch(e){}}};
+const oldSyncObsAll=syncObsAll;syncObsAll=async function(){await oldSyncObsAll();if(obs.connected){try{const tasks=[setText(settings.sources.TeamA_PrimaryColor,settings.teamColors.aPrimary),setText(settings.sources.TeamA_SecondaryColor,settings.teamColors.aSecondary),setText(settings.sources.TeamB_PrimaryColor,settings.teamColors.bPrimary),setText(settings.sources.TeamB_SecondaryColor,settings.teamColors.bSecondary)];if(isSkinStudioEnabled())tasks.push(setSkinBrowserSourceUrl('live'),setSkinBrowserSourceUrl('summary'));await Promise.all(tasks)}catch(e){}}};
 const oldProcessRemoteCommand=processRemoteCommand;processRemoteCommand=async function(cmd){const action=cmd&&(cmd.action||cmd.type||cmd.command);if(action==='sourceAction')return runSourceAction(cmd.slot||1);if(action==='hideAllActions')return hideAllActionSources();return oldProcessRemoteCommand(cmd)};
 
 // Runtime safety patch: keep Settings Drawer and Timer resilient even if optional settings sections change.
@@ -673,10 +749,10 @@ async function createSourceByTag(k,type){
   if(type==='Text(GDI+)')inputSettings={text:k};
   if(type==='Image')inputSettings={file:''};
   if(type==='Media'){inputSettings={local_file:'',is_local_file:true};enabled=false}
-  if(type==='Browser'){const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeBestSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}
+  if(type==='Browser'){if(!isSkinStudioEnabled())return toast('Scoreboard Skin Studio ปิดอยู่ กด Enable ก่อนสร้าง Skin Source');const browserKind=k==='SkinSummary'?'summary':'live';const size=skinBrowserSourceSize(browserKind);inputSettings={url:makeBestSkinStudioOverlayUrl(browserKind,false),width:size.width,height:size.height,shutdown:false,restart_when_active:true}}
   try{await obsRequest('CreateInput',{sceneName,inputName,inputKind:kind,inputSettings,sceneItemEnabled:enabled});toast('สร้าง Source แล้ว: '+inputName+' ('+type+')')}catch(e){toast('สร้างไม่สำเร็จ/อาจมีอยู่แล้ว: '+inputName)}
 }
-createSources=async function(){if(!(await ensureObs()))return;for(const [k,t] of OBS_TAGS)await createSourceByTag(k,t);toast('สร้าง/ซ่อม Source ทั้งหมดเสร็จแล้ว')};
+createSources=async function(){if(!(await ensureObs()))return;const skipSkin=!isSkinStudioEnabled();for(const [k,t] of OBS_TAGS){if(skipSkin&&t==='Browser')continue;await createSourceByTag(k,t)}toast(skipSkin?'สร้าง/ซ่อม Source ทั้งหมดเสร็จแล้ว (ข้าม Skin Source เพราะปิดอยู่)':'สร้าง/ซ่อม Source ทั้งหมดเสร็จแล้ว')};
 async function repairLogoSources(){
   if(!(await ensureObs()))return;
   await ensureLogoImageSource(settings.sources.LogoA||'PEPS_LogoA');
@@ -802,6 +878,7 @@ renderLogos=function(){
   renderLogoPreviewGrid();
 };
 
+const SKIN_STUDIO_ENABLED_KEY='pepslive.scoreboardSkinStudio.enabled';
 const SKIN_SYNC_ENABLED_KEY='pepslive.scoreboardSkinSync.enabled';
 const SKIN_STUDIO_BASE_URL='https://pepsproduction.github.io/pepslive-scoreboard-skin-studio/';
 const SKIN_STUDIO_EMBED_PATH='dock.html?embed=1&from=dock-v1';
@@ -814,16 +891,19 @@ let skinRelayLastResult=null;
 let skinRelayPublishTimer=null;
 let skinRelayLastPublishAt=0;
 function hasSkinSyncPanel(){return !!$('moduleSkinSync')}
-function isSkinSyncEnabled(){if(!hasSkinSyncPanel())return true;const raw=localStorage.getItem(SKIN_SYNC_ENABLED_KEY);return raw===null?true:raw==='true'}
-function setSkinSyncEnabled(next){localStorage.setItem(SKIN_SYNC_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus()}
+function isSkinStudioEnabled(){return localStorage.getItem(SKIN_STUDIO_ENABLED_KEY)==='true'}
+function setSkinStudioEnabled(next){localStorage.setItem(SKIN_STUDIO_ENABLED_KEY,next?'true':'false');if(next){localStorage.setItem(SKIN_SYNC_ENABLED_KEY,'true')}else{localStorage.setItem(SKIN_SYNC_ENABLED_KEY,'false');localStorage.setItem(SKIN_RELAY_ENABLED_KEY,'false');if(skinRelayPublishTimer){clearTimeout(skinRelayPublishTimer);skinRelayPublishTimer=null}}renderSkinSyncStatus();renderSkinStudioEmbedStatus()}
+function toggleSkinStudioEnabled(){const next=!isSkinStudioEnabled();setSkinStudioEnabled(next);if(next){toast('เปิดใช้งาน Scoreboard Skin Studio แล้ว');openSkinStudioPopup()}else{const frame=$('skinStudioFrame');if(frame){frame.removeAttribute('src');frame.dataset.src=''}toast('ปิดใช้งาน Scoreboard Skin Studio แล้ว')}}
+function isSkinSyncEnabled(){if(!isSkinStudioEnabled())return false;const raw=localStorage.getItem(SKIN_SYNC_ENABLED_KEY);return raw==='true'}
+function setSkinSyncEnabled(next){if(next)localStorage.setItem(SKIN_STUDIO_ENABLED_KEY,'true');localStorage.setItem(SKIN_SYNC_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus();renderSkinStudioEmbedStatus()}
 function defaultLocalSkinRelayUrl(){
   try{
     if(location.origin&&location.origin.startsWith('http'))return new URL('/pepslive-relay/state.json',location.origin).toString();
   }catch(_){}
   return 'http://127.0.0.1:8123/pepslive-relay/state.json';
 }
-function isSkinRelayEnabled(){if(!hasSkinSyncPanel()&&(getSkinRelayUrl()||settings.webhookUrl))return true;return localStorage.getItem(SKIN_RELAY_ENABLED_KEY)==='true'}
-function setSkinRelayEnabled(next){localStorage.setItem(SKIN_RELAY_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus()}
+function isSkinRelayEnabled(){if(!isSkinStudioEnabled())return false;return localStorage.getItem(SKIN_RELAY_ENABLED_KEY)==='true'}
+function setSkinRelayEnabled(next){if(next)localStorage.setItem(SKIN_STUDIO_ENABLED_KEY,'true');localStorage.setItem(SKIN_RELAY_ENABLED_KEY,next?'true':'false');renderSkinSyncStatus();renderSkinStudioEmbedStatus()}
 function getSkinRelayUrl(){const stored=(localStorage.getItem(SKIN_RELAY_URL_KEY)||'').trim();if(stored)return stored;if(!hasSkinSyncPanel()&&settings.webhookUrl)return String(settings.webhookUrl||'').trim();return ''}
 function setSkinRelayUrl(url){localStorage.setItem(SKIN_RELAY_URL_KEY,String(url||'').trim());renderSkinSyncStatus()}
 function skinRelayReadUrl(){
@@ -906,13 +986,19 @@ function skinStudioEmbedUrl(){
   try{return new URL(SKIN_STUDIO_EMBED_PATH,SKIN_STUDIO_BASE_URL).toString()}catch(_){return SKIN_STUDIO_BASE_URL+SKIN_STUDIO_EMBED_PATH}
 }
 function renderSkinStudioEmbedStatus(){
+  const enabled=isSkinStudioEnabled();
   const payload=skinStudioLastUrls||loadSkinStudioLastUrls();
   const status=$('skinStudioEmbedStatus');
   const current=$('skinStudioEmbedCurrent');
   const liveSize=$('skinStudioEmbedLiveSize');
   const summarySize=$('skinStudioEmbedSummarySize');
-  if(status)status.textContent=payload&&payload.liveUrl?'Ready':'Waiting';
-  if(current)current.textContent=payload?((payload.skinId||payload.liveSkinId||'-')+(payload.skinName?' | '+payload.skinName:'')):'No Skin URL yet';
+  const toggle=$('btnToggleSkinStudioEnabled');
+  const openBtn=$('btnOpenSkinStudio');
+  ['btnApplySkinLive','btnApplySkinSummary','btnCopySkinPopupLiveUrl','btnCopySkinPopupSummaryUrl'].forEach(id=>{const btn=$(id);if(btn)btn.disabled=!enabled});
+  if(toggle){toggle.textContent=enabled?'Disable Skin Studio':'Enable Skin Studio';toggle.className=enabled?'danger':'primary'}
+  if(openBtn){openBtn.textContent=enabled?'Skin':'Skin Off';openBtn.title=enabled?'Scoreboard Skin Studio enabled':'Scoreboard Skin Studio disabled'}
+  if(status)status.textContent=enabled?(payload&&payload.liveUrl?'Ready':'Waiting'):'Off';
+  if(current)current.textContent=enabled?(payload?((payload.skinId||payload.liveSkinId||'-')+(payload.skinName?' | '+payload.skinName:'')):'No Skin URL yet'):'Disabled';
   if(liveSize)liveSize.textContent=payload&&payload.liveSource?(payload.liveSource.width+' x '+payload.liveSource.height):'900 x 180';
   if(summarySize)summarySize.textContent=payload&&payload.summarySource?(payload.summarySource.width+' x '+payload.summarySource.height):'1920 x 1080';
 }
@@ -920,6 +1006,7 @@ function openSkinStudioPopup(){
   const modal=$('skinStudioModalBackdrop');
   const frame=$('skinStudioFrame');
   if(!modal||!frame)return;
+  if(!isSkinStudioEnabled()){frame.removeAttribute('src');frame.dataset.src='';modal.classList.add('show');renderSkinStudioEmbedStatus();toast('Scoreboard Skin Studio ปิดอยู่ กด Enable ก่อนใช้งาน');return;}
   const url=skinStudioEmbedUrl();
   if(frame.dataset.src!==url){frame.src=url;frame.dataset.src=url;}
   modal.classList.add('show');
@@ -930,6 +1017,7 @@ function closeSkinStudioPopup(){
   if(modal)modal.classList.remove('show');
 }
 async function applySkinStudioSources(kind){
+  if(!isSkinStudioEnabled()){toast('เปิดใช้งาน Scoreboard Skin Studio ก่อน');renderSkinStudioEmbedStatus();return false;}
   const status=$('skinStudioEmbedStatus');
   if(status)status.textContent='Applying...';
   const ok=await setSkinBrowserSourceUrl(kind==='summary'?'summary':'live');
@@ -947,6 +1035,7 @@ function bindSkinStudioPopupControls(){
   if($('btnOpenSkinStudio'))$('btnOpenSkinStudio').onclick=openSkinStudioPopup;
   if($('btnCloseSkinStudio'))$('btnCloseSkinStudio').onclick=closeSkinStudioPopup;
   if($('skinStudioModalBackdrop'))$('skinStudioModalBackdrop').onclick=e=>{if(e&&e.target&&e.target.id==='skinStudioModalBackdrop')closeSkinStudioPopup()};
+  if($('btnToggleSkinStudioEnabled'))$('btnToggleSkinStudioEnabled').onclick=toggleSkinStudioEnabled;
   if($('btnApplySkinLive'))$('btnApplySkinLive').onclick=()=>applySkinStudioSources('live');
   if($('btnApplySkinSummary'))$('btnApplySkinSummary').onclick=()=>applySkinStudioSources('summary');
   if($('btnCopySkinPopupLiveUrl'))$('btnCopySkinPopupLiveUrl').onclick=()=>safeCopy(makeBestSkinStudioOverlayUrl('live',false),'Copy Live URL OK');
@@ -1035,6 +1124,7 @@ function skinComparableOverlayUrl(raw){
   }catch(_){return String(raw||'')}
 }
 async function setSkinBrowserSourceUrl(kind){
+  if(!isSkinStudioEnabled()){log('Skip Skin Studio Browser Source update: disabled');return false;}
   if(!(await ensureObs())){toast('OBS not connected. Copy URL manually.');return false;}
   publishSkinSyncNow();
   if(isSkinRelayEnabled())await publishSkinRelayNow({silent:true});
@@ -1271,7 +1361,9 @@ function initSkinSyncPanel(){
   }
   renderSkinSyncStatus();
 }
-if(initMobileRemoteMode())return;bind();bindLogin();bindScoreNameEditing();bindMobileRemoteControls();if($('btnOnlineUsers'))$('btnOnlineUsers').onclick=openOnlinePopup;if($('btnCloseOnlinePopup'))$('btnCloseOnlinePopup').onclick=closeOnlinePopup;if($('onlineModalBackdrop'))$('onlineModalBackdrop').onclick=e=>{if(e.target.id==='onlineModalBackdrop')closeOnlinePopup()};if($('btnRefreshOnlinePopup'))$('btnRefreshOnlinePopup').onclick=async()=>{await syncPresenceOnce();renderOnlinePopup()};document.querySelectorAll('.help-btn').forEach(b=>b.onclick=()=>showHelp(b.dataset.help));if($('btnSaveLogoSettings'))$('btnSaveLogoSettings').onclick=()=>saveSettingsFromInputs(true);if($('btnRepairLogoSources'))$('btnRepairLogoSources').onclick=repairLogoSources;if($('btnPickLogoFolder'))$('btnPickLogoFolder').onclick=()=>$('logoFolderInput').click();if($('logoFolderInput'))$('logoFolderInput').onchange=async e=>{const files=e.target.files||[];const first=files[0];const count=registerLogoFiles(files);await hydrateLocalLogoDataUrls();if(first&&first.webkitRelativePath){const folder=first.webkitRelativePath.split('/')[0];settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโฟลเดอร์โลโก้สำหรับ Preview: ${folder} (${count} ไฟล์) | OBS ต้องกรอก Logo Folder Path จริง`)}else if(count){settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโลโก้สำหรับ Preview แล้ว ${count} ไฟล์ | OBS ต้องกรอก Logo Folder Path จริง`)}};if($('btnSaveActions'))$('btnSaveActions').onclick=saveActionSettings;if($('btnPresetActions'))$('btnPresetActions').onclick=presetActions;if($('btnHideAllActions2'))$('btnHideAllActions2').onclick=hideAllActionSources;if($('btnHideActionSources'))$('btnHideActionSources').onclick=hideAllActionSources;if($('btnSaveLayout'))$('btnSaveLayout').onclick=saveLayoutSettings;if($('btnResetLayout'))$('btnResetLayout').onclick=resetLayoutSettings;if($('btnCheckObsSources'))$('btnCheckObsSources').onclick=()=>toast('ใช้ปุ่ม + เพื่อสร้าง/ตรวจทีละ Tag ได้ทันที');bindSkinStudioPopupControls();applySportDefaults(false);filterMatches(false);renderAll();initSkinSyncPanel();applyAuthUI();if(auth.authenticated)startPresence();resumeMobileRemoteSession();setInterval(tick,1000);window.addEventListener('pagehide',sendPresenceOfflineBeacon);window.addEventListener('beforeunload',()=>{sendPresenceOfflineBeacon();saveLocal()});if(state.sheetRows&&state.sheetRows.length){$('stSheet').className='status ok';$('stSheet').textContent=`Sheet: ${state.sheetRows.length}`}
+function openDockMatchPanel(){openDrawer();setTimeout(()=>{const tab=document.querySelector('[data-tab="tabMatch"]');if(tab)tab.click()},0)}
+function bindCompactDockControls(){on('btnSyncObsDock',syncObsAll);on('btnHideFxDock',hideAllFx);on('btnOpenMatchDock',openDockMatchPanel)}
+if(initMobileRemoteMode())return;bind();bindCompactDockControls();bindLogin();bindScoreNameEditing();bindMobileRemoteControls();if($('btnOnlineUsers'))$('btnOnlineUsers').onclick=openOnlinePopup;if($('btnCloseOnlinePopup'))$('btnCloseOnlinePopup').onclick=closeOnlinePopup;if($('onlineModalBackdrop'))$('onlineModalBackdrop').onclick=e=>{if(e.target.id==='onlineModalBackdrop')closeOnlinePopup()};if($('btnRefreshOnlinePopup'))$('btnRefreshOnlinePopup').onclick=async()=>{await syncPresenceOnce();renderOnlinePopup()};document.querySelectorAll('.help-btn').forEach(b=>b.onclick=()=>showHelp(b.dataset.help));if($('btnSaveLogoSettings'))$('btnSaveLogoSettings').onclick=()=>saveSettingsFromInputs(true);if($('btnRepairLogoSources'))$('btnRepairLogoSources').onclick=repairLogoSources;if($('btnPickLogoFolder'))$('btnPickLogoFolder').onclick=()=>$('logoFolderInput').click();if($('logoFolderInput'))$('logoFolderInput').onchange=async e=>{const files=e.target.files||[];const first=files[0];const count=registerLogoFiles(files);await hydrateLocalLogoDataUrls();if(first&&first.webkitRelativePath){const folder=first.webkitRelativePath.split('/')[0];settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโฟลเดอร์โลโก้สำหรับ Preview: ${folder} (${count} ไฟล์) | OBS ต้องกรอก Logo Folder Path จริง`)}else if(count){settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโลโก้สำหรับ Preview แล้ว ${count} ไฟล์ | OBS ต้องกรอก Logo Folder Path จริง`)}};if($('btnSaveActions'))$('btnSaveActions').onclick=saveActionSettings;if($('btnPresetActions'))$('btnPresetActions').onclick=presetActions;if($('btnHideAllActions2'))$('btnHideAllActions2').onclick=hideAllActionSources;if($('btnHideActionSources'))$('btnHideActionSources').onclick=hideAllActionSources;if($('btnSaveLayout'))$('btnSaveLayout').onclick=saveLayoutSettings;if($('btnResetLayout'))$('btnResetLayout').onclick=resetLayoutSettings;if($('btnCheckObsSources'))$('btnCheckObsSources').onclick=()=>toast('ใช้ปุ่ม + เพื่อสร้าง/ตรวจทีละ Tag ได้ทันที');bindSkinStudioPopupControls();applySportDefaults(false);filterMatches(false);renderAll();initSkinSyncPanel();applyAuthUI();if(auth.authenticated)startPresence();resumeMobileRemoteSession();setInterval(tick,1000);window.addEventListener('pagehide',sendPresenceOfflineBeacon);window.addEventListener('beforeunload',()=>{sendPresenceOfflineBeacon();saveLocal()});if(state.sheetRows&&state.sheetRows.length){$('stSheet').className='status ok';$('stSheet').textContent=`Sheet: ${state.sheetRows.length}`}
 })();
 </script>
 </body>
