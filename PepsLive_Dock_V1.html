@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>PepsLive Dock V1</title>
+<link rel="icon" href="logos/default.svg" type="image/svg+xml">
 <style>
 :root{--bg:#070b12;--panel:#101826;--panel2:#0b111c;--card:#141e2d;--line:#27344a;--text:#eef5ff;--muted:#9aa9bf;--blue:#4f7cff;--cyan:#22c7ff;--green:#20b56b;--red:#ef4444;--yellow:#f4b740;--shadow:0 18px 50px rgba(0,0,0,.34);--radius:18px;--font:Segoe UI,Tahoma,Arial,sans-serif}
 *{box-sizing:border-box}html,body{height:100%}body{margin:0;background:radial-gradient(circle at 12% 6%,rgba(79,124,255,.25),transparent 34%),linear-gradient(180deg,#060a12,#0e1624 60%,#070b12);color:var(--text);font-family:var(--font);overflow:auto}button,input,select,textarea{font:inherit}button{border:0;border-radius:14px;padding:10px 13px;color:#fff;background:#243248;cursor:pointer;transition:.12s ease;min-height:42px}button:hover{filter:brightness(1.08)}button:active{transform:translateY(1px)}button.primary{background:linear-gradient(135deg,var(--blue),#6f5cff)}button.success{background:linear-gradient(135deg,#17a85e,#20c778)}button.danger{background:linear-gradient(135deg,#d83b3b,#ef4444)}button.warn{background:linear-gradient(135deg,#f2a81d,#ffd36b);color:#121212}button.ghost{background:transparent;border:1px solid var(--line)}button.soft{background:#1a2638}button.tiny{min-height:30px;padding:6px 9px;border-radius:10px;font-size:12px}button.wide{width:100%}input,select,textarea{width:100%;border:1px solid var(--line);border-radius:13px;padding:10px 12px;background:#0c1421;color:#fff;outline:none}input:focus,select:focus,textarea:focus{border-color:rgba(79,124,255,.85);box-shadow:0 0 0 3px rgba(79,124,255,.14)}label{display:grid;gap:6px;color:var(--muted);font-size:13px}.app{max-width:1180px;margin:0 auto;padding:12px}.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.brand{display:flex;align-items:center;gap:10px;min-width:0}.logo-dot{width:38px;height:38px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--blue),var(--cyan));font-weight:900;color:#06101c}.brand h1{font-size:18px;margin:0;line-height:1}.brand p{margin:3px 0 0;color:var(--muted);font-size:12px}.statusbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}.status{display:inline-flex;align-items:center;gap:6px;padding:7px 9px;border-radius:999px;background:#101927;border:1px solid var(--line);font-size:12px;color:var(--muted);white-space:nowrap}.status::before{content:"";width:8px;height:8px;border-radius:50%;background:#65758b}.status.ok{color:#c9ffe0}.status.ok::before{background:var(--green);box-shadow:0 0 10px rgba(32,181,107,.7)}.status.bad{color:#ffd1d1}.status.bad::before{background:var(--red)}.status.warn{color:#ffe8aa}.status.warn::before{background:var(--yellow)}.grid{display:grid;gap:10px}.main{grid-template-columns:1fr 330px}.card{background:rgba(17,25,39,.92);border:1px solid rgba(255,255,255,.07);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.section-title h2{font-size:14px;margin:0;color:#dce8fb}.muted{color:var(--muted)}.small{font-size:12px}.sport-row{display:grid;grid-template-columns:190px 1fr auto;gap:8px;margin-bottom:8px}.matchbar{display:grid;grid-template-columns:1fr auto auto;gap:8px}.match-results{display:grid;gap:6px;margin-top:8px;max-height:220px;overflow:auto}.match-item{display:grid;gap:3px;text-align:left;padding:10px;border-radius:14px;border:1px solid var(--line);background:#0c1421;color:#eaf2ff;min-height:auto}.match-item:hover,.match-item.active{border-color:rgba(79,124,255,.8);background:#12213a}.match-item strong{font-size:13px}.match-item span{font-size:12px;color:var(--muted)}.match-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#0d1522;color:#d4e1f5;border-radius:999px;padding:6px 9px;font-size:12px}.score-card{padding:14px}.teams{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center}.team{display:grid;gap:8px;min-width:0}.team.right{text-align:right}.team-name{font-weight:900;font-size:clamp(18px,4vw,34px);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.team-sub{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.logo-preview{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:#0b111b;object-fit:contain;justify-self:start}.team.right .logo-preview{justify-self:end}.score-mid{text-align:center;min-width:130px}.scoreline{font-weight:900;font-size:clamp(44px,9vw,82px);font-variant-numeric:tabular-nums;letter-spacing:-.08em}.scoreline span{letter-spacing:0}.vs{font-size:11px;color:var(--muted);letter-spacing:.16em}.score-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.score-buttons.football{grid-template-columns:repeat(2,1fr)}.timerbox{display:grid;gap:10px}.clock{font-size:clamp(42px,10vw,84px);font-weight:900;line-height:.95;font-variant-numeric:tabular-nums;text-align:center;background:#0b111b;border:1px solid var(--line);border-radius:18px;padding:12px}.time-edit{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}.period-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.action-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.fx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.side-panel{display:grid;gap:10px}.quick-log{max-height:190px;overflow:auto;display:grid;gap:6px}.log-item{padding:8px;border-radius:12px;background:#0c1421;border:1px solid rgba(255,255,255,.05);font-size:12px;color:#cbd8ec}.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.48);display:none;z-index:100}.drawer-backdrop.show{display:block}.drawer{position:fixed;top:0;right:0;height:100%;width:min(560px,100%);background:#0b111b;border-left:1px solid rgba(255,255,255,.1);box-shadow:-18px 0 60px rgba(0,0,0,.42);transform:translateX(102%);transition:.18s ease;z-index:101;display:flex;flex-direction:column}.drawer.show{transform:translateX(0)}.drawer-head{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid var(--line)}.drawer-head h2{margin:0;font-size:17px}.tabs{display:flex;gap:6px;overflow:auto;padding:10px 12px;border-bottom:1px solid var(--line)}.tab{min-height:34px;padding:7px 10px;border-radius:999px;background:#111a29;color:#b8c6db;white-space:nowrap}.tab.active{background:var(--blue);color:#fff}.drawer-body{padding:12px;overflow:auto;display:grid;gap:10px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.form-grid.one{grid-template-columns:1fr}.source-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%) translateY(20px);background:#101927;border:1px solid var(--line);box-shadow:var(--shadow);border-radius:14px;padding:10px 14px;color:#fff;opacity:0;pointer-events:none;transition:.16s ease;z-index:120;max-width:min(620px,calc(100% - 24px));font-size:13px}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:130}.modal-backdrop.show{display:flex}.modal{width:min(460px,100%);background:#101927;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:16px}.modal h3{margin:0 0 8px}.modal p{margin:0 0 14px;color:#c9d6e8;line-height:1.55}.modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}.danger-zone{border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);border-radius:16px;padding:12px}.ready-list{display:grid;gap:6px}.ready-row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid rgba(255,255,255,.06);padding:7px 0}.ready-row:last-child{border-bottom:0}.kbd{border:1px solid var(--line);background:#0c1421;border-radius:7px;padding:1px 6px;font-size:11px;color:#cbd8ec}
@@ -161,6 +162,20 @@ body.dock-compact-ui::after{background:rgba(0,0,0,.20);backdrop-filter:blur(7px)
   .dock-compact-ui .sport-row{grid-template-columns:1fr 1fr}
   .dock-compact-ui .sport-row #btnLoadSheet{grid-column:span 2}
 }
+.team-meta-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.team.right .team-meta-row{flex-direction:row-reverse}
+.team-colors{display:inline-flex;align-items:center;gap:5px;min-width:max-content}
+.team-color-swatch{position:relative;width:36px;height:22px;min-height:22px;padding:0;border:1px solid rgba(255,255,255,.36);border-radius:8px;background:#111827;box-shadow:inset 0 0 0 1px rgba(0,0,0,.28);overflow:hidden}
+.team-color-swatch::after{content:attr(data-slot);position:absolute;right:3px;bottom:1px;font-size:9px;font-weight:900;color:#fff;text-shadow:0 1px 3px #000}
+.team-color-swatch:hover{filter:brightness(1.12)}
+.team-color-swatch.picking{outline:2px solid rgba(255,255,255,.9);outline-offset:2px}
+.dock-compact-ui .team-meta-row{gap:5px}
+.dock-compact-ui .team-colors{gap:3px}
+.dock-compact-ui .team-color-swatch{width:28px;height:18px;min-height:18px;border-radius:6px}
+.dock-compact-ui .team-color-swatch::after{font-size:8px;right:2px;bottom:0}
+@media(max-width:620px){
+  .team.right .team-meta-row{flex-direction:row}
+}
 
 </style>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
@@ -216,9 +231,9 @@ body.dock-compact-ui::after{background:rgba(0,0,0,.20);backdrop-filter:blur(7px)
       </section>
             <section class="card score-card dock-module" id="moduleScore" data-module="score">
         <div class="teams">
-          <div class="team"><img id="logoA" class="logo-preview" alt="Logo A" onerror="this.onerror=null;this.src='logos/default.svg'"><div class="team-name" id="teamAName">TEAM A</div><div class="team-sub" id="teamASub">LogoA</div><div class="score-buttons" id="scoreBtnsA"></div></div>
+          <div class="team"><img id="logoA" class="logo-preview" alt="Logo A" onerror="this.onerror=null;this.src='logos/default.svg'"><div class="team-name" id="teamAName">TEAM A</div><div class="team-meta-row"><div class="team-sub" id="teamASub">LogoA</div><div class="team-colors" data-team-color-panel="A"><button class="team-color-swatch" id="teamAColor1" data-team-color="A" data-slot="1" type="button" title="Team A Color 1"></button><button class="team-color-swatch" id="teamAColor2" data-team-color="A" data-slot="2" type="button" title="Team A Color 2"></button></div></div><div class="score-buttons" id="scoreBtnsA"></div></div>
           <div class="score-mid"><div class="vs">SCORE</div><div class="scoreline"><span id="scoreA">0</span><span> - </span><span id="scoreB">0</span></div><button class="ghost tiny" id="btnUndo">Undo Last Score</button></div>
-          <div class="team right"><img id="logoB" class="logo-preview" alt="Logo B" onerror="this.onerror=null;this.src='logos/default.svg'"><div class="team-name" id="teamBName">TEAM B</div><div class="team-sub" id="teamBSub">LogoB</div><div class="score-buttons" id="scoreBtnsB"></div></div>
+          <div class="team right"><img id="logoB" class="logo-preview" alt="Logo B" onerror="this.onerror=null;this.src='logos/default.svg'"><div class="team-name" id="teamBName">TEAM B</div><div class="team-meta-row"><div class="team-sub" id="teamBSub">LogoB</div><div class="team-colors" data-team-color-panel="B"><button class="team-color-swatch" id="teamBColor1" data-team-color="B" data-slot="1" type="button" title="Team B Color 1"></button><button class="team-color-swatch" id="teamBColor2" data-team-color="B" data-slot="2" type="button" title="Team B Color 2"></button></div></div><div class="score-buttons" id="scoreBtnsB"></div></div>
         </div>
       </section>
       <section class="card timerbox dock-module" id="moduleClock" data-module="clock">
@@ -380,8 +395,10 @@ function bindLogin(){if($('loginUsername'))$('loginUsername').value=auth.usernam
 let obs={ws:null,connected:false,identified:false,req:0,pending:new Map()};
 function merge(base,over){const out=Array.isArray(base)?[...base]:{...base};for(const[k,v]of Object.entries(over||{})){out[k]=(v&&typeof v==='object'&&!Array.isArray(v)&&base[k]&&typeof base[k]==='object'&&!Array.isArray(base[k]))?merge(base[k],v):v}return out}
 function loadJson(key,fallback){try{return JSON.parse(localStorage.getItem(key)||'null')||fallback}catch(_){return fallback}}
+let stateBridgeMutedUntil=0;
+function stateBridgeUrl(){try{if(location.origin&&/^https?:\/\/(127\.0\.0\.1|localhost):19446$/i.test(location.origin))return `${location.origin}/state`;if(location.protocol==='file:')return `${APP_HTTP}/state`}catch(_){}return ''}
 function saveLocal(){localStorage.setItem(STORE_KEY,JSON.stringify(state));localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));postStateToBridge()}
-async function postStateToBridge(){try{await fetch(`${APP_HTTP}/state`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:{pepsLiveDockV12:state,settings,updatedAt:Date.now()}})})}catch(_){}}
+async function postStateToBridge(){const url=stateBridgeUrl();if(!url||Date.now()<stateBridgeMutedUntil)return;try{const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({state:{pepsLiveDockV12:state,settings,updatedAt:Date.now()}})});if(!res.ok)stateBridgeMutedUntil=Date.now()+30000}catch(_){stateBridgeMutedUntil=Date.now()+30000}}
 function toast(msg){const el=$('toast');el.textContent=msg;el.className='toast show';setTimeout(()=>el.className='toast',2600)}
 function log(msg){state.logs.unshift(`${new Date().toLocaleTimeString('th-TH',{hour12:false})} ${msg}`);state.logs=state.logs.slice(0,80);saveLocal();renderLog()}
 function confirmBox(title,msg,okText='ตกลง'){return new Promise(resolve=>{$('modalTitle').textContent=title;$('modalMessage').textContent=msg;$('modalOk').textContent=okText;$('modalBackdrop').classList.add('show');const done=v=>{$('modalBackdrop').classList.remove('show');$('modalOk').onclick=null;$('modalCancel').onclick=null;resolve(v)};$('modalOk').onclick=()=>done(true);$('modalCancel').onclick=()=>done(false)})}
@@ -499,7 +516,7 @@ function bind(){initDrawer();on('btnOpenSettings',openDrawer);on('btnCloseDrawer
 
 // ===== PepsLive Dock V1 final feature overrides =====
 const OBS_TAGS=[
- ['TeamA','Text(GDI+)'],['TeamB','Text(GDI+)'],['ScoreA','Text(GDI+)'],['ScoreB','Text(GDI+)'],['Clock','Text(GDI+)'],['Period','Text(GDI+)'],['Status','Text(GDI+)'],['Label1','Text(GDI+)'],['Label2','Text(GDI+)'],['Label3','Text(GDI+)'],['Label4','Text(GDI+)'],['Label5','Text(GDI+)'],['LogoA','Logo'],['LogoB','Logo'],['TeamA_FX','Media'],['TeamB_FX','Media'],['Shared_FX','Media'],['CommandBus','Text(GDI+)'],['TeamA_PrimaryColor','Text(GDI+)'],['TeamA_SecondaryColor','Text(GDI+)'],['TeamB_PrimaryColor','Text(GDI+)'],['TeamB_SecondaryColor','Text(GDI+)'],['SkinLive','Browser'],['SkinSummary','Browser']
+ ['TeamA','Text(GDI+)'],['TeamB','Text(GDI+)'],['ScoreA','Text(GDI+)'],['ScoreB','Text(GDI+)'],['Clock','Text(GDI+)'],['Period','Text(GDI+)'],['Status','Text(GDI+)'],['Label1','Text(GDI+)'],['Label2','Text(GDI+)'],['Label3','Text(GDI+)'],['Label4','Text(GDI+)'],['Label5','Text(GDI+)'],['LogoA','Logo'],['LogoB','Logo'],['TeamA_FX','Media'],['TeamB_FX','Media'],['Shared_FX','Media'],['CommandBus','Text(GDI+)'],['TeamA_PrimaryColor','Color'],['TeamA_SecondaryColor','Color'],['TeamB_PrimaryColor','Color'],['TeamB_SecondaryColor','Color'],['SkinLive','Browser'],['SkinSummary','Browser']
 ];
 const HELP_TEXT={
  match:'วิธีการใช้งาน Match Loader\n1. โหลด Google Sheet ก่อน\n2. พิมพ์ค้นหา MatchID / ชื่อทีม / สนาม / รอบ\n3. คลิกเลือกคู่ที่ต้องการ\n4. กด Load Match เพื่อส่งชื่อทีม คะแนน โลโก้ และ label เข้า OBS\n5. กด Next เพื่อไปคู่ถัดไป',
@@ -597,6 +614,7 @@ function tagInputKind(type){
   if(type==='Logo')return 'image_source';
   if(type==='Image')return 'image_source';
   if(type==='Browser')return 'browser_source';
+  if(type==='Color')return 'color_source_v3';
   return 'text_gdiplus_v3';
 }
 function isLikelyRealLocalPath(v){return /^[a-zA-Z]:[\\/]/.test(v)||/^\\\\/.test(v)||/^\//.test(v)}
@@ -677,7 +695,7 @@ function applyDockLayout(){(settings.layout||[]).forEach(m=>{const el=document.q
 const oldRenderAll=renderAll;renderAll=function(){oldRenderAll();normalizeSettingsV1();renderActionButtons();renderObsTagTable();renderSourceActionSettings();renderLayoutSettings();applyDockLayout();};
 const oldRenderSettingsInputs=renderSettingsInputs;renderSettingsInputs=function(){oldRenderSettingsInputs();normalizeSettingsV1();if($('setLogoMode'))$('setLogoMode').value=settings.logo.mode;if($('setLogoBasePath'))$('setLogoBasePath').value=settings.logo.basePath||'logos/';if($('setLogoFolderPath'))$('setLogoFolderPath').value=settings.logo.folderPath||'';if($('setLogoExts'))$('setLogoExts').value=settings.logo.exts||'png,jpg,jpeg,webp,svg';};
 const oldSaveSettingsFromInputs=saveSettingsFromInputs;saveSettingsFromInputs=function(showToast=true){oldSaveSettingsFromInputs(false);normalizeSettingsV1();if($('setLogoMode'))settings.logo.mode=$('setLogoMode').value;if($('setLogoBasePath'))settings.logo.basePath=$('setLogoBasePath').value.trim()||'logos/';if($('setLogoFolderPath'))settings.logo.folderPath=$('setLogoFolderPath').value.trim();if($('setLogoExts'))settings.logo.exts=$('setLogoExts').value.trim()||'png,jpg,jpeg,webp,svg';saveLocal();renderObsTagTable();if(showToast)toast('บันทึก Settings แล้ว')};
-const oldSyncObsAll=syncObsAll;syncObsAll=async function(){await oldSyncObsAll();if(obs.connected){try{const tasks=[setText(settings.sources.TeamA_PrimaryColor,settings.teamColors.aPrimary),setText(settings.sources.TeamA_SecondaryColor,settings.teamColors.aSecondary),setText(settings.sources.TeamB_PrimaryColor,settings.teamColors.bPrimary),setText(settings.sources.TeamB_SecondaryColor,settings.teamColors.bSecondary)];if(isSkinStudioEnabled())tasks.push(setSkinBrowserSourceUrl('live'),setSkinBrowserSourceUrl('summary'));await Promise.all(tasks)}catch(e){}}};
+const oldSyncObsAll=syncObsAll;syncObsAll=async function(){await oldSyncObsAll();if(obs.connected){try{const tasks=[syncObsTeamColors()];if(isSkinStudioEnabled())tasks.push(setSkinBrowserSourceUrl('live'),setSkinBrowserSourceUrl('summary'));await Promise.all(tasks)}catch(e){}}};
 const oldProcessRemoteCommand=processRemoteCommand;processRemoteCommand=async function(cmd){const action=cmd&&(cmd.action||cmd.type||cmd.command);if(action==='sourceAction')return runSourceAction(cmd.slot||1);if(action==='hideAllActions')return hideAllActionSources();return oldProcessRemoteCommand(cmd)};
 
 // Runtime safety patch: keep Settings Drawer and Timer resilient even if optional settings sections change.
@@ -725,6 +743,37 @@ async function ensureLogoImageSource(inputName){
 }
 /* compatibility alias for older internal calls */
 async function ensureLogoBrowserSource(inputName){return ensureLogoImageSource(inputName)}
+function isObsColorKind(kind){return /^color_source(_v\d+)?$/i.test(String(kind||''))}
+function obsColorInt(hex,alpha=255){const c=normalizeHexColor(hex,'#FFFFFF');const r=parseInt(c.slice(1,3),16),g=parseInt(c.slice(3,5),16),b=parseInt(c.slice(5,7),16),a=Math.max(0,Math.min(255,Number(alpha)||255));return (((a&255)<<24)|(r<<16)|(g<<8)|b)>>>0}
+function colorForObsTag(k){if(k==='TeamA_PrimaryColor')return getTeamColor('A',1);if(k==='TeamA_SecondaryColor')return getTeamColor('A',2);if(k==='TeamB_PrimaryColor')return getTeamColor('B',1);if(k==='TeamB_SecondaryColor')return getTeamColor('B',2);return '#FFFFFF'}
+async function ensureColorSource(inputName,hex){
+  if(!inputName)throw new Error('missing_color_input_name');
+  const sceneName=await currentScene();
+  let kind=await getObsInputKind(inputName);
+  if(isObsColorKind(kind))return true;
+  if(kind){
+    log('Color source type mismatch: '+inputName+' is '+kind+' -> recreate as Color Source');
+    await removeObsInputIfExists(inputName);
+    await new Promise(r=>setTimeout(r,180));
+  }
+  const inputSettings={color:obsColorInt(hex),width:80,height:80};
+  try{
+    await obsRequest('CreateInput',{sceneName,inputName,inputKind:'color_source_v3',inputSettings,sceneItemEnabled:true});
+    log('Create Color Source: '+inputName);
+    return true;
+  }catch(e){
+    try{
+      await obsRequest('CreateInput',{sceneName,inputName,inputKind:'color_source',inputSettings,sceneItemEnabled:true});
+      log('Create Color Source fallback: '+inputName);
+      return true;
+    }catch(_){
+      kind=await getObsInputKind(inputName);
+      if(isObsColorKind(kind))return true;
+      throw new Error('Create Color Source failed: '+inputName+' | '+e.message);
+    }
+  }
+}
+async function setColorSource(inputName,hex){if(!inputName)return;await ensureColorSource(inputName,hex);await obsRequest('SetInputSettings',{inputName,inputSettings:{color:obsColorInt(hex),width:80,height:80},overlay:true})}
 async function setLogo(inputName,value){
   if(!inputName)return;
   const rawValue=String(value||'').trim();
@@ -743,6 +792,10 @@ async function createSourceByTag(k,type){
   const inputName=tagSourceName(k);
   if(type==='Logo'){
     try{await ensureLogoImageSource(inputName);toast('สร้าง/ซ่อม Logo Image Source แล้ว: '+inputName)}catch(e){toast(e.message)}
+    return;
+  }
+  if(type==='Color'){
+    try{await setColorSource(inputName,colorForObsTag(k));toast('Create/Update Color Source: '+inputName)}catch(e){toast(e.message)}
     return;
   }
   const kind=tagInputKind(type);let inputSettings={};let enabled=true;
@@ -1361,8 +1414,21 @@ function initSkinSyncPanel(){
   }
   renderSkinSyncStatus();
 }
+const TEAM_COLOR_DEFAULTS={A:{primary:'#FF6A00',secondary:'#111111'},B:{primary:'#0057FF',secondary:'#FFFFFF'}};
+function normalizeHexColor(value,fallback='#FFFFFF'){let v=String(value||'').trim();if(!v)v=fallback;if(v[0]!=='#')v='#'+v;const m=v.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);if(!m)return normalizeHexColor(fallback,'#FFFFFF');let h=m[1];if(h.length===3)h=h.split('').map(c=>c+c).join('');return '#'+h.toUpperCase()}
+function teamColorKey(team,slot){const t=String(team||'A').toUpperCase()==='B'?'b':'a';return t+(Number(slot)===2?'Secondary':'Primary')}
+function defaultTeamColor(team,slot){const d=TEAM_COLOR_DEFAULTS[String(team||'A').toUpperCase()==='B'?'B':'A'];return Number(slot)===2?d.secondary:d.primary}
+function getTeamColor(team,slot){normalizeSettingsV1();return normalizeHexColor(settings.teamColors[teamColorKey(team,slot)],defaultTeamColor(team,slot))}
+function setTeamColor(team,slot,value){normalizeSettingsV1();settings.teamColors[teamColorKey(team,slot)]=normalizeHexColor(value,defaultTeamColor(team,slot))}
+function renderTeamColorSwatches(){['A','B'].forEach(team=>{[1,2].forEach(slot=>{const btn=$(`team${team}Color${slot}`);if(!btn)return;const color=getTeamColor(team,slot);btn.style.background=color;btn.title=`Pick Team ${team} Color ${slot}: ${color}`;btn.setAttribute('aria-label',`Pick Team ${team} Color ${slot} ${color}`)})})}
+async function syncObsTeamColors(){if(!obs.connected)return;try{await Promise.all([setColorSource(settings.sources.TeamA_PrimaryColor,getTeamColor('A',1)),setColorSource(settings.sources.TeamA_SecondaryColor,getTeamColor('A',2)),setColorSource(settings.sources.TeamB_PrimaryColor,getTeamColor('B',1)),setColorSource(settings.sources.TeamB_SecondaryColor,getTeamColor('B',2))])}catch(e){log('Team color sync failed: '+(e&&e.message?e.message:e))}}
+function applyPickedTeamColor(team,slot,value){team=String(team||'A').toUpperCase()==='B'?'B':'A';slot=Number(slot)===2?2:1;const color=normalizeHexColor(value,defaultTeamColor(team,slot));setTeamColor(team,slot,color);saveLocal();renderTeamColorSwatches();syncObsTeamColors();toast(`Team ${team} Color ${slot}: ${color}`)}
+function openNativeTeamColorPicker(team,slot){const input=document.createElement('input');input.type='color';input.value=getTeamColor(team,slot);input.style.position='fixed';input.style.left='-999px';input.style.top='0';document.body.appendChild(input);let last='';const commit=()=>{if(input.value&&input.value!==last){last=input.value;applyPickedTeamColor(team,slot,input.value)}};const cleanup=()=>setTimeout(()=>{try{input.remove()}catch(_){}},120);input.oninput=commit;input.onchange=()=>{commit();cleanup()};input.onblur=cleanup;input.click()}
+async function pickTeamColor(team,slot){team=String(team||'A').toUpperCase()==='B'?'B':'A';slot=Number(slot)===2?2:1;const btn=$(`team${team}Color${slot}`);if(btn)btn.classList.add('picking');try{if(window.EyeDropper){const result=await new EyeDropper().open();if(result&&result.sRGBHex)applyPickedTeamColor(team,slot,result.sRGBHex)}else{openNativeTeamColorPicker(team,slot)}}catch(e){if(!(e&&e.name==='AbortError'))toast('Pick color failed: '+(e&&e.message?e.message:'unknown error'))}finally{if(btn)btn.classList.remove('picking')}}
+function bindTeamColorControls(){document.querySelectorAll('[data-team-color]').forEach(btn=>btn.onclick=()=>pickTeamColor(btn.dataset.teamColor,btn.dataset.slot))}
+const __oldRenderAllForTeamColors=renderAll;renderAll=function(){__oldRenderAllForTeamColors();renderTeamColorSwatches()};
 function openDockMatchPanel(){openDrawer();setTimeout(()=>{const tab=document.querySelector('[data-tab="tabMatch"]');if(tab)tab.click()},0)}
-function bindCompactDockControls(){on('btnSyncObsDock',syncObsAll);on('btnHideFxDock',hideAllFx);on('btnOpenMatchDock',openDockMatchPanel)}
+function bindCompactDockControls(){on('btnSyncObsDock',syncObsAll);on('btnHideFxDock',hideAllFx);on('btnOpenMatchDock',openDockMatchPanel);bindTeamColorControls()}
 if(initMobileRemoteMode())return;bind();bindCompactDockControls();bindLogin();bindScoreNameEditing();bindMobileRemoteControls();if($('btnOnlineUsers'))$('btnOnlineUsers').onclick=openOnlinePopup;if($('btnCloseOnlinePopup'))$('btnCloseOnlinePopup').onclick=closeOnlinePopup;if($('onlineModalBackdrop'))$('onlineModalBackdrop').onclick=e=>{if(e.target.id==='onlineModalBackdrop')closeOnlinePopup()};if($('btnRefreshOnlinePopup'))$('btnRefreshOnlinePopup').onclick=async()=>{await syncPresenceOnce();renderOnlinePopup()};document.querySelectorAll('.help-btn').forEach(b=>b.onclick=()=>showHelp(b.dataset.help));if($('btnSaveLogoSettings'))$('btnSaveLogoSettings').onclick=()=>saveSettingsFromInputs(true);if($('btnRepairLogoSources'))$('btnRepairLogoSources').onclick=repairLogoSources;if($('btnPickLogoFolder'))$('btnPickLogoFolder').onclick=()=>$('logoFolderInput').click();if($('logoFolderInput'))$('logoFolderInput').onchange=async e=>{const files=e.target.files||[];const first=files[0];const count=registerLogoFiles(files);await hydrateLocalLogoDataUrls();if(first&&first.webkitRelativePath){const folder=first.webkitRelativePath.split('/')[0];settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโฟลเดอร์โลโก้สำหรับ Preview: ${folder} (${count} ไฟล์) | OBS ต้องกรอก Logo Folder Path จริง`)}else if(count){settings.logo.mode='local';renderSettingsInputs();saveSettingsFromInputs(false);checkLogos(false);toast(`เลือกโลโก้สำหรับ Preview แล้ว ${count} ไฟล์ | OBS ต้องกรอก Logo Folder Path จริง`)}};if($('btnSaveActions'))$('btnSaveActions').onclick=saveActionSettings;if($('btnPresetActions'))$('btnPresetActions').onclick=presetActions;if($('btnHideAllActions2'))$('btnHideAllActions2').onclick=hideAllActionSources;if($('btnHideActionSources'))$('btnHideActionSources').onclick=hideAllActionSources;if($('btnSaveLayout'))$('btnSaveLayout').onclick=saveLayoutSettings;if($('btnResetLayout'))$('btnResetLayout').onclick=resetLayoutSettings;if($('btnCheckObsSources'))$('btnCheckObsSources').onclick=()=>toast('ใช้ปุ่ม + เพื่อสร้าง/ตรวจทีละ Tag ได้ทันที');bindSkinStudioPopupControls();applySportDefaults(false);filterMatches(false);renderAll();initSkinSyncPanel();applyAuthUI();if(auth.authenticated)startPresence();resumeMobileRemoteSession();setInterval(tick,1000);window.addEventListener('pagehide',sendPresenceOfflineBeacon);window.addEventListener('beforeunload',()=>{sendPresenceOfflineBeacon();saveLocal()});if(state.sheetRows&&state.sheetRows.length){$('stSheet').className='status ok';$('stSheet').textContent=`Sheet: ${state.sheetRows.length}`}
 })();
 </script>
