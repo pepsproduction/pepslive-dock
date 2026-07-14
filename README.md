@@ -36,8 +36,10 @@ PepsLive_Dock_V1.html
 ## Google Sheet Schema
 
 ```text
-MatchID, LogoA, TeamA, LogoB, TeamB, Label1, Label2, Label3, Label4, Label5, ScoreA, ScoreB, FinalScore, MatchStatus, Winner, FinishedAt, UpdatedAt, UpdatedBy, Note
+MatchID, LogoA, TeamA, LogoB, TeamB, Label1, Label2, Label3, Label4, Label5, ScoreA, ScoreB, FinalScore, MatchStatus, Winner, FinishedAt, UpdatedAt, UpdatedBy, Note, TeamA_PrimaryColor, TeamA_SecondaryColor, TeamB_PrimaryColor, TeamB_SecondaryColor, Revision, LastOperationID
 ```
+
+สีเก็บเป็น `#RRGGBB` และใช้ค่าเดียวกันใน Google Sheet, Dock และ OBS Color Source ดูรายละเอียดที่ [docs/SHEET_SCHEMA.md](docs/SHEET_SCHEMA.md)
 
 ## Apps Script
 
@@ -62,7 +64,9 @@ bridge/google_apps_script_save_result.gs
 7. นำ Web App URL ไปใส่ใน Dock > Settings > Sheet > Apps Script Webhook URL
 8. กด `Setup Check` หรือ `ทดสอบ Webhook`
 
-ถ้าชีตขาดหัวตาราง ให้กด `Repair Sheet` ใน Dock หรือเมนู `PepsLive > Repair Sheet Schema` ใน Google Sheet ระบบจะเติมหัวตารางหลักและสร้างชีตเสริม `PepsLiveUsers`, `PepsLiveRemote`, `PepsLiveRemoteState`, `PepsLiveRemoteDevices` ให้เอง
+ถ้าชีตขาดหัวตาราง ให้กด `Repair Sheet` ใน Dock หรือเมนู `PepsLive > Repair Sheet Schema` ใน Google Sheet ระบบจะเติม Match Schema V2 และสร้างชีตเสริม `PepsLiveOperations`, `PepsLiveUsers`, `PepsLiveRemote`, `PepsLiveRemoteState`, `PepsLiveRemoteDevices` ให้เอง
+
+เตรียมสีล่วงหน้าได้จาก `PepsLive > Pick OBS Color` ใน Google Sheet เลือก Primary/Secondary ของทั้งสองทีมแล้วบันทึกครั้งเดียว จากนั้นกด `Load Sheet` ใน Dock
 
 Webhook Token เป็นทางเลือกเสริมสำหรับงานที่ต้องการกันคนอื่นยิง Webhook ถ้าต้องใช้ ให้เปิดเมนู `PepsLive > Generate Webhook Token` แล้วนำ token ไปใส่ใน Dock ช่อง `Webhook Token`
 
@@ -93,7 +97,7 @@ Webhook Token เป็นทางเลือกเสริมสำหรั
 
 ### Mobile Remote
 
-1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook OK v2026-05-26.1` หรือใหม่กว่า
+1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook V2 OK 2026-07-14.1` หรือใหม่กว่า
 2. กดปุ่มรูปมือถือบนแถบบนของ Dock
 3. สแกน QR Code ด้วยมือถือ หรือ copy link ไปเปิดในมือถือ
 4. มือถือจะเปิดหน้า Remote แยก พร้อมปุ่มควบคุมคะแนน เวลา Save Result, Finish Match, Load Next Match, Sync OBS และ Source Actions
@@ -448,4 +452,4 @@ The visible Sync panel is no longer shown. Background sync still publishes Dock 
 ### Apps Script Webhook Update Note
 
 - Use the latest `bridge/google_apps_script_save_result.gs` script for Save Result, Presence, and Scoreboard Skin Relay.
-- Latest expected webhook version: `2026-05-26.1`.
+- Latest expected webhook version: `2026-07-14.1` with Match Schema V2, revision-safe saves, and Sheet color picker.

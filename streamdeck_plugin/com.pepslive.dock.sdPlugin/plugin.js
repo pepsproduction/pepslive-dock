@@ -5,6 +5,7 @@
   let websocket = null;
   let pluginUUID = null;
   let seq = 0;
+  let commandSendChain = Promise.resolve();
   let globalSettings = { ...DEFAULT_CONFIG };
   let obs = { ws:null, connected:false, identified:false, req:0, pending:new Map() };
 
@@ -82,12 +83,37 @@
     try{ await obsRequest('CreateInput',{sceneName,inputName:name,inputKind:'text_gdiplus_v3',inputSettings:{text:''},sceneItemEnabled:false}); }
     catch(e){ /* source may already exist or text kind may differ */ }
   }
-  async function sendCommandToDock(command){
+  function commandEnvelope(text){
+    try{
+      const parsed = JSON.parse(String(text||''));
+      if(Array.isArray(parsed && parsed.commands)) return parsed.commands.filter(item=>item && typeof item === 'object');
+      if(parsed && typeof parsed === 'object' && parsed.id) return [parsed];
+    }catch(_){ }
+    return [];
+  }
+  async function sendCommandToDockNow(command){
     await connectObs();
     await ensureCommandBus();
-    const payload = { id:'sd-' + Date.now() + '-' + (++seq), source:'streamdeck', ...command };
-    await obsRequest('SetInputSettings', {inputName:globalSettings.commandBusSource || 'PEPS_CommandBus', inputSettings:{text:JSON.stringify(payload)}, overlay:true});
+    const now = Date.now();
+    const payload = { id:'sd-' + now + '-' + (++seq), source:'streamdeck', createdAt:now, ...command };
+    const inputName = globalSettings.commandBusSource || 'PEPS_CommandBus';
+    let commands = [];
+    try{
+      const current = await obsRequest('GetInputSettings', {inputName});
+      commands = commandEnvelope(current && current.inputSettings && current.inputSettings.text);
+    }catch(_){ }
+    commands = commands
+      .filter((item,index,list)=>list.findIndex(candidate=>candidate.id===item.id)===index)
+      .filter(item=>!Number.isFinite(Number(item.createdAt)) || now-Number(item.createdAt)<30000);
+    if(commands.length>=20) throw new Error('Command queue is full. Wait for Dock to process it.');
+    commands.push(payload);
+    await obsRequest('SetInputSettings', {inputName, inputSettings:{text:JSON.stringify({version:1,commands})}, overlay:true});
     return payload;
+  }
+  function sendCommandToDock(command){
+    const task = commandSendChain.then(()=>sendCommandToDockNow(command));
+    commandSendChain = task.catch(()=>{});
+    return task;
   }
   async function handleKeyUp(ev){
     const meta = (window.PEPSLIVE_ACTIONS || {})[ev.action];

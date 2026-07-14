@@ -6,7 +6,7 @@
 bridge/google_apps_script_save_result.gs
 ```
 
-เวอร์ชันที่คาดหวังใน Dock: `2026-05-26.1`
+เวอร์ชันที่คาดหวังใน Dock: `2026-07-14.1`
 
 Webhook ตัวนี้ใช้สำหรับ Save Result, Finish Match, Online Users, Mobile Remote และ Scoreboard Skin Relay โดยข้อมูลจะถูกเขียนลง Google Sheet ของเจ้าของชีตคนนั้นเอง ไม่ได้ผูกกับชีตของ PepsProduction
 
@@ -31,7 +31,7 @@ Webhook ตัวนี้ใช้สำหรับ Save Result, Finish Match,
 หัวตารางหลักควรมีคอลัมน์เหล่านี้:
 
 ```text
-MatchID, LogoA, TeamA, LogoB, TeamB, Label1, Label2, Label3, Label4, Label5, ScoreA, ScoreB, FinalScore, MatchStatus, Winner, FinishedAt, UpdatedAt, UpdatedBy, Note
+MatchID, LogoA, TeamA, LogoB, TeamB, Label1, Label2, Label3, Label4, Label5, ScoreA, ScoreB, FinalScore, MatchStatus, Winner, FinishedAt, UpdatedAt, UpdatedBy, Note, TeamA_PrimaryColor, TeamA_SecondaryColor, TeamB_PrimaryColor, TeamB_SecondaryColor, Revision, LastOperationID
 ```
 
 ถ้ายังไม่มีหัวตารางครบ ไม่เป็นไร เดี๋ยวใช้เมนู Repair เติมให้ได้
@@ -87,12 +87,15 @@ PepsLive > Install / Repair Sheet
 3. กด Go to PepsLive Dock Webhook
 4. กด Allow
 
-เมนูนี้จะทำ 4 อย่าง:
+เมนูนี้จะทำสิ่งต่อไปนี้:
 
 - จำ Spreadsheet ID ของชีตนี้ไว้ใน Script Properties
 - ตรวจ/เติมหัวตารางหลักของ match sheet
 - สร้างชีต `PepsLiveConfig`
+- สร้างชีต append-only `PepsLiveOperations` สำหรับป้องกันการบันทึกซ้ำและตรวจ revision
 - สร้างชีตเสริมสำหรับระบบ online/mobile remote ถ้ายังไม่มี
+
+หลังติดตั้งจะมีเมนู `PepsLive > Pick OBS Color` สำหรับเตรียมสี Primary/Secondary ของทั้งสองทีมล่วงหน้า สีจะถูกเก็บเป็น `#RRGGBB` และโหลดไปยัง Dock/OBS โดยตรง
 
 ชีตเสริมที่อาจถูกสร้าง:
 
@@ -179,7 +182,7 @@ Setup Check
 
 ```text
 Setup OK
-Webhook OK v2026-05-26.1
+Webhook V2 OK 2026-07-14.1
 ```
 
 ## ทดสอบ Save Result
@@ -205,6 +208,12 @@ FinishedAt
 UpdatedAt
 UpdatedBy
 Note
+TeamA_PrimaryColor
+TeamA_SecondaryColor
+TeamB_PrimaryColor
+TeamB_SecondaryColor
+Revision
+LastOperationID
 ```
 
 ## อัปเดตจากสคริปต์เก่า
@@ -273,6 +282,11 @@ token ใน Dock ไม่ตรงกับ token ใน Apps Script
 
 ค่า `MatchID` ใน Dock ไม่ตรงกับแถวใน Google Sheet ให้ตรวจว่าคู่ที่โหลดมาจากชีตเดียวกับชีตที่ Webhook เขียนกลับอยู่
 
+### ขึ้น `duplicate_match_id` หรือ `revision_conflict`
+
+- `duplicate_match_id`: มี `MatchID` ซ้ำในชีตหลัก ต้องแก้ให้แต่ละแถวไม่ซ้ำก่อนบันทึก
+- `revision_conflict`: Sheet มีข้อมูลใหม่กว่ารายการใน Dock ให้กด `Load Sheet` ตรวจสอบผลล่าสุด แล้วค่อย Retry หรือ Discard Pending เก่า
+
 ### ทดสอบ Webhook แล้วขึ้น Old Script
 
 แปลว่า Web App ยังเป็นโค้ดเก่า ให้ไปที่:
@@ -288,12 +302,13 @@ Google Workspace บางองค์กรอาจปิด Apps Script ห�
 ## Checklist ก่อนส่งให้คนอื่นใช้
 
 1. Google Sheet เป็นของผู้ใช้คนนั้นเอง
-2. Apps Script วางโค้ดล่าสุด `v2026-05-26.1`
+2. Apps Script วางโค้ดล่าสุด `v2026-07-14.1`
 3. กด `PepsLive > Install / Repair Sheet` แล้ว
 4. Deploy Web App เป็น `/exec`
 5. Dock ใส่ Google Sheet URL ถูกตัว
 6. Dock ใส่ Apps Script Webhook URL ถูกตัว
 7. ถ้าใช้ token ต้องใส่ token ตรงกัน
 8. `Setup Check` ผ่าน
-9. `ทดสอบ Webhook` ขึ้น `Webhook OK v2026-05-26.1`
-10. Save Result แล้ว Google Sheet อัปเดตจริง
+9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-14.1`
+10. เปิด `PepsLive > Pick OBS Color` แล้วบันทึกสีทั้ง 4 ช่องได้
+11. Save Result แล้ว Google Sheet อัปเดตคะแนน สี `Revision` และ `LastOperationID` จริง

@@ -42,6 +42,8 @@ Stream Deck -> OBS WebSocket -> Text Source `PEPS_CommandBus` -> PepsLive Dock -
 
 ต้องเปิด PepsLive Dock อยู่เสมอ ถ้า Dock ไม่เปิด Stream Deck จะเขียนคำสั่งเข้า OBS ได้ แต่ไม่มีตัวอ่านคำสั่งไปประมวลผลต่อ
 
+ปลั๊กอินส่งคำสั่งแบบเรียงคิวและ Dock กัน command ID ซ้ำ หากคิว `PEPS_CommandBus` เต็ม ปลั๊กอินจะแจ้งเตือนแทนการทิ้งคำสั่งเก่าเงียบ ๆ ให้รอ Dock อ่านคิวแล้วกดใหม่
+
 
 ## ปุ่ม Source Actions เพิ่มเติม
 

@@ -18,11 +18,20 @@ PEPS_Label3
 PEPS_Label4
 PEPS_Label5
 PEPS_CommandBus
+```
+
+## Color Sources
+
+ใช้เป็น OBS Color Source ไม่ใช่ Text Source
+
+```text
 PEPS_TeamA_PrimaryColor
 PEPS_TeamA_SecondaryColor
 PEPS_TeamB_PrimaryColor
 PEPS_TeamB_SecondaryColor
 ```
+
+Dock ใช้สี `#RRGGBB` เป็นค่าหลัก แปลงเป็นรูปแบบ ABGR ของ OBS ตอนส่ง และอ่านค่ากลับจาก OBS เพื่อตรวจว่าสีตรงกัน
 
 ## Logo Sources
 
@@ -40,6 +49,7 @@ PEPS_LogoB
 ```text
 PEPS_TeamA_FX
 PEPS_TeamB_FX
+PEPS_Shared_FX
 ```
 
 ## วิธีสร้าง

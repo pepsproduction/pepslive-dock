@@ -12,7 +12,7 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-05-26.1';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-07-14.1';
 var PEPSLIVE_SPREADSHEET_ID_KEY = 'PEPSLIVE_SPREADSHEET_ID';
 var PEPSLIVE_WEBHOOK_TOKEN_KEY = 'PEPSLIVE_WEBHOOK_TOKEN';
 var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
@@ -20,14 +20,20 @@ var PEPSLIVE_MATCH_SCHEMA = [
   'MatchID','LogoA','TeamA','LogoB','TeamB',
   'Label1','Label2','Label3','Label4','Label5',
   'ScoreA','ScoreB','FinalScore','MatchStatus','Winner',
-  'FinishedAt','UpdatedAt','UpdatedBy','Note'
+  'FinishedAt','UpdatedAt','UpdatedBy','Note',
+  'TeamA_PrimaryColor','TeamA_SecondaryColor',
+  'TeamB_PrimaryColor','TeamB_SecondaryColor',
+  'Revision','LastOperationID'
 ];
+var PEPSLIVE_COLOR_FIELDS = ['TeamA_PrimaryColor','TeamA_SecondaryColor','TeamB_PrimaryColor','TeamB_SecondaryColor'];
+var PEPSLIVE_OPERATION_SCHEMA = ['OperationID','TargetMatchID','ContractVersion','OperationType','BaseRevision','AppliedRevision','PayloadHash','PatchJSON','SnapshotJSON','ClientID','ClientCreatedAt','Actor','RecordedAt'];
 var PEPSLIVE_SYSTEM_SHEETS = {
   PepsLiveConfig: true,
   PepsLiveUsers: true,
   PepsLiveRemote: true,
   PepsLiveRemoteState: true,
-  PepsLiveRemoteDevices: true
+  PepsLiveRemoteDevices: true,
+  PepsLiveOperations: true
 };
 
 function onOpen() {
@@ -36,6 +42,7 @@ function onOpen() {
       .createMenu('PepsLive')
       .addItem('Install / Repair Sheet', 'pepsliveInstall')
       .addItem('Repair Sheet Schema', 'pepsliveRepair')
+      .addItem('Pick OBS Color', 'pepsliveOpenColorPicker')
       .addItem('Generate Webhook Token', 'pepsliveGenerateWebhookToken')
       .addItem('Show Setup Status', 'pepsliveShowSetup')
       .addToUi();
@@ -231,26 +238,99 @@ function ensureMatchSchema_(sheet, repair) {
   return { missing: missing, repaired: repair };
 }
 
+function operationsSheet_(ss) {
+  ss = ss || targetSpreadsheet_();
+  var sheet = ss.getSheetByName('PepsLiveOperations');
+  if (!sheet) sheet = ss.insertSheet('PepsLiveOperations');
+  var headers = sheet.getLastColumn() ? sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), PEPSLIVE_OPERATION_SCHEMA.length)).getValues()[0] : [];
+  var current = headers.map(function(h) { return String(h || '').trim(); });
+  if (current.join('').trim() === '') {
+    sheet.getRange(1, 1, 1, PEPSLIVE_OPERATION_SCHEMA.length).setValues([PEPSLIVE_OPERATION_SCHEMA]);
+  } else {
+    var missing = PEPSLIVE_OPERATION_SCHEMA.filter(function(h) { return current.indexOf(h) === -1; });
+    if (missing.length) sheet.getRange(1, current.length + 1, 1, missing.length).setValues([missing]);
+  }
+  sheet.setFrozenRows(1);
+  return sheet;
+}
+
+function normalizeColor_(value, allowBlank) {
+  var text = String(value == null ? '' : value).trim().toUpperCase();
+  if (!text && allowBlank) return '';
+  if (text.charAt(0) !== '#') text = '#' + text;
+  if (/^#[0-9A-F]{3}$/.test(text)) text = '#' + text.slice(1).split('').map(function(ch) { return ch + ch; }).join('');
+  if (!/^#[0-9A-F]{6}$/.test(text)) throw new Error('invalid_color: ' + String(value));
+  return text;
+}
+
+function colorTextColor_(hex) {
+  if (!/^#[0-9A-F]{6}$/i.test(String(hex || ''))) return '#20242B';
+  var r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? '#111111' : '#FFFFFF';
+}
+
+function formatMatchColorColumns_(sheet) {
+  if (!sheet || sheet.getLastRow() < 2) return;
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) { return String(h || '').trim(); });
+  PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
+    var col = headers.indexOf(field) + 1;
+    if (col < 1) return;
+    var range = sheet.getRange(2, col, sheet.getLastRow() - 1, 1), values = range.getValues();
+    var backgrounds = [], fonts = [];
+    values.forEach(function(row) {
+      var raw = String(row[0] || '').trim();
+      if (!raw) { backgrounds.push(['#FFFFFF']); fonts.push(['#20242B']); return; }
+      try { var color = normalizeColor_(raw, true); backgrounds.push([color]); fonts.push([colorTextColor_(color)]); }
+      catch (err) { backgrounds.push(['#FFE7EA']); fonts.push(['#B42335']); }
+    });
+    range.setNumberFormat('@').setBackgrounds(backgrounds).setFontColors(fonts);
+    sheet.setColumnWidth(col, 150);
+  });
+}
+
+function inspectMatchData_(sheet) {
+  var issues = [];
+  if (!sheet || sheet.getLastRow() < 2) return issues;
+  var data = sheet.getDataRange().getValues(), headers = data[0].map(function(h) { return String(h || '').trim(); });
+  var matchCol = headers.indexOf('MatchID'), revisionCol = headers.indexOf('Revision'), seen = {};
+  for (var r = 1; r < data.length; r++) {
+    var matchId = matchCol >= 0 ? String(data[r][matchCol] || '').trim() : '';
+    if (!matchId) { issues.push('row ' + (r + 1) + ': missing MatchID'); continue; }
+    if (seen[matchId]) issues.push('row ' + (r + 1) + ': duplicate MatchID ' + matchId);
+    seen[matchId] = true;
+    PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
+      var col = headers.indexOf(field), raw = col >= 0 ? String(data[r][col] || '').trim() : '';
+      if (raw) try { normalizeColor_(raw, true); } catch (err) { issues.push('row ' + (r + 1) + ': invalid ' + field); }
+    });
+    if (revisionCol >= 0 && String(data[r][revisionCol] || '').trim() !== '' && (!isFinite(Number(data[r][revisionCol])) || Number(data[r][revisionCol]) < 0)) issues.push('row ' + (r + 1) + ': invalid Revision');
+    if (issues.length >= 50) break;
+  }
+  return issues;
+}
+
 function setupCheck_() {
   try {
     var ss = targetSpreadsheet_();
     var sheet = matchSheet_(ss);
     var schema = ensureMatchSchema_(sheet, false);
+    var dataIssues = schema.missing.length ? [] : inspectMatchData_(sheet);
     return {
-      ok: !schema.missing.length,
+      ok: !schema.missing.length && !dataIssues.length,
       version: PEPSLIVE_WEBHOOK_VERSION,
       spreadsheetReady: true,
       spreadsheetId: ss.getId(),
       spreadsheetName: ss.getName(),
       matchSheet: sheet.getName(),
       missingColumns: schema.missing,
+      dataIssues: dataIssues,
       tokenEnabled: !!webhookToken_(),
       sheets: {
         config: !!ss.getSheetByName('PepsLiveConfig'),
         users: !!ss.getSheetByName('PepsLiveUsers'),
         remote: !!ss.getSheetByName('PepsLiveRemote'),
         remoteState: !!ss.getSheetByName('PepsLiveRemoteState'),
-        remoteDevices: !!ss.getSheetByName('PepsLiveRemoteDevices')
+        remoteDevices: !!ss.getSheetByName('PepsLiveRemoteDevices'),
+        operations: !!ss.getSheetByName('PepsLiveOperations')
       }
     };
   } catch (err) {
@@ -272,6 +352,8 @@ function setupRepair_(options) {
   writeConfigSheet_(ss);
   var sheet = matchSheet_(ss);
   ensureMatchSchema_(sheet, true);
+  formatMatchColorColumns_(sheet);
+  operationsSheet_(ss);
   usersSheet_();
   remoteSheet_();
   remoteStateSheet_();
@@ -353,46 +435,243 @@ function webhookInfo_() {
       setupCheck: true,
       setupRepair: true,
       spreadsheetIdBinding: true,
-      optionalWebhookToken: true
+      optionalWebhookToken: true,
+      matchDataV2: true,
+      teamColors: true,
+      idempotentSave: true,
+      optimisticRevision: true,
+      immutableOperationLog: true,
+      sheetColorPicker: true
     },
     setup: setupCheck_()
   };
 }
 
+function stableJson_(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return '[' + value.map(stableJson_).join(',') + ']';
+  return '{' + Object.keys(value).sort().map(function(key) { return JSON.stringify(key) + ':' + stableJson_(value[key]); }).join(',') + '}';
+}
+
+function sha256Hex_(value) {
+  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(value || ''), Utilities.Charset.UTF_8);
+  return bytes.map(function(byte) { var n = byte < 0 ? byte + 256 : byte; return ('0' + n.toString(16)).slice(-2); }).join('');
+}
+
+function rowSnapshot_(headers, row) {
+  var out = {};
+  PEPSLIVE_MATCH_SCHEMA.forEach(function(field) { var col = headers.indexOf(field); if (col >= 0) out[field] = row[col]; });
+  return out;
+}
+
+function findOperation_(sheet, operationId) {
+  if (!operationId || sheet.getLastRow() < 2) return null;
+  var data = sheet.getDataRange().getValues(), headers = data[0].map(function(h) { return String(h || '').trim(); }), idCol = headers.indexOf('OperationID');
+  for (var r = data.length - 1; r >= 1; r--) {
+    if (String(data[r][idCol] || '').trim() !== operationId) continue;
+    var record = {};
+    headers.forEach(function(header, index) { record[header] = data[r][index]; });
+    return record;
+  }
+  return null;
+}
+
+function appendOperation_(sheet, record) {
+  sheet.appendRow(PEPSLIVE_OPERATION_SCHEMA.map(function(field) { return record[field] == null ? '' : record[field]; }));
+}
+
+function projectMatchSnapshot_(sheet, rowIndex, headers, snapshot) {
+  var range = sheet.getRange(rowIndex, 1, 1, headers.length), row = range.getValues()[0], formulas = range.getFormulas()[0];
+  var writable = ['TeamA','TeamB','ScoreA','ScoreB','FinalScore','MatchStatus','Winner','FinishedAt','UpdatedAt','UpdatedBy','Note'].concat(PEPSLIVE_COLOR_FIELDS).concat(['Revision','LastOperationID']);
+  writable.forEach(function(field) { var col = headers.indexOf(field); if (col >= 0 && Object.prototype.hasOwnProperty.call(snapshot, field)) row[col] = snapshot[field]; });
+  for (var i = 0; i < row.length; i++) if (formulas[i] && writable.indexOf(headers[i]) === -1) row[i] = formulas[i];
+  range.setValues([row]);
+  PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
+    var col = headers.indexOf(field), color = snapshot[field];
+    if (col < 0) return;
+    var cell = sheet.getRange(rowIndex, col + 1);
+    if (color) cell.setBackground(color).setFontColor(colorTextColor_(color)); else cell.setBackground('#FFFFFF').setFontColor('#20242B');
+  });
+}
+
 function saveResult_(payload) {
   payload = payload || {};
-  var values = payload.values || {};
-  var matchId = String(payload.matchId || '').trim();
-  if (!matchId) return { ok: false, error: 'missing_matchId' };
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return { ok: false, error: 'save_busy_retry' };
+  try {
+    var values = payload.values || {}, matchId = String(payload.matchId || '').trim(), contractVersion = Number(payload.contractVersion || 1) || 1;
+    if (!matchId) return { ok: false, error: 'missing_matchId' };
+    var sheet = matchSheet_();
+    ensureMatchSchema_(sheet, true);
+    var data = sheet.getDataRange().getValues();
+    if (!data.length) return { ok: false, error: 'empty_sheet' };
+    var headers = data[0].map(function(h) { return String(h || '').trim(); }), matchIdCol = headers.indexOf('MatchID'), rowIndex = -1, rowData = null, matchingRows = [];
+    for (var r = 1; r < data.length; r++) if (String(data[r][matchIdCol] || '').trim() === matchId) matchingRows.push(r);
+    if (matchingRows.length > 1) return { ok: false, error: 'duplicate_match_id', matchId: matchId, rows: matchingRows.map(function(index) { return index + 1; }) };
+    if (matchingRows.length === 1) { rowIndex = matchingRows[0] + 1; rowData = data[matchingRows[0]]; }
+    if (rowIndex < 0) return { ok: false, error: 'match_not_found', matchId: matchId };
 
-  var sheet = matchSheet_();
-  var data = sheet.getDataRange().getValues();
-  if (!data.length) return { ok: false, error: 'empty_sheet' };
+    var writable = ['TeamA','TeamB','ScoreA','ScoreB','FinalScore','MatchStatus','Winner','FinishedAt','UpdatedAt','UpdatedBy','Note'].concat(PEPSLIVE_COLOR_FIELDS), patch = {};
+    writable.forEach(function(field) {
+      if (!Object.prototype.hasOwnProperty.call(values, field)) return;
+      if (contractVersion >= 2 && values[field] === null) throw new Error('null_not_allowed: ' + field);
+      if (values[field] == null) return;
+      patch[field] = PEPSLIVE_COLOR_FIELDS.indexOf(field) >= 0 ? normalizeColor_(values[field], true) : values[field];
+    });
+    ['ScoreA','ScoreB'].forEach(function(field) { if (Object.prototype.hasOwnProperty.call(patch, field)) { var score = Number(patch[field]); if (!isFinite(score) || score < 0) throw new Error('invalid_score: ' + field); patch[field] = Math.floor(score); } });
 
-  var headers = data[0].map(function(h) { return String(h || '').trim(); });
-  var schema = PEPSLIVE_MATCH_SCHEMA;
-  var missing = schema.filter(function(h) { return headers.indexOf(h) === -1; });
-  if (missing.length) return { ok: false, error: 'schema_missing_columns', missing: missing };
-
-  var matchIdCol = headers.indexOf('MatchID');
-  var rowIndex = -1;
-  for (var r = 1; r < data.length; r++) {
-    if (String(data[r][matchIdCol] || '').trim() === matchId) {
-      rowIndex = r + 1;
-      break;
+    var current = rowSnapshot_(headers, rowData), currentRevision = Number(current.Revision || 0) || 0;
+    var hashInput = { contractVersion: contractVersion, matchId: matchId, baseRevision: payload.baseRevision, patch: patch };
+    var payloadHash = sha256Hex_(stableJson_(hashInput));
+    var operationId = String(payload.operationId || ('legacy-' + payloadHash.slice(0, 32))).trim();
+    var operations = operationsSheet_(), existing = findOperation_(operations, operationId);
+    if (existing) {
+      if (String(existing.PayloadHash || '') !== payloadHash) return { ok: false, error: 'idempotency_key_reused', operationId: operationId };
+      var existingSnapshot = parseJson_(existing.SnapshotJSON, {});
+      var existingRevision = Number(existing.AppliedRevision || 0) || 0;
+      var duplicateAck = { ok: true, duplicate: true, applied: false, row: rowIndex, matchId: matchId, operationId: operationId, baseRevision: Number(existing.BaseRevision || 0), revision: existingRevision, saved: parseJson_(existing.PatchJSON, {}), savedAt: existing.RecordedAt || new Date().toISOString() };
+      if (currentRevision === existingRevision && String(current.LastOperationID || '') === operationId) {
+        duplicateAck.outcome = 'duplicate_exact';
+        return duplicateAck;
+      }
+      if (currentRevision < existingRevision) {
+        projectMatchSnapshot_(sheet, rowIndex, headers, existingSnapshot);
+        SpreadsheetApp.flush();
+        duplicateAck.applied = true;
+        duplicateAck.outcome = 'duplicate_recovered';
+        return duplicateAck;
+      }
+      if (currentRevision > existingRevision) {
+        duplicateAck.outcome = 'duplicate_superseded';
+        duplicateAck.superseded = true;
+        duplicateAck.revision = currentRevision;
+        duplicateAck.currentRevision = currentRevision;
+        duplicateAck.current = current;
+        return duplicateAck;
+      }
+      return { ok: false, error: 'revision_conflict', matchId: matchId, operationId: operationId, currentRevision: currentRevision, current: current };
     }
+
+    if (contractVersion >= 2) {
+      var baseRevision = Number(payload.baseRevision);
+      if (!isFinite(baseRevision)) return { ok: false, error: 'missing_baseRevision', currentRevision: currentRevision };
+      if (baseRevision !== currentRevision) return { ok: false, error: 'revision_conflict', currentRevision: currentRevision, current: current };
+    }
+
+    var snapshot = {};
+    Object.keys(current).forEach(function(key) { snapshot[key] = current[key]; });
+    Object.keys(patch).forEach(function(key) { snapshot[key] = patch[key]; });
+    if (Object.prototype.hasOwnProperty.call(patch, 'ScoreA') || Object.prototype.hasOwnProperty.call(patch, 'ScoreB')) {
+      var a = Number(snapshot.ScoreA || 0) || 0, b = Number(snapshot.ScoreB || 0) || 0;
+      snapshot.FinalScore = a + '-' + b;
+      snapshot.Winner = a > b ? String(snapshot.TeamA || '') : b > a ? String(snapshot.TeamB || '') : 'DRAW';
+      patch.FinalScore = snapshot.FinalScore;
+      patch.Winner = snapshot.Winner;
+    }
+    var appliedRevision = currentRevision + 1, recordedAt = new Date().toISOString();
+    snapshot.Revision = appliedRevision;
+    snapshot.LastOperationID = operationId;
+    appendOperation_(operations, {
+      OperationID: operationId,
+      TargetMatchID: matchId,
+      ContractVersion: contractVersion,
+      OperationType: String(payload.operationType || 'MATCH_SAVE'),
+      BaseRevision: currentRevision,
+      AppliedRevision: appliedRevision,
+      PayloadHash: payloadHash,
+      PatchJSON: JSON.stringify(patch),
+      SnapshotJSON: JSON.stringify(snapshot),
+      ClientID: String(payload.clientId || payload.deviceId || ''),
+      ClientCreatedAt: String(payload.clientCreatedAt || ''),
+      Actor: String(patch.UpdatedBy || ''),
+      RecordedAt: recordedAt
+    });
+    projectMatchSnapshot_(sheet, rowIndex, headers, snapshot);
+    SpreadsheetApp.flush();
+    return { ok: true, duplicate: false, applied: true, outcome: 'applied', row: rowIndex, matchId: matchId, operationId: operationId, baseRevision: currentRevision, revision: appliedRevision, saved: patch, savedAt: recordedAt };
+  } catch (err) {
+    return { ok: false, error: String(err && err.message || err) };
+  } finally {
+    lock.releaseLock();
   }
-  if (rowIndex < 0) return { ok: false, error: 'match_not_found', matchId: matchId };
+}
 
-  var resultCols = ['TeamA','TeamB','ScoreA','ScoreB','FinalScore','MatchStatus','Winner','FinishedAt','UpdatedAt','UpdatedBy','Note'];
-  resultCols.forEach(function(h) {
-    if (values[h] == null) return;
-    var col = headers.indexOf(h) + 1;
-    if (col > 0) sheet.getRange(rowIndex, col).setValue(values[h]);
+function pepsliveGetColorPickerData() {
+  var sheet = matchSheet_();
+  ensureMatchSchema_(sheet, true);
+  var data = sheet.getDataRange().getValues(), headers = data[0].map(function(h) { return String(h || '').trim(); });
+  var defaults = { TeamA_PrimaryColor:'#FF6A00', TeamA_SecondaryColor:'#111111', TeamB_PrimaryColor:'#0057FF', TeamB_SecondaryColor:'#FFFFFF' };
+  var matches = [];
+  for (var r = 1; r < data.length; r++) {
+    var matchId = String(data[r][headers.indexOf('MatchID')] || '').trim();
+    if (!matchId) continue;
+    var item = { matchId:matchId, teamA:String(data[r][headers.indexOf('TeamA')] || 'TEAM A'), teamB:String(data[r][headers.indexOf('TeamB')] || 'TEAM B'), revision:Number(data[r][headers.indexOf('Revision')] || 0) || 0, colors:{} };
+    PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
+      var raw = String(data[r][headers.indexOf(field)] || '').trim();
+      try { item.colors[field] = raw ? normalizeColor_(raw, true) : defaults[field]; }
+      catch (err) { item.colors[field] = defaults[field]; }
+    });
+    matches.push(item);
+  }
+  return { ok:true, sheetName:sheet.getName(), matches:matches, colorFields:PEPSLIVE_COLOR_FIELDS };
+}
+
+function pepsliveSaveTeamColors(input) {
+  input = input || {};
+  var matchId = String(input.matchId || '').trim(), colors = input.colors || {};
+  if (!matchId) return { ok:false, error:'missing_matchId' };
+  var values = { UpdatedAt:new Date().toISOString(), UpdatedBy:'Google Sheet Pick OBS Color' };
+  PEPSLIVE_COLOR_FIELDS.forEach(function(field) { values[field] = normalizeColor_(colors[field], false); });
+  return saveResult_({
+    contractVersion:2,
+    operationType:'SHEET_COLOR_PICK',
+    operationId:'sheet-color-' + Utilities.getUuid(),
+    clientId:'google-sheet-sidebar',
+    clientCreatedAt:new Date().toISOString(),
+    baseRevision:Number(input.revision || 0) || 0,
+    matchId:matchId,
+    values:values
   });
+}
 
-  SpreadsheetApp.flush();
-  return { ok: true, row: rowIndex, matchId: matchId, saved: values, savedAt: new Date().toISOString() };
+function pepsliveOpenColorPicker() {
+  var html = HtmlService.createHtmlOutput(`
+<!doctype html><html lang="th"><head><base target="_top"><style>
+*{box-sizing:border-box}body{margin:0;background:#0B0F15;color:#F5F7FB;font:13px Arial,sans-serif}.app{padding:14px;display:grid;gap:12px}h1{font-size:18px;margin:0;color:#FF7A35}p{margin:3px 0 0;color:#AAB3C1;line-height:1.45}label{display:grid;gap:5px;font-weight:700}select,input,button{min-height:40px;border-radius:6px;border:1px solid #343D4B;background:#121821;color:#F5F7FB;padding:8px}select,input[type=text]{width:100%}.slot{display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:7px;align-items:end;padding:9px;border:1px solid #2B3441;border-radius:7px;background:#10151D}.slot label{font-size:11px}.slot input[type=color]{width:42px;padding:3px}.pick{white-space:nowrap;background:#1B2533;color:#BFEFFF}.actions{display:grid;grid-template-columns:1fr auto;gap:8px}.save{background:#F06A2C;border-color:#FF8B55;font-weight:800}.close{background:#171D26}.status{min-height:36px;padding:9px;border-radius:6px;background:#121821;color:#AAB3C1}.status.ok{color:#8EE9BC;border:1px solid #2B7955}.status.bad{color:#FFB6C1;border:1px solid #8C3343}.hint{font-size:11px;color:#8792A3}
+</style></head><body><div class="app"><div><h1>Pick OBS Color</h1><p>เตรียมสีทีมล่วงหน้า สี HEX เดียวกันจะถูกใช้ใน Sheet, Dock และ OBS</p></div><label>คู่แข่งขัน<select id="match"></select></label><div id="slots"></div><div id="status" class="status">กำลังโหลดข้อมูล...</div><div class="actions"><button id="save" class="save">บันทึกสีทั้ง 4 ช่อง</button><button id="close" class="close">ปิด</button></div><div class="hint">ปุ่มหลอดดูดสีใช้ EyeDropper ของเบราว์เซอร์ หากถูกบล็อกยังเลือกจากช่องสีหรือกรอก #RRGGBB ได้</div></div><script>
+const fields=[['TeamA_PrimaryColor','ทีม A สีหลัก'],['TeamA_SecondaryColor','ทีม A สีรอง'],['TeamB_PrimaryColor','ทีม B สีหลัก'],['TeamB_SecondaryColor','ทีม B สีรอง']];let matches=[],current=null;
+const byId=id=>document.getElementById(id);const valid=v=>/^#[0-9A-F]{6}$/i.test(String(v||''));
+function status(text,tone=''){const el=byId('status');el.textContent=text;el.className='status '+tone}
+function setColor(field,value){const color=valid(value)?String(value).toUpperCase():'#FFFFFF';byId('color_'+field).value=color;byId('hex_'+field).value=color}
+function renderSlots(){byId('slots').innerHTML=fields.map(([field,label])=>'<div class="slot"><input id="color_'+field+'" type="color" aria-label="'+label+'"><label>'+label+'<input id="hex_'+field+'" type="text" maxlength="7" value="#FFFFFF"></label><button class="pick" data-pick="'+field+'">หลอดดูดสี</button></div>').join('');fields.forEach(([field])=>{byId('color_'+field).oninput=e=>setColor(field,e.target.value);byId('hex_'+field).onchange=e=>{if(valid(e.target.value))setColor(field,e.target.value);else status('HEX ไม่ถูกต้อง: '+field,'bad')}});document.querySelectorAll('[data-pick]').forEach(button=>button.onclick=()=>pick(button.dataset.pick))}
+function selectMatch(){current=matches.find(item=>item.matchId===byId('match').value)||matches[0];if(!current)return;fields.forEach(([field])=>setColor(field,current.colors[field]));status(current.teamA+' vs '+current.teamB+' | Revision '+current.revision)}
+async function pick(field){if(!window.EyeDropper){status('เบราว์เซอร์นี้ไม่อนุญาตหลอดดูดสี ให้ใช้ช่องสีหรือ HEX','bad');return}try{status('คลิกสีที่ต้องการบนหน้าจอ...');const result=await new EyeDropper().open();setColor(field,result.sRGBHex);status('เลือก '+result.sRGBHex.toUpperCase()+' แล้ว')}catch(err){status('ยกเลิกการดูดสี')}}
+function init(data){if(!data||data.ok===false){status(data&&data.error||'โหลดข้อมูลไม่สำเร็จ','bad');return}matches=data.matches||[];renderSlots();const match=byId('match');match.replaceChildren();matches.forEach(item=>{const option=document.createElement('option');option.value=String(item.matchId||'');option.textContent='#'+String(item.matchId||'')+' '+String(item.teamA||'')+' vs '+String(item.teamB||'');match.appendChild(option)});match.onchange=selectMatch;if(!matches.length){status('ยังไม่มี MatchID ใน Sheet','bad');byId('save').disabled=true;return}selectMatch()}
+byId('save').onclick=()=>{if(!current)return;const colors={};for(const [field] of fields){const value=byId('hex_'+field).value.toUpperCase();if(!valid(value)){status('กรุณาตรวจ HEX ของ '+field,'bad');return}colors[field]=value}byId('save').disabled=true;status('กำลังบันทึก...');google.script.run.withSuccessHandler(result=>{byId('save').disabled=false;if(!result||result.ok===false){status((result&&result.error)||'บันทึกไม่สำเร็จ','bad');return}current.revision=Number(result.revision||current.revision);current.colors=colors;status('บันทึกแล้ว Revision '+current.revision,'ok')}).withFailureHandler(err=>{byId('save').disabled=false;status(err&&err.message||'บันทึกไม่สำเร็จ','bad')}).pepsliveSaveTeamColors({matchId:current.matchId,revision:current.revision,colors})};
+byId('close').onclick=()=>google.script.host.close();google.script.run.withSuccessHandler(init).withFailureHandler(err=>status(err&&err.message||'โหลดข้อมูลไม่สำเร็จ','bad')).pepsliveGetColorPickerData();
+</script></body></html>`).setTitle('Pick OBS Color').setWidth(390);
+  SpreadsheetApp.getUi().showSidebar(html);
+}
+
+function onEdit(e) {
+  try {
+    var range = e && e.range;
+    if (!range || range.getRow() < 2 || range.getNumRows() !== 1 || range.getNumColumns() !== 1) return;
+    var sheet = range.getSheet(), headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) { return String(h || '').trim(); });
+    var field = headers[range.getColumn() - 1];
+    if (PEPSLIVE_COLOR_FIELDS.indexOf(field) === -1) return;
+    var raw = String(range.getValue() || '').trim();
+    if (!raw) range.setBackground('#FFFFFF').setFontColor('#20242B').clearNote();
+    else {
+      var color = normalizeColor_(raw, true);
+      range.setValue(color).setBackground(color).setFontColor(colorTextColor_(color)).clearNote();
+    }
+    var revisionCol = headers.indexOf('Revision') + 1, operationCol = headers.indexOf('LastOperationID') + 1;
+    if (revisionCol > 0) { var revisionCell = sheet.getRange(range.getRow(), revisionCol); revisionCell.setValue((Number(revisionCell.getValue()) || 0) + 1); }
+    if (operationCol > 0) sheet.getRange(range.getRow(), operationCol).setValue('sheet-edit-' + new Date().getTime());
+  } catch (err) {
+    try { e.range.setBackground('#FFE7EA').setFontColor('#B42335').setNote(String(err && err.message || err)); } catch (_) {}
+  }
 }
 
 function usersSheet_() {
