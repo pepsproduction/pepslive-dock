@@ -6,7 +6,7 @@
 bridge/google_apps_script_save_result.gs
 ```
 
-เวอร์ชันที่คาดหวังใน Dock: `2026-07-15.1`
+เวอร์ชันที่คาดหวังใน Dock: `2026-07-15.2`
 
 Webhook ตัวนี้ใช้สำหรับ Save Result, Finish Match, Online Users, Mobile Remote และ Scoreboard Skin Relay โดยข้อมูลจะถูกเขียนลง Google Sheet ของเจ้าของชีตคนนั้นเอง ไม่ได้ผูกกับชีตของ PepsProduction
 
@@ -92,11 +92,12 @@ PepsLive > Install / Repair Sheet
 - จำ Spreadsheet ID ของชีตนี้ไว้ใน Script Properties
 - ตรวจ/เติมหัวตารางหลักของ match sheet
 - สร้างและจัดรูปแบบแท็บ `Team Colors` สำหรับดูหรือแก้สีทั้งสองทีมโดยไม่ต้องเลื่อนไปคอลัมน์ด้านขวา
+- ติดตั้ง Spreadsheet change trigger สำหรับตรวจ `FORMAT` และเปลี่ยนสีพื้นของ 4 ช่องสีเป็นรหัส HEX โดยอัตโนมัติ
 - สร้างชีต `PepsLiveConfig`
 - สร้างชีต append-only `PepsLiveOperations` สำหรับป้องกันการบันทึกซ้ำและตรวจ revision
 - สร้างชีตเสริมสำหรับระบบ online/mobile remote ถ้ายังไม่มี
 
-หลังติดตั้งจะมีแท็บ `Team Colors` และเมนู `PepsLive > Pick OBS Color` สำหรับเตรียมสี Primary/Secondary ของทั้งสองทีมล่วงหน้า แก้ได้ทั้งจากเซลล์สีหรือหน้าต่าง Picker โดยทั้งสองทางจะซิงก์กลับ `Matches` พร้อม `Revision` สีจะถูกเก็บเป็น `#RRGGBB` และโหลดไปยัง Dock/OBS โดยตรง
+หลังติดตั้งจะมีแท็บ `Team Colors` และเมนู `PepsLive > Pick OBS Color` สำหรับเตรียมสี Primary/Secondary ของทั้งสองทีมล่วงหน้า สามารถกด `Fill color` ที่ช่องสีให้รหัส HEX เปลี่ยนตาม, กรอก `#RRGGBB` โดยตรง หรือใช้ Picker ทุกทางจะซิงก์กลับ `Matches` พร้อม `Revision` สีจะถูกเก็บเป็น `#RRGGBB` และโหลดไปยัง Dock/OBS โดยตรง
 
 เมื่อ Dock เรียก `Setup Check` หรือ `ทดสอบ Webhook` Apps Script จะส่ง GID ของตาราง `Matches` กลับไปตั้งค่า `Default GID` ให้อัตโนมัติ เพื่อป้องกันการโหลดผิดแท็บหลังเปิดหน้า `Team Colors`
 
@@ -186,7 +187,7 @@ Setup Check
 
 ```text
 Setup OK
-Webhook V2 OK 2026-07-15.1
+Webhook V2 OK 2026-07-15.2
 ```
 
 ## ทดสอบ Save Result
@@ -256,6 +257,17 @@ LastOperationID
 4. ตรวจว่าแท็บ `Team Colors` เปิดขึ้นมาอัตโนมัติ
 5. ถ้าใช้ Webhook ให้ Deploy แบบ `New version` แล้วกด `ทดสอบ Webhook` ใน Dock
 
+### เปลี่ยน Fill color แล้วรหัส HEX ไม่เปลี่ยนตาม
+
+`onEdit` ไม่ถูกเรียกเมื่อเปลี่ยนเฉพาะรูปแบบเซลล์ รุ่นล่าสุดจึงใช้ installable `FORMAT` trigger แทน:
+
+1. วาง `bridge/google_apps_script_save_result.gs` รุ่นล่าสุดและกด Save
+2. reload Google Sheet
+3. กด `PepsLive > Install / Repair Sheet` และกด Allow สิทธิ์ที่ Google ถาม
+4. กด Fill color ที่ช่อง PrimaryColor/SecondaryColor แล้วตรวจว่า HEX และ `Revision` เปลี่ยน
+5. หาก trigger ยังไม่ทันทำงาน ให้เลือกช่องสีที่เปลี่ยนแล้วกด `PepsLive > Sync Selected Fill to HEX`
+6. ถ้าใช้ Webhook ให้ Deploy แบบ `New version` แล้วกด `ทดสอบ Webhook` จนสถานะขึ้น `Fill Sync On`
+
 ### ขึ้น `run_pepslive_install_first`
 
 ยังไม่ได้กด:
@@ -317,14 +329,14 @@ Google Workspace บางองค์กรอาจปิด Apps Script ห�
 ## Checklist ก่อนส่งให้คนอื่นใช้
 
 1. Google Sheet เป็นของผู้ใช้คนนั้นเอง
-2. Apps Script วางโค้ดล่าสุด `v2026-07-15.1`
+2. Apps Script วางโค้ดล่าสุด `v2026-07-15.2`
 3. กด `PepsLive > Install / Repair Sheet` แล้ว
 4. Deploy Web App เป็น `/exec`
 5. Dock ใส่ Google Sheet URL ถูกตัว
 6. Dock ใส่ Apps Script Webhook URL ถูกตัว
 7. ถ้าใช้ token ต้องใส่ token ตรงกัน
 8. `Setup Check` ผ่าน
-9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-15.1`
+9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-15.2` และ `Fill Sync On`
 10. เห็นแท็บ `Team Colors` และรายการ MatchID ครบ
-11. แก้สีจากแท็บ `Team Colors` หรือ `PepsLive > Pick OBS Color` แล้วค่าใน `Matches` กับ `Revision` เปลี่ยนจริง
+11. กด Fill color ในแท็บ `Team Colors` แล้วรหัส HEX, ค่าใน `Matches` และ `Revision` เปลี่ยนจริง
 12. Save Result แล้ว Google Sheet อัปเดตคะแนน สี `Revision` และ `LastOperationID` จริง
