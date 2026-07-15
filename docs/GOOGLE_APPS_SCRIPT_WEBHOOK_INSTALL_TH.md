@@ -6,7 +6,7 @@
 bridge/google_apps_script_save_result.gs
 ```
 
-เวอร์ชันที่คาดหวังใน Dock: `2026-07-15.3`
+เวอร์ชันที่คาดหวังใน Dock: `2026-07-15.4`
 
 Webhook ตัวนี้ใช้สำหรับ Save Result, Finish Match, Online Users, Mobile Remote และ Scoreboard Skin Relay โดยข้อมูลจะถูกเขียนลง Google Sheet ของเจ้าของชีตคนนั้นเอง ไม่ได้ผูกกับชีตของ PepsProduction
 
@@ -189,7 +189,7 @@ Setup Check
 
 ```text
 Setup OK
-Webhook V2 OK 2026-07-15.3
+Webhook V2 OK 2026-07-15.4
 ```
 
 ## ทดสอบ Save Result
@@ -333,14 +333,14 @@ Google Workspace บางองค์กรอาจปิด Apps Script ห�
 ## Checklist ก่อนส่งให้คนอื่นใช้
 
 1. Google Sheet เป็นของผู้ใช้คนนั้นเอง
-2. Apps Script วางโค้ดล่าสุด `v2026-07-15.3`
+2. Apps Script วางโค้ดล่าสุด `v2026-07-15.4`
 3. กด `PepsLive > Install / Repair Sheet` แล้ว
 4. Deploy Web App เป็น `/exec`
 5. Dock ใส่ Google Sheet URL ถูกตัว
 6. Dock ใส่ Apps Script Webhook URL ถูกตัว
 7. ถ้าใช้ token ต้องใส่ token ตรงกัน
 8. `Setup Check` ผ่าน
-9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-15.3` และรองรับ `Team Colors Real-time`
+9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-15.4` และรองรับ `Team Colors Real-time`
 10. เห็นแท็บ `Team Colors` และรายการ MatchID ครบ
 11. กด Fill color ในแท็บ `Team Colors` แล้วรหัส HEX, ค่าใน `Matches` และ `Revision` เปลี่ยนจริง
 12. เปลี่ยนสีใน Dock แล้ว HEX ใน Sheet เปลี่ยนอัตโนมัติ และเปลี่ยนสีใน Sheet แล้ว Dock เปลี่ยนตามภายในประมาณ 3 วินาที

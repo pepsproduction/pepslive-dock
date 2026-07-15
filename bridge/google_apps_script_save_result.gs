@@ -12,7 +12,7 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.3';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.4';
 var PEPSLIVE_SPREADSHEET_ID_KEY = 'PEPSLIVE_SPREADSHEET_ID';
 var PEPSLIVE_WEBHOOK_TOKEN_KEY = 'PEPSLIVE_WEBHOOK_TOKEN';
 var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
@@ -349,14 +349,16 @@ function teamColorsProjection_(matchSheet) {
 function formatTeamColorsView_(sheet, rowCount) {
   sheet.setHiddenGridlines(true);
   sheet.setTabColor('#F06A2C');
-  sheet.getRange('A1:I1').breakApart().merge()
+  ['A1:I1', 'A2:I2', 'A3:I3'].forEach(function(a1) { sheet.getRange(a1).breakApart(); });
+  sheet.setFrozenColumns(0);
+  sheet.getRange('A1:I1').merge()
     .setValue('TEAM COLORS | สีทีมสำหรับ PepsLive Dock + OBS')
     .setBackground('#0F172A').setFontColor('#FFFFFF').setFontWeight('bold').setFontSize(16)
     .setHorizontalAlignment('left').setVerticalAlignment('middle');
-  sheet.getRange('A2:I2').breakApart().merge()
+  sheet.getRange('A2:I2').merge()
     .setValue('กด Fill color ที่ช่องสีแล้ว HEX จะเปลี่ยนตาม หรือกรอก #RRGGBB / ใช้ PepsLive > Pick OBS Color')
     .setBackground('#172033').setFontColor('#D8E2F1').setFontSize(10).setWrap(true);
-  sheet.getRange('A3:I3').breakApart().merge()
+  sheet.getRange('A3:I3').merge()
     .setValue('ถ้า HEX ไม่เปลี่ยน ให้เลือกเซลล์นั้นแล้วกด PepsLive > Sync Selected Fill to HEX หรือรัน Install / Repair')
     .setBackground('#101722').setFontColor('#93A4BA').setFontSize(9).setWrap(true);
   sheet.getRange(PEPSLIVE_TEAM_COLORS_HEADER_ROW, 1, 1, PEPSLIVE_TEAM_COLORS_SCHEMA.length)
@@ -364,7 +366,6 @@ function formatTeamColorsView_(sheet, rowCount) {
     .setBackground('#202A3A').setFontColor('#FFFFFF').setFontWeight('bold')
     .setHorizontalAlignment('center').setVerticalAlignment('middle').setWrap(true);
   sheet.setFrozenRows(PEPSLIVE_TEAM_COLORS_HEADER_ROW);
-  sheet.setFrozenColumns(2);
   [90, 180, 125, 135, 180, 125, 135, 75, 115].forEach(function(width, index) { sheet.setColumnWidth(index + 1, width); });
   sheet.setRowHeight(1, 34);
   sheet.setRowHeight(2, 34);
