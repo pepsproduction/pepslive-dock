@@ -6,7 +6,7 @@
 bridge/google_apps_script_save_result.gs
 ```
 
-เวอร์ชันที่คาดหวังใน Dock: `2026-07-15.2`
+เวอร์ชันที่คาดหวังใน Dock: `2026-07-15.3`
 
 Webhook ตัวนี้ใช้สำหรับ Save Result, Finish Match, Online Users, Mobile Remote และ Scoreboard Skin Relay โดยข้อมูลจะถูกเขียนลง Google Sheet ของเจ้าของชีตคนนั้นเอง ไม่ได้ผูกกับชีตของ PepsProduction
 
@@ -97,7 +97,9 @@ PepsLive > Install / Repair Sheet
 - สร้างชีต append-only `PepsLiveOperations` สำหรับป้องกันการบันทึกซ้ำและตรวจ revision
 - สร้างชีตเสริมสำหรับระบบ online/mobile remote ถ้ายังไม่มี
 
-หลังติดตั้งจะมีแท็บ `Team Colors` และเมนู `PepsLive > Pick OBS Color` สำหรับเตรียมสี Primary/Secondary ของทั้งสองทีมล่วงหน้า สามารถกด `Fill color` ที่ช่องสีให้รหัส HEX เปลี่ยนตาม, กรอก `#RRGGBB` โดยตรง หรือใช้ Picker ทุกทางจะซิงก์กลับ `Matches` พร้อม `Revision` สีจะถูกเก็บเป็น `#RRGGBB` และโหลดไปยัง Dock/OBS โดยตรง
+หลังติดตั้งจะมีแท็บ `Team Colors` และเมนู `PepsLive > Pick OBS Color` สำหรับเตรียมสี Primary/Secondary ของทั้งสองทีมล่วงหน้า สามารถกด `Fill color` ที่ช่องสีให้รหัส HEX เปลี่ยนตาม, กรอก `#RRGGBB` โดยตรง หรือใช้ Picker ทุกทางจะซิงก์กลับ `Matches` พร้อม `Revision` สีจะถูกเก็บเป็น `#RRGGBB` และ Dock จะตรวจ revision ทุกประมาณ 3 วินาทีเพื่อรับสีใหม่ไปแสดงและส่งต่อ OBS โดยไม่ต้องกด `Load Sheet`
+
+เมื่อเปลี่ยนสีใน Dock ระบบจะบันทึกสีทั้ง 4 ช่องกลับ Google Sheet อัตโนมัติหลังหยุดเลือกสีช่วงสั้น ๆ รหัส HEX, สีใน Dock และค่า OBS Color Source จึงใช้ค่าเดียวกัน หาก revision ที่เพิ่มขึ้นมีคะแนนหรือข้อมูลการแข่งขันรวมอยู่ด้วย Dock จะไม่ข้าม revision นั้นและจะแจ้งให้กด `Load Sheet` แล้ว `Load Match` ใหม่แทน
 
 เมื่อ Dock เรียก `Setup Check` หรือ `ทดสอบ Webhook` Apps Script จะส่ง GID ของตาราง `Matches` กลับไปตั้งค่า `Default GID` ให้อัตโนมัติ เพื่อป้องกันการโหลดผิดแท็บหลังเปิดหน้า `Team Colors`
 
@@ -187,7 +189,7 @@ Setup Check
 
 ```text
 Setup OK
-Webhook V2 OK 2026-07-15.2
+Webhook V2 OK 2026-07-15.3
 ```
 
 ## ทดสอบ Save Result
@@ -240,6 +242,8 @@ LastOperationID
 13. กลับไปที่ Dock แล้วกด `ทดสอบ Webhook`
 
 สำคัญ: ถ้าแก้โค้ดแล้วไม่สร้าง New version ใน deployment, Web App URL เดิมอาจยังรันโค้ดเก่าอยู่
+
+หลังอัปเดตสำเร็จ ให้ทดสอบ Color Live สองทาง: เปลี่ยนสีที่ Dock แล้วดู HEX ใน `Team Colors` จากนั้นเปลี่ยน HEX หรือ Fill color ใน Sheet แล้วรอไม่เกินประมาณ 3 วินาที สีที่ Dock ควรเปลี่ยนตามโดยไม่กด `Load Sheet`
 
 ## ปัญหาที่พบบ่อย
 
@@ -329,14 +333,15 @@ Google Workspace บางองค์กรอาจปิด Apps Script ห�
 ## Checklist ก่อนส่งให้คนอื่นใช้
 
 1. Google Sheet เป็นของผู้ใช้คนนั้นเอง
-2. Apps Script วางโค้ดล่าสุด `v2026-07-15.2`
+2. Apps Script วางโค้ดล่าสุด `v2026-07-15.3`
 3. กด `PepsLive > Install / Repair Sheet` แล้ว
 4. Deploy Web App เป็น `/exec`
 5. Dock ใส่ Google Sheet URL ถูกตัว
 6. Dock ใส่ Apps Script Webhook URL ถูกตัว
 7. ถ้าใช้ token ต้องใส่ token ตรงกัน
 8. `Setup Check` ผ่าน
-9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-15.2` และ `Fill Sync On`
+9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-15.3` และรองรับ `Team Colors Real-time`
 10. เห็นแท็บ `Team Colors` และรายการ MatchID ครบ
 11. กด Fill color ในแท็บ `Team Colors` แล้วรหัส HEX, ค่าใน `Matches` และ `Revision` เปลี่ยนจริง
-12. Save Result แล้ว Google Sheet อัปเดตคะแนน สี `Revision` และ `LastOperationID` จริง
+12. เปลี่ยนสีใน Dock แล้ว HEX ใน Sheet เปลี่ยนอัตโนมัติ และเปลี่ยนสีใน Sheet แล้ว Dock เปลี่ยนตามภายในประมาณ 3 วินาที
+13. Save Result แล้ว Google Sheet อัปเดตคะแนน สี `Revision` และ `LastOperationID` จริง

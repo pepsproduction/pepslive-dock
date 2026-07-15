@@ -38,7 +38,9 @@ LastOperationID
 
 ไฟล์ template `.xlsx` รุ่นล่าสุดมีแท็บ `Team Colors` แยกจากตาราง `Matches` เพื่อให้เห็นชื่อทีมและสีทั้ง 4 ช่องโดยไม่ต้องเลื่อนไปคอลัมน์ด้านขวา ไฟล์ `.csv` ไม่สามารถมีหลายแท็บได้ จึงมีเฉพาะข้อมูล `Matches`; ถ้าต้องการหน้าจัดการสีให้ใช้ `.xlsx` หรือรัน Apps Script รุ่นล่าสุดกับ Google Sheet เดิม
 
-`Matches` ยังเป็นข้อมูลหลักของระบบ ส่วน `Team Colors` เป็นหน้าจัดการสำหรับผู้ปฏิบัติงาน เมื่อแก้ค่า HEX ในคอลัมน์ `PrimaryColor A`, `SecondaryColor A`, `PrimaryColor B` หรือ `SecondaryColor B` Apps Script จะตรวจรูปแบบและซิงก์กลับ `Matches` อัตโนมัติ ถ้าใช้ปุ่ม `Fill color` ระบบจะอ่านสีพื้นจริงของเซลล์ เปลี่ยนรหัส `#RRGGBB` ให้ตรงกัน และเพิ่ม `Revision` ผ่านเส้นทางบันทึกเดียวกัน การแก้สีผ่าน `PepsLive > Pick OBS Color` จะอัปเดตทั้งสองแท็บด้วยวิธีเดียวกัน
+`Matches` ยังเป็นข้อมูลหลักของระบบ ส่วน `Team Colors` เป็นหน้าจัดการสำหรับผู้ปฏิบัติงาน เมื่อแก้ค่า HEX ในคอลัมน์ `PrimaryColor A`, `SecondaryColor A`, `PrimaryColor B` หรือ `SecondaryColor B` Apps Script จะตรวจรูปแบบและซิงก์กลับ `Matches` อัตโนมัติ ถ้าใช้ปุ่ม `Fill color` ระบบจะอ่านสีพื้นจริงของเซลล์ เปลี่ยนรหัส `#RRGGBB` ให้ตรงกัน และเพิ่ม `Revision` ผ่านเส้นทางบันทึกเดียวกัน การแก้สีผ่าน `PepsLive > Pick OBS Color` จะอัปเดตทั้งสองแท็บด้วยวิธีเดียวกัน Dock รุ่นล่าสุดอ่าน revision สีทุกประมาณ 3 วินาที และส่งการแก้สีจาก Dock กลับ Sheet อัตโนมัติ
+
+รายการสีใช้ Operation Type `SHEET_COLOR_PICK` หรือ `DOCK_COLOR_SYNC` ใน `PepsLiveOperations` ทำให้ Dock ตรวจได้ว่า revision ที่เพิ่มขึ้นเป็นการแก้สีล้วน หากมี `MATCH_SAVE` หรือ revision ที่ตรวจสอบไม่ได้ ระบบจะไม่เลื่อน base revision เองและจะให้ผู้ใช้ `Load Sheet` แล้ว `Load Match` ใหม่เพื่อป้องกันคะแนนหรือผลการแข่งขันถูกเขียนทับ
 
 ถ้า Google Sheet เดิมยังไม่เห็นแท็บนี้ ให้วาง Apps Script รุ่นล่าสุด กด Save, reload Google Sheet แล้วรัน `PepsLive > Install / Repair Sheet`
 
@@ -48,7 +50,8 @@ LastOperationID
 2. เปิดแท็บ `Team Colors` แล้วกด `Fill color` ที่ช่องสี, แก้ HEX โดยตรง หรือเปิด `PepsLive > Pick OBS Color`
 3. เลือก MatchID แล้วกำหนด PrimaryColor / SecondaryColor ของทั้งสองทีม
 4. ตรวจว่ารหัส HEX ตรงกับสีพื้น, `Sync Status` กลับเป็น `READY` และค่าใน `Matches` ถูกอัปเดต
-5. ใน Dock กด `Load Sheet` และ `Load Match`
+5. เปิด match เดียวกันใน Dock แล้วตรวจว่าสีเปลี่ยนตามอัตโนมัติภายในประมาณ 3 วินาที
+6. ใน Dock กด `Load Sheet` และ `Load Match`
 
 Dock จะใช้ค่า HEX เดียวกันกับ Team Card และแปลงเป็นค่า ABGR สำหรับ OBS Color Source จากนั้นอ่านค่ากลับจาก OBS เพื่อตรวจสอบความตรงกัน
 

@@ -12,7 +12,7 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.2';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.3';
 var PEPSLIVE_SPREADSHEET_ID_KEY = 'PEPSLIVE_SPREADSHEET_ID';
 var PEPSLIVE_WEBHOOK_TOKEN_KEY = 'PEPSLIVE_WEBHOOK_TOKEN';
 var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
@@ -690,6 +690,7 @@ function doPost(e) {
     if (action === 'presenceHeartbeat') return json_(presenceHeartbeat_(authorizedPayload_(requestPayload_(payload))));
     if (action === 'presenceList') return json_(presenceList_(authorizedPayload_(requestPayload_(payload))));
     if (action === 'presenceOffline') return json_(presenceOffline_(authorizedPayload_(requestPayload_(payload))));
+    if (action === 'teamColorsGet') return json_(teamColorsGet_(authorizedPayload_(requestPayload_(payload))));
     return json_(saveResult_(authorizedPayload_(requestPayload_(payload))));
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message || err) });
@@ -715,6 +716,7 @@ function doGet(e) {
     if (action === 'scoreboardSkinRelaySet') return jsonp_(scoreboardSkinRelaySet_(authorizedPayload_(payload)), callback);
     if (action === 'scoreboardSkinRelayGet') return jsonp_(scoreboardSkinRelayGet_(authorizedPayload_(payload)), callback);
     if (action === 'saveResult') return jsonp_(saveResult_(authorizedPayload_(payload)), callback);
+    if (action === 'teamColorsGet') return jsonp_(teamColorsGet_(authorizedPayload_(payload)), callback);
     if (action === 'presenceHeartbeat') return jsonp_(presenceHeartbeat_(authorizedPayload_(payload)), callback);
     if (action === 'presenceList') return jsonp_(presenceList_(authorizedPayload_(payload)), callback);
     if (action === 'presenceOffline') return jsonp_(presenceOffline_(authorizedPayload_(payload)), callback);
@@ -756,7 +758,10 @@ function webhookInfo_() {
       teamColorsSheet: true,
       teamColorsTwoWaySync: true,
       sheetFillColorSync: true,
-      sheetFillFormatTrigger: true
+      sheetFillFormatTrigger: true,
+      teamColorsRealtimeSet: true,
+      teamColorsRealtimeGet: true,
+      teamColorsRevisionPoll: true
     },
     setup: setupCheck_()
   };
@@ -793,6 +798,80 @@ function findOperation_(sheet, operationId) {
 
 function appendOperation_(sheet, record) {
   sheet.appendRow(PEPSLIVE_OPERATION_SCHEMA.map(function(field) { return record[field] == null ? '' : record[field]; }));
+}
+
+function colorOnlyOperationType_(value) {
+  return ['SHEET_COLOR_PICK', 'DOCK_COLOR_SYNC'].indexOf(String(value || '').trim().toUpperCase()) >= 0;
+}
+
+function colorOnlySince_(operations, matchId, sinceRevision, currentRevision, lastOperationId) {
+  sinceRevision = Math.max(0, Number(sinceRevision || 0) || 0);
+  currentRevision = Math.max(0, Number(currentRevision || 0) || 0);
+  if (currentRevision <= sinceRevision) return true;
+  if (currentRevision - sinceRevision > 100 || !operations || operations.getLastRow() < 2) {
+    return currentRevision === sinceRevision + 1 && String(lastOperationId || '').indexOf('sheet-edit-') === 0;
+  }
+  var data = operations.getDataRange().getValues();
+  var headers = data[0].map(function(header) { return String(header || '').trim(); });
+  var matchCol = headers.indexOf('TargetMatchID');
+  var revisionCol = headers.indexOf('AppliedRevision');
+  var typeCol = headers.indexOf('OperationType');
+  if (matchCol < 0 || revisionCol < 0 || typeCol < 0) return false;
+  var revisions = {};
+  for (var r = 1; r < data.length; r++) {
+    if (String(data[r][matchCol] || '').trim() !== matchId) continue;
+    var revision = Number(data[r][revisionCol] || 0) || 0;
+    if (revision > sinceRevision && revision <= currentRevision) revisions[revision] = String(data[r][typeCol] || '');
+  }
+  for (var expected = sinceRevision + 1; expected <= currentRevision; expected++) {
+    if (!colorOnlyOperationType_(revisions[expected])) {
+      return expected === currentRevision && currentRevision === sinceRevision + 1 &&
+        String(lastOperationId || '').indexOf('sheet-edit-') === 0;
+    }
+  }
+  return true;
+}
+
+function teamColorsGet_(payload) {
+  payload = payload || {};
+  var matchId = String(payload.matchId || '').trim();
+  var sinceRevision = Math.max(0, Number(payload.sinceRevision || 0) || 0);
+  if (!matchId) return { ok:false, error:'missing_matchId' };
+  var sheet = matchSheet_();
+  var schema = ensureMatchSchema_(sheet, false);
+  if (schema.missing && schema.missing.length) return { ok:false, error:'sheet_schema_missing', missingColumns:schema.missing };
+  var data = sheet.getDataRange().getValues();
+  if (!data.length) return { ok:false, error:'empty_sheet' };
+  var headers = data[0].map(function(header) { return String(header || '').trim(); });
+  var matchCol = headers.indexOf('MatchID'), matches = [];
+  for (var r = 1; r < data.length; r++) {
+    if (String(data[r][matchCol] || '').trim() === matchId) matches.push(data[r]);
+  }
+  if (matches.length > 1) return { ok:false, error:'duplicate_match_id', matchId:matchId };
+  if (!matches.length) return { ok:false, error:'match_not_found', matchId:matchId };
+  var current = rowSnapshot_(headers, matches[0]);
+  var defaults = teamColorDefaults_(), colors = {};
+  PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
+    var raw = String(current[field] || '').trim();
+    try { colors[field] = raw ? normalizeColor_(raw, true) : defaults[field]; }
+    catch (err) { colors[field] = defaults[field]; }
+  });
+  var currentRevision = Math.max(0, Number(current.Revision || 0) || 0);
+  var changed = currentRevision > sinceRevision;
+  var colorOnly = !changed || colorOnlySince_(operationsSheet_(sheet.getParent()), matchId, sinceRevision, currentRevision, current.LastOperationID);
+  return {
+    ok:true,
+    matchId:matchId,
+    sinceRevision:sinceRevision,
+    revision:currentRevision,
+    lastOperationID:String(current.LastOperationID || ''),
+    changed:changed,
+    colorOnlySince:colorOnly,
+    requiresReload:changed && !colorOnly,
+    colors:colors,
+    updatedAt:current.UpdatedAt || '',
+    updatedBy:current.UpdatedBy || ''
+  };
 }
 
 function projectMatchSnapshot_(sheet, rowIndex, headers, snapshot) {
@@ -943,6 +1022,7 @@ function pepsliveSaveTeamColors(input) {
   var actors = {
     'team-colors-sheet':'Google Sheet Team Colors HEX',
     'team-colors-fill':'Google Sheet Team Colors Fill',
+    'matches-sheet':'Google Sheet Matches Color',
     'sheet-color-picker':'Google Sheet Pick OBS Color'
   };
   var actor = actors[input.source] || 'Google Sheet Pick OBS Color';
@@ -1000,10 +1080,22 @@ function onEdit(e) {
         var color = normalizeColor_(raw, true);
         range.setValue(color).setBackground(color).setFontColor(colorTextColor_(color)).clearNote();
       }
-      var revisionCol = headers.indexOf('Revision') + 1, operationCol = headers.indexOf('LastOperationID') + 1;
-      if (revisionCol > 0) { var revisionCell = sheet.getRange(range.getRow(), revisionCol); revisionCell.setValue((Number(revisionCell.getValue()) || 0) + 1); }
-      if (operationCol > 0) sheet.getRange(range.getRow(), operationCol).setValue('sheet-edit-' + new Date().getTime());
-      syncTeamColorsSheet_(sheet.getParent());
+      var matchIdCol = headers.indexOf('MatchID') + 1, revisionCol = headers.indexOf('Revision') + 1;
+      if (matchIdCol < 1 || revisionCol < 1) throw new Error('sheet_schema_missing');
+      var defaults = teamColorDefaults_(), colors = {};
+      PEPSLIVE_COLOR_FIELDS.forEach(function(colorField) {
+        var colorCol = headers.indexOf(colorField) + 1;
+        if (colorCol < 1) throw new Error('sheet_schema_missing: ' + colorField);
+        var colorRaw = String(sheet.getRange(range.getRow(), colorCol).getValue() || '').trim();
+        colors[colorField] = colorRaw ? normalizeColor_(colorRaw, true) : defaults[colorField];
+      });
+      var result = pepsliveSaveTeamColors({
+        matchId:String(sheet.getRange(range.getRow(), matchIdCol).getValue() || '').trim(),
+        revision:Number(sheet.getRange(range.getRow(), revisionCol).getValue() || 0) || 0,
+        colors:colors,
+        source:'matches-sheet'
+      });
+      if (!result || result.ok === false) throw new Error(result && result.error || 'match_color_sync_failed');
       return;
     }
     if (['MatchID','TeamA','TeamB'].indexOf(field) >= 0) syncTeamColorsSheet_(sheet.getParent());

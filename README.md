@@ -66,7 +66,9 @@ bridge/google_apps_script_save_result.gs
 
 ถ้าชีตขาดหัวตาราง ให้กด `Repair Sheet` ใน Dock หรือเมนู `PepsLive > Repair Sheet Schema` ใน Google Sheet ระบบจะเติม Match Schema V2 และสร้างชีตเสริม `Team Colors`, `PepsLiveOperations`, `PepsLiveUsers`, `PepsLiveRemote`, `PepsLiveRemoteState`, `PepsLiveRemoteDevices` ให้เอง
 
-เตรียมสีล่วงหน้าได้สามทาง: กด `Fill color` ที่ช่องสีในแท็บ `Team Colors`, แก้ค่า `#RRGGBB` โดยตรง หรือเปิด `PepsLive > Pick OBS Color` แล้วบันทึก Primary/Secondary ของทั้งสองทีมครั้งเดียว ทุกทางจะซิงก์กลับ `Matches` พร้อมเพิ่ม `Revision` จากนั้นกด `Load Sheet` ใน Dock หากเปลี่ยน Fill แล้ว HEX ไม่ตาม ให้รัน `PepsLive > Install / Repair Sheet` หรือใช้ `Sync Selected Fill to HEX`
+เตรียมสีล่วงหน้าได้สามทาง: กด `Fill color` ที่ช่องสีในแท็บ `Team Colors`, แก้ค่า `#RRGGBB` โดยตรง หรือเปิด `PepsLive > Pick OBS Color` แล้วบันทึก Primary/Secondary ของทั้งสองทีมครั้งเดียว ทุกทางจะซิงก์กลับ `Matches` พร้อมเพิ่ม `Revision` และ Dock จะรับสีล่าสุดอัตโนมัติภายในประมาณ 3 วินาทีโดยไม่ต้องกด `Load Sheet` ขณะเดียวกัน เมื่อแก้สีใน Dock ระบบจะส่งรหัส HEX เดียวกันกลับ Google Sheet แบบ debounce อัตโนมัติ หากเปลี่ยน Fill แล้ว HEX ไม่ตาม ให้รัน `PepsLive > Install / Repair Sheet` หรือใช้ `Sync Selected Fill to HEX`
+
+Color Live จะขยับ revision อัตโนมัติเฉพาะเมื่อประวัติระหว่าง Dock กับ Sheet เป็นการแก้สีล้วน หากพบว่าคะแนน ชื่อทีม หรือผลการแข่งขันใน Sheet เปลี่ยนจากที่ Dock โหลดไว้ ระบบจะหยุดซิงก์และแจ้งให้กด `Load Sheet` เพื่อป้องกันข้อมูลใหม่ถูกเขียนทับ
 
 เมื่อกด `Setup Check` หรือ `ทดสอบ Webhook` Dock จะรับ GID ของตาราง `Matches` จาก Apps Script และใส่ใน `Default GID` อัตโนมัติ จึงไม่โหลดผิดไปที่แท็บ `Team Colors` แม้ URL ที่นำมาวางจะเปิดอยู่คนละแท็บ
 
@@ -99,7 +101,7 @@ Webhook Token เป็นทางเลือกเสริมสำหรั
 
 ### Mobile Remote
 
-1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook V2 OK 2026-07-15.2` หรือใหม่กว่า
+1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook V2 OK 2026-07-15.3` หรือใหม่กว่า
 2. กดปุ่มรูปมือถือบนแถบบนของ Dock
 3. สแกน QR Code ด้วยมือถือ หรือ copy link ไปเปิดในมือถือ
 4. มือถือจะเปิดหน้า Remote แยก พร้อมปุ่มควบคุมคะแนน เวลา Save Result, Finish Match, Load Next Match, Sync OBS และ Source Actions
@@ -454,4 +456,4 @@ The visible Sync panel is no longer shown. Background sync still publishes Dock 
 ### Apps Script Webhook Update Note
 
 - Use the latest `bridge/google_apps_script_save_result.gs` script for Save Result, Presence, and Scoreboard Skin Relay.
-- Latest expected webhook version: `2026-07-15.2` with Match Schema V2, revision-safe saves, the visible Team Colors sheet, two-way Sheet color sync, and Fill color-to-HEX sync.
+- Latest expected webhook version: `2026-07-15.3` with Match Schema V2, revision-safe saves, the visible Team Colors sheet, automatic Dock-to-Sheet saves, revision-polled Sheet-to-Dock color updates, and Fill color-to-HEX sync.
