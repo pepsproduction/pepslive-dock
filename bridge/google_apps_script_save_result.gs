@@ -12,7 +12,7 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.5';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.6';
 var PEPSLIVE_SPREADSHEET_ID_KEY = 'PEPSLIVE_SPREADSHEET_ID';
 var PEPSLIVE_WEBHOOK_TOKEN_KEY = 'PEPSLIVE_WEBHOOK_TOKEN';
 var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
@@ -126,6 +126,31 @@ function parseJson_(value, fallback) {
   } catch (err) {
     return fallback || {};
   }
+}
+
+function matchIdText_(value) {
+  return String(value == null ? '' : value).trim();
+}
+
+function matchIdKey_(value) {
+  var text = matchIdText_(value);
+  if (!text) return '';
+  return /^\d+$/.test(text) ? text.replace(/^0+(?=\d)/, '') : text;
+}
+
+function sameMatchId_(left, right) {
+  var leftText = matchIdText_(left), rightText = matchIdText_(right);
+  if (!leftText || !rightText) return false;
+  return leftText === rightText || matchIdKey_(leftText) === matchIdKey_(rightText);
+}
+
+function matchingRowIndexes_(data, matchIdColumn, matchId) {
+  var matches = [];
+  if (matchIdColumn < 0) return matches;
+  for (var rowIndex = 1; rowIndex < data.length; rowIndex++) {
+    if (sameMatchId_(data[rowIndex][matchIdColumn], matchId)) matches.push(rowIndex);
+  }
+  return matches;
 }
 
 function requestPayload_(payload) {
@@ -323,7 +348,7 @@ function teamColorsProjection_(matchSheet) {
   var headers = data[0].map(function(header) { return String(header || '').trim(); });
   var defaults = teamColorDefaults_(), rows = [];
   for (var r = 1; r < data.length; r++) {
-    var matchId = String(data[r][headers.indexOf('MatchID')] || '').trim();
+    var matchId = matchIdText_(data[r][headers.indexOf('MatchID')]);
     if (!matchId) continue;
     var colors = {};
     PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
@@ -497,7 +522,7 @@ function syncTeamColorFills_(ss, selectedRange) {
 
     rows.forEach(function(row, index) {
       var sheetRow = firstRow + index;
-      var matchId = String(row[0] || '').trim();
+      var matchId = matchIdText_(row[0]);
       if (!matchId) return;
       var colors = {};
       pairs.forEach(function(pair) {
@@ -586,7 +611,7 @@ function handleTeamColorsEdit_(range) {
     TeamB_PrimaryColor: normalizeColor_(row[5], false),
     TeamB_SecondaryColor: normalizeColor_(row[6], false)
   };
-  var result = pepsliveSaveTeamColors({ matchId: String(row[0] || '').trim(), revision: Number(row[7] || 0) || 0, colors: colors, source: 'team-colors-sheet' });
+  var result = pepsliveSaveTeamColors({ matchId: matchIdText_(row[0]), revision: Number(row[7] || 0) || 0, colors: colors, source: 'team-colors-sheet' });
   if (!result || result.ok === false) throw new Error(result && result.error || 'team_colors_sync_failed');
   return true;
 }
@@ -597,10 +622,11 @@ function inspectMatchData_(sheet) {
   var data = sheet.getDataRange().getValues(), headers = data[0].map(function(h) { return String(h || '').trim(); });
   var matchCol = headers.indexOf('MatchID'), revisionCol = headers.indexOf('Revision'), seen = {};
   for (var r = 1; r < data.length; r++) {
-    var matchId = matchCol >= 0 ? String(data[r][matchCol] || '').trim() : '';
+    var matchId = matchCol >= 0 ? matchIdText_(data[r][matchCol]) : '';
     if (!matchId) { issues.push('row ' + (r + 1) + ': missing MatchID'); continue; }
-    if (seen[matchId]) issues.push('row ' + (r + 1) + ': duplicate MatchID ' + matchId);
-    seen[matchId] = true;
+    var matchKey = matchIdKey_(matchId);
+    if (seen[matchKey]) issues.push('row ' + (r + 1) + ': duplicate MatchID ' + matchId + ' matches ' + seen[matchKey]);
+    seen[matchKey] = matchId;
     PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
       var col = headers.indexOf(field), raw = col >= 0 ? String(data[r][col] || '').trim() : '';
       if (raw) try { normalizeColor_(raw, true); } catch (err) { issues.push('row ' + (r + 1) + ': invalid ' + field); }
@@ -765,7 +791,8 @@ function webhookInfo_() {
       sheetFillFormatTrigger: true,
       teamColorsRealtimeSet: true,
       teamColorsRealtimeGet: true,
-      teamColorsRevisionPoll: true
+      teamColorsRevisionPoll: true,
+      normalizedMatchIds: true
     },
     setup: setupCheck_()
   };
@@ -799,7 +826,7 @@ function sheetLoad_() {
   var rows = [];
   for (var rowIndex = 1; rowIndex < values.length; rowIndex++) {
     var row = values[rowIndex];
-    if (!String(row[matchIdColumn] == null ? '' : row[matchIdColumn]).trim()) continue;
+    if (!matchIdText_(row[matchIdColumn])) continue;
     var item = {};
     headers.forEach(function(header, columnIndex) {
       if (header) item[header] = sheetCellValue_(row[columnIndex], timeZone);
@@ -873,7 +900,7 @@ function colorOnlySince_(operations, matchId, sinceRevision, currentRevision, la
   if (matchCol < 0 || revisionCol < 0 || typeCol < 0) return false;
   var revisions = {};
   for (var r = 1; r < data.length; r++) {
-    if (String(data[r][matchCol] || '').trim() !== matchId) continue;
+    if (!sameMatchId_(data[r][matchCol], matchId)) continue;
     var revision = Number(data[r][revisionCol] || 0) || 0;
     if (revision > sinceRevision && revision <= currentRevision) revisions[revision] = String(data[r][typeCol] || '');
   }
@@ -888,7 +915,7 @@ function colorOnlySince_(operations, matchId, sinceRevision, currentRevision, la
 
 function teamColorsGet_(payload) {
   payload = payload || {};
-  var matchId = String(payload.matchId || '').trim();
+  var matchId = matchIdText_(payload.matchId);
   var sinceRevision = Math.max(0, Number(payload.sinceRevision || 0) || 0);
   if (!matchId) return { ok:false, error:'missing_matchId' };
   var sheet = matchSheet_();
@@ -897,13 +924,10 @@ function teamColorsGet_(payload) {
   var data = sheet.getDataRange().getValues();
   if (!data.length) return { ok:false, error:'empty_sheet' };
   var headers = data[0].map(function(header) { return String(header || '').trim(); });
-  var matchCol = headers.indexOf('MatchID'), matches = [];
-  for (var r = 1; r < data.length; r++) {
-    if (String(data[r][matchCol] || '').trim() === matchId) matches.push(data[r]);
-  }
-  if (matches.length > 1) return { ok:false, error:'duplicate_match_id', matchId:matchId };
-  if (!matches.length) return { ok:false, error:'match_not_found', matchId:matchId };
-  var current = rowSnapshot_(headers, matches[0]);
+  var matchCol = headers.indexOf('MatchID'), matchingRows = matchingRowIndexes_(data, matchCol, matchId);
+  if (matchingRows.length > 1) return { ok:false, error:'duplicate_match_id', matchId:matchId, rows:matchingRows.map(function(index) { return index + 1; }) };
+  if (!matchingRows.length) return { ok:false, error:'match_not_found', matchId:matchId };
+  var current = rowSnapshot_(headers, data[matchingRows[0]]);
   var defaults = teamColorDefaults_(), colors = {};
   PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
     var raw = String(current[field] || '').trim();
@@ -947,14 +971,14 @@ function saveResult_(payload) {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return { ok: false, error: 'save_busy_retry' };
   try {
-    var values = payload.values || {}, matchId = String(payload.matchId || '').trim(), contractVersion = Number(payload.contractVersion || 1) || 1;
+    var values = payload.values || {}, matchId = matchIdText_(payload.matchId), contractVersion = Number(payload.contractVersion || 1) || 1;
     if (!matchId) return { ok: false, error: 'missing_matchId' };
     var sheet = matchSheet_();
     ensureMatchSchema_(sheet, true);
     var data = sheet.getDataRange().getValues();
     if (!data.length) return { ok: false, error: 'empty_sheet' };
-    var headers = data[0].map(function(h) { return String(h || '').trim(); }), matchIdCol = headers.indexOf('MatchID'), rowIndex = -1, rowData = null, matchingRows = [];
-    for (var r = 1; r < data.length; r++) if (String(data[r][matchIdCol] || '').trim() === matchId) matchingRows.push(r);
+    var headers = data[0].map(function(h) { return String(h || '').trim(); }), matchIdCol = headers.indexOf('MatchID'), rowIndex = -1, rowData = null;
+    var matchingRows = matchingRowIndexes_(data, matchIdCol, matchId);
     if (matchingRows.length > 1) return { ok: false, error: 'duplicate_match_id', matchId: matchId, rows: matchingRows.map(function(index) { return index + 1; }) };
     if (matchingRows.length === 1) { rowIndex = matchingRows[0] + 1; rowData = data[matchingRows[0]]; }
     if (rowIndex < 0) return { ok: false, error: 'match_not_found', matchId: matchId };
@@ -1056,7 +1080,7 @@ function pepsliveGetColorPickerData() {
   var defaults = teamColorDefaults_();
   var matches = [];
   for (var r = 1; r < data.length; r++) {
-    var matchId = String(data[r][headers.indexOf('MatchID')] || '').trim();
+    var matchId = matchIdText_(data[r][headers.indexOf('MatchID')]);
     if (!matchId) continue;
     var item = { matchId:matchId, teamA:String(data[r][headers.indexOf('TeamA')] || 'TEAM A'), teamB:String(data[r][headers.indexOf('TeamB')] || 'TEAM B'), revision:Number(data[r][headers.indexOf('Revision')] || 0) || 0, colors:{} };
     PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
@@ -1071,7 +1095,7 @@ function pepsliveGetColorPickerData() {
 
 function pepsliveSaveTeamColors(input) {
   input = input || {};
-  var matchId = String(input.matchId || '').trim(), colors = input.colors || {};
+  var matchId = matchIdText_(input.matchId), colors = input.colors || {};
   if (!matchId) return { ok:false, error:'missing_matchId' };
   var actors = {
     'team-colors-sheet':'Google Sheet Team Colors HEX',
@@ -1144,7 +1168,7 @@ function onEdit(e) {
         colors[colorField] = colorRaw ? normalizeColor_(colorRaw, true) : defaults[colorField];
       });
       var result = pepsliveSaveTeamColors({
-        matchId:String(sheet.getRange(range.getRow(), matchIdCol).getValue() || '').trim(),
+        matchId:matchIdText_(sheet.getRange(range.getRow(), matchIdCol).getValue()),
         revision:Number(sheet.getRange(range.getRow(), revisionCol).getValue() || 0) || 0,
         colors:colors,
         source:'matches-sheet'
