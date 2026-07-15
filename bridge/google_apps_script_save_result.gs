@@ -12,10 +12,13 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-07-14.1';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.1';
 var PEPSLIVE_SPREADSHEET_ID_KEY = 'PEPSLIVE_SPREADSHEET_ID';
 var PEPSLIVE_WEBHOOK_TOKEN_KEY = 'PEPSLIVE_WEBHOOK_TOKEN';
 var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
+var PEPSLIVE_TEAM_COLORS_SHEET = 'Team Colors';
+var PEPSLIVE_TEAM_COLORS_HEADER_ROW = 4;
+var PEPSLIVE_TEAM_COLORS_SCHEMA = ['MatchID','Team A','PrimaryColor A','SecondaryColor A','Team B','PrimaryColor B','SecondaryColor B','Revision','Sync Status'];
 var PEPSLIVE_MATCH_SCHEMA = [
   'MatchID','LogoA','TeamA','LogoB','TeamB',
   'Label1','Label2','Label3','Label4','Label5',
@@ -33,7 +36,8 @@ var PEPSLIVE_SYSTEM_SHEETS = {
   PepsLiveRemote: true,
   PepsLiveRemoteState: true,
   PepsLiveRemoteDevices: true,
-  PepsLiveOperations: true
+  PepsLiveOperations: true,
+  'Team Colors': true
 };
 
 function onOpen() {
@@ -42,10 +46,14 @@ function onOpen() {
       .createMenu('PepsLive')
       .addItem('Install / Repair Sheet', 'pepsliveInstall')
       .addItem('Repair Sheet Schema', 'pepsliveRepair')
+      .addItem('Open Team Colors', 'pepsliveOpenTeamColors')
+      .addItem('Refresh Team Colors', 'pepsliveRefreshTeamColors')
       .addItem('Pick OBS Color', 'pepsliveOpenColorPicker')
       .addItem('Generate Webhook Token', 'pepsliveGenerateWebhookToken')
       .addItem('Show Setup Status', 'pepsliveShowSetup')
       .addToUi();
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    if (ss && ss.getSheetByName(PEPSLIVE_TEAM_COLORS_SHEET)) syncTeamColorsSheet_(ss);
   } catch (err) {}
 }
 
@@ -61,6 +69,7 @@ function pepsliveInstall() {
     'Schema: ' + (result.missingColumns.length ? 'missing ' + result.missingColumns.join(', ') : 'OK') + '\n' +
     'Deploy this Apps Script as a Web App, then paste the Web App URL into PepsLive Dock.'
   );
+  pepsliveOpenTeamColors();
   return result;
 }
 
@@ -69,6 +78,7 @@ function pepsliveRepair() {
   if (ss) PropertiesService.getScriptProperties().setProperty(PEPSLIVE_SPREADSHEET_ID_KEY, ss.getId());
   var result = setupRepair_({ skipTokenCheck: true });
   pepsliveAlert_('PepsLive repair complete', 'Schema and support sheets are ready.');
+  pepsliveOpenTeamColors();
   return result;
 }
 
@@ -127,18 +137,17 @@ function scriptProperties_() {
 }
 
 function targetSpreadsheet_() {
-  var props = scriptProperties_();
-  var id = String(props.getProperty(PEPSLIVE_SPREADSHEET_ID_KEY) || '').trim();
-  if (id) return SpreadsheetApp.openById(id);
-
   var ss = null;
   try {
     ss = SpreadsheetApp.getActiveSpreadsheet();
   } catch (err) {}
   if (ss) {
-    props.setProperty(PEPSLIVE_SPREADSHEET_ID_KEY, ss.getId());
+    try { scriptProperties_().setProperty(PEPSLIVE_SPREADSHEET_ID_KEY, ss.getId()); } catch (err) {}
     return ss;
   }
+  var props = scriptProperties_();
+  var id = String(props.getProperty(PEPSLIVE_SPREADSHEET_ID_KEY) || '').trim();
+  if (id) return SpreadsheetApp.openById(id);
   throw new Error('run_pepslive_install_first');
 }
 
@@ -288,6 +297,138 @@ function formatMatchColorColumns_(sheet) {
   });
 }
 
+function teamColorDefaults_() {
+  return {
+    TeamA_PrimaryColor: '#FF6A00',
+    TeamA_SecondaryColor: '#111111',
+    TeamB_PrimaryColor: '#0057FF',
+    TeamB_SecondaryColor: '#FFFFFF'
+  };
+}
+
+function teamColorsSheet_(ss) {
+  ss = ss || targetSpreadsheet_();
+  var sheet = ss.getSheetByName(PEPSLIVE_TEAM_COLORS_SHEET);
+  if (!sheet) sheet = ss.insertSheet(PEPSLIVE_TEAM_COLORS_SHEET);
+  return sheet;
+}
+
+function teamColorsProjection_(matchSheet) {
+  var data = matchSheet.getDataRange().getValues();
+  if (!data.length) return [];
+  var headers = data[0].map(function(header) { return String(header || '').trim(); });
+  var defaults = teamColorDefaults_(), rows = [];
+  for (var r = 1; r < data.length; r++) {
+    var matchId = String(data[r][headers.indexOf('MatchID')] || '').trim();
+    if (!matchId) continue;
+    var colors = {};
+    PEPSLIVE_COLOR_FIELDS.forEach(function(field) {
+      var raw = String(data[r][headers.indexOf(field)] || '').trim();
+      try { colors[field] = raw ? normalizeColor_(raw, true) : defaults[field]; }
+      catch (err) { colors[field] = defaults[field]; }
+    });
+    rows.push([
+      matchId,
+      String(data[r][headers.indexOf('TeamA')] || 'TEAM A'),
+      colors.TeamA_PrimaryColor,
+      colors.TeamA_SecondaryColor,
+      String(data[r][headers.indexOf('TeamB')] || 'TEAM B'),
+      colors.TeamB_PrimaryColor,
+      colors.TeamB_SecondaryColor,
+      Number(data[r][headers.indexOf('Revision')] || 0) || 0,
+      'READY'
+    ]);
+  }
+  return rows;
+}
+
+function formatTeamColorsView_(sheet, rowCount) {
+  sheet.setHiddenGridlines(true);
+  sheet.setTabColor('#F06A2C');
+  sheet.getRange('A1:I1').breakApart().merge()
+    .setValue('TEAM COLORS | สีทีมสำหรับ PepsLive Dock + OBS')
+    .setBackground('#0F172A').setFontColor('#FFFFFF').setFontWeight('bold').setFontSize(16)
+    .setHorizontalAlignment('left').setVerticalAlignment('middle');
+  sheet.getRange('A2:I2').breakApart().merge()
+    .setValue('แก้ค่า #RRGGBB ในช่องสี หรือใช้เมนู PepsLive > Pick OBS Color แล้วกด Load Sheet ใน Dock')
+    .setBackground('#172033').setFontColor('#D8E2F1').setFontSize(10).setWrap(true);
+  sheet.getRange('A3:I3').breakApart().merge()
+    .setValue('คอลัมน์สีจะซิงก์กลับ Matches อัตโนมัติเมื่อ Apps Script รุ่นล่าสุดถูกติดตั้ง')
+    .setBackground('#101722').setFontColor('#93A4BA').setFontSize(9).setWrap(true);
+  sheet.getRange(PEPSLIVE_TEAM_COLORS_HEADER_ROW, 1, 1, PEPSLIVE_TEAM_COLORS_SCHEMA.length)
+    .setValues([PEPSLIVE_TEAM_COLORS_SCHEMA])
+    .setBackground('#202A3A').setFontColor('#FFFFFF').setFontWeight('bold')
+    .setHorizontalAlignment('center').setVerticalAlignment('middle').setWrap(true);
+  sheet.setFrozenRows(PEPSLIVE_TEAM_COLORS_HEADER_ROW);
+  sheet.setFrozenColumns(2);
+  [90, 180, 125, 135, 180, 125, 135, 75, 115].forEach(function(width, index) { sheet.setColumnWidth(index + 1, width); });
+  sheet.setRowHeight(1, 34);
+  sheet.setRowHeight(2, 34);
+  sheet.setRowHeight(3, 28);
+  sheet.setRowHeight(4, 34);
+  if (!rowCount) return;
+  var dataRange = sheet.getRange(5, 1, rowCount, PEPSLIVE_TEAM_COLORS_SCHEMA.length);
+  dataRange.setVerticalAlignment('middle').setFontSize(10);
+  sheet.getRange(5, 1, rowCount, 2).setBackground('#F5F7FA').setFontColor('#20242B');
+  sheet.getRange(5, 5, rowCount, 1).setBackground('#F5F7FA').setFontColor('#20242B');
+  sheet.getRange(5, 8, rowCount, 2).setBackground('#EEF2F7').setFontColor('#465568').setHorizontalAlignment('center');
+  [[3,'TeamA_PrimaryColor'],[4,'TeamA_SecondaryColor'],[6,'TeamB_PrimaryColor'],[7,'TeamB_SecondaryColor']].forEach(function(pair) {
+    var col = pair[0], range = sheet.getRange(5, col, rowCount, 1), values = range.getValues(), backgrounds = [], fonts = [];
+    values.forEach(function(row) {
+      var color = normalizeColor_(row[0], false);
+      backgrounds.push([color]);
+      fonts.push([colorTextColor_(color)]);
+    });
+    range.setNumberFormat('@').setBackgrounds(backgrounds).setFontColors(fonts).setFontWeight('bold').setHorizontalAlignment('center');
+  });
+}
+
+function syncTeamColorsSheet_(ss) {
+  ss = ss || targetSpreadsheet_();
+  var matchSheet = matchSheet_(ss);
+  ensureMatchSchema_(matchSheet, true);
+  var rows = teamColorsProjection_(matchSheet), sheet = teamColorsSheet_(ss);
+  sheet.clear();
+  if (rows.length) sheet.getRange(5, 1, rows.length, PEPSLIVE_TEAM_COLORS_SCHEMA.length).setValues(rows);
+  formatTeamColorsView_(sheet, rows.length);
+  return sheet;
+}
+
+function pepsliveOpenTeamColors() {
+  var ss = targetSpreadsheet_(), sheet = syncTeamColorsSheet_(ss);
+  ss.setActiveSheet(sheet);
+  return { ok: true, sheetName: sheet.getName(), rows: Math.max(0, sheet.getLastRow() - PEPSLIVE_TEAM_COLORS_HEADER_ROW) };
+}
+
+function pepsliveRefreshTeamColors() {
+  var result = pepsliveOpenTeamColors();
+  try { SpreadsheetApp.getActiveSpreadsheet().toast('Team Colors synced with Matches', 'PepsLive', 4); } catch (_) {}
+  return result;
+}
+
+function syncTeamColorsAfterSave_() {
+  try { syncTeamColorsSheet_(targetSpreadsheet_()); } catch (_) {}
+}
+
+function teamColorsFieldForColumn_(column) {
+  return { 3:'TeamA_PrimaryColor', 4:'TeamA_SecondaryColor', 6:'TeamB_PrimaryColor', 7:'TeamB_SecondaryColor' }[Number(column)] || '';
+}
+
+function handleTeamColorsEdit_(range) {
+  if (!range || range.getRow() <= PEPSLIVE_TEAM_COLORS_HEADER_ROW) return false;
+  if (!teamColorsFieldForColumn_(range.getColumn())) return false;
+  var sheet = range.getSheet(), row = sheet.getRange(range.getRow(), 1, 1, PEPSLIVE_TEAM_COLORS_SCHEMA.length).getValues()[0];
+  var colors = {
+    TeamA_PrimaryColor: normalizeColor_(row[2], false),
+    TeamA_SecondaryColor: normalizeColor_(row[3], false),
+    TeamB_PrimaryColor: normalizeColor_(row[5], false),
+    TeamB_SecondaryColor: normalizeColor_(row[6], false)
+  };
+  var result = pepsliveSaveTeamColors({ matchId: String(row[0] || '').trim(), revision: Number(row[7] || 0) || 0, colors: colors, source: 'team-colors-sheet' });
+  if (!result || result.ok === false) throw new Error(result && result.error || 'team_colors_sync_failed');
+  return true;
+}
+
 function inspectMatchData_(sheet) {
   var issues = [];
   if (!sheet || sheet.getLastRow() < 2) return issues;
@@ -314,13 +455,15 @@ function setupCheck_() {
     var sheet = matchSheet_(ss);
     var schema = ensureMatchSchema_(sheet, false);
     var dataIssues = schema.missing.length ? [] : inspectMatchData_(sheet);
+    var teamColorsReady = !!ss.getSheetByName(PEPSLIVE_TEAM_COLORS_SHEET);
     return {
-      ok: !schema.missing.length && !dataIssues.length,
+      ok: !schema.missing.length && !dataIssues.length && teamColorsReady,
       version: PEPSLIVE_WEBHOOK_VERSION,
       spreadsheetReady: true,
       spreadsheetId: ss.getId(),
       spreadsheetName: ss.getName(),
       matchSheet: sheet.getName(),
+      matchSheetGid: sheet.getSheetId(),
       missingColumns: schema.missing,
       dataIssues: dataIssues,
       tokenEnabled: !!webhookToken_(),
@@ -330,7 +473,8 @@ function setupCheck_() {
         remote: !!ss.getSheetByName('PepsLiveRemote'),
         remoteState: !!ss.getSheetByName('PepsLiveRemoteState'),
         remoteDevices: !!ss.getSheetByName('PepsLiveRemoteDevices'),
-        operations: !!ss.getSheetByName('PepsLiveOperations')
+        operations: !!ss.getSheetByName('PepsLiveOperations'),
+        teamColors: teamColorsReady
       }
     };
   } catch (err) {
@@ -353,6 +497,7 @@ function setupRepair_(options) {
   var sheet = matchSheet_(ss);
   ensureMatchSchema_(sheet, true);
   formatMatchColorColumns_(sheet);
+  syncTeamColorsSheet_(ss);
   operationsSheet_(ss);
   usersSheet_();
   remoteSheet_();
@@ -441,7 +586,9 @@ function webhookInfo_() {
       idempotentSave: true,
       optimisticRevision: true,
       immutableOperationLog: true,
-      sheetColorPicker: true
+      sheetColorPicker: true,
+      teamColorsSheet: true,
+      teamColorsTwoWaySync: true
     },
     setup: setupCheck_()
   };
@@ -532,16 +679,19 @@ function saveResult_(payload) {
       var duplicateAck = { ok: true, duplicate: true, applied: false, row: rowIndex, matchId: matchId, operationId: operationId, baseRevision: Number(existing.BaseRevision || 0), revision: existingRevision, saved: parseJson_(existing.PatchJSON, {}), savedAt: existing.RecordedAt || new Date().toISOString() };
       if (currentRevision === existingRevision && String(current.LastOperationID || '') === operationId) {
         duplicateAck.outcome = 'duplicate_exact';
+        syncTeamColorsAfterSave_();
         return duplicateAck;
       }
       if (currentRevision < existingRevision) {
         projectMatchSnapshot_(sheet, rowIndex, headers, existingSnapshot);
         SpreadsheetApp.flush();
+        syncTeamColorsAfterSave_();
         duplicateAck.applied = true;
         duplicateAck.outcome = 'duplicate_recovered';
         return duplicateAck;
       }
       if (currentRevision > existingRevision) {
+        syncTeamColorsAfterSave_();
         duplicateAck.outcome = 'duplicate_superseded';
         duplicateAck.superseded = true;
         duplicateAck.revision = currentRevision;
@@ -588,6 +738,7 @@ function saveResult_(payload) {
     });
     projectMatchSnapshot_(sheet, rowIndex, headers, snapshot);
     SpreadsheetApp.flush();
+    syncTeamColorsAfterSave_();
     return { ok: true, duplicate: false, applied: true, outcome: 'applied', row: rowIndex, matchId: matchId, operationId: operationId, baseRevision: currentRevision, revision: appliedRevision, saved: patch, savedAt: recordedAt };
   } catch (err) {
     return { ok: false, error: String(err && err.message || err) };
@@ -597,10 +748,11 @@ function saveResult_(payload) {
 }
 
 function pepsliveGetColorPickerData() {
-  var sheet = matchSheet_();
+  var ss = targetSpreadsheet_(), sheet = matchSheet_(ss);
   ensureMatchSchema_(sheet, true);
+  syncTeamColorsSheet_(ss);
   var data = sheet.getDataRange().getValues(), headers = data[0].map(function(h) { return String(h || '').trim(); });
-  var defaults = { TeamA_PrimaryColor:'#FF6A00', TeamA_SecondaryColor:'#111111', TeamB_PrimaryColor:'#0057FF', TeamB_SecondaryColor:'#FFFFFF' };
+  var defaults = teamColorDefaults_();
   var matches = [];
   for (var r = 1; r < data.length; r++) {
     var matchId = String(data[r][headers.indexOf('MatchID')] || '').trim();
@@ -613,14 +765,15 @@ function pepsliveGetColorPickerData() {
     });
     matches.push(item);
   }
-  return { ok:true, sheetName:sheet.getName(), matches:matches, colorFields:PEPSLIVE_COLOR_FIELDS };
+  return { ok:true, sheetName:sheet.getName(), teamColorsSheet:PEPSLIVE_TEAM_COLORS_SHEET, matches:matches, colorFields:PEPSLIVE_COLOR_FIELDS };
 }
 
 function pepsliveSaveTeamColors(input) {
   input = input || {};
   var matchId = String(input.matchId || '').trim(), colors = input.colors || {};
   if (!matchId) return { ok:false, error:'missing_matchId' };
-  var values = { UpdatedAt:new Date().toISOString(), UpdatedBy:'Google Sheet Pick OBS Color' };
+  var actor = input.source === 'team-colors-sheet' ? 'Google Sheet Team Colors' : 'Google Sheet Pick OBS Color';
+  var values = { UpdatedAt:new Date().toISOString(), UpdatedBy:actor };
   PEPSLIVE_COLOR_FIELDS.forEach(function(field) { values[field] = normalizeColor_(colors[field], false); });
   return saveResult_({
     contractVersion:2,
@@ -656,21 +809,36 @@ byId('close').onclick=()=>google.script.host.close();google.script.run.withSucce
 function onEdit(e) {
   try {
     var range = e && e.range;
-    if (!range || range.getRow() < 2 || range.getNumRows() !== 1 || range.getNumColumns() !== 1) return;
-    var sheet = range.getSheet(), headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) { return String(h || '').trim(); });
-    var field = headers[range.getColumn() - 1];
-    if (PEPSLIVE_COLOR_FIELDS.indexOf(field) === -1) return;
-    var raw = String(range.getValue() || '').trim();
-    if (!raw) range.setBackground('#FFFFFF').setFontColor('#20242B').clearNote();
-    else {
-      var color = normalizeColor_(raw, true);
-      range.setValue(color).setBackground(color).setFontColor(colorTextColor_(color)).clearNote();
+    if (!range || range.getNumRows() !== 1 || range.getNumColumns() !== 1) return;
+    var sheet = range.getSheet();
+    if (sheet.getName() === PEPSLIVE_TEAM_COLORS_SHEET) {
+      if (range.getRow() <= PEPSLIVE_TEAM_COLORS_HEADER_ROW || !teamColorsFieldForColumn_(range.getColumn())) return;
+      sheet.getRange(range.getRow(), 9).setValue('SYNCING...').setBackground('#FFF4D6').setFontColor('#8A5A00');
+      handleTeamColorsEdit_(range);
+      return;
     }
-    var revisionCol = headers.indexOf('Revision') + 1, operationCol = headers.indexOf('LastOperationID') + 1;
-    if (revisionCol > 0) { var revisionCell = sheet.getRange(range.getRow(), revisionCol); revisionCell.setValue((Number(revisionCell.getValue()) || 0) + 1); }
-    if (operationCol > 0) sheet.getRange(range.getRow(), operationCol).setValue('sheet-edit-' + new Date().getTime());
+    if (range.getRow() < 2) return;
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0].map(function(h) { return String(h || '').trim(); });
+    var field = headers[range.getColumn() - 1];
+    if (PEPSLIVE_COLOR_FIELDS.indexOf(field) >= 0) {
+      var raw = String(range.getValue() || '').trim();
+      if (!raw) range.setBackground('#FFFFFF').setFontColor('#20242B').clearNote();
+      else {
+        var color = normalizeColor_(raw, true);
+        range.setValue(color).setBackground(color).setFontColor(colorTextColor_(color)).clearNote();
+      }
+      var revisionCol = headers.indexOf('Revision') + 1, operationCol = headers.indexOf('LastOperationID') + 1;
+      if (revisionCol > 0) { var revisionCell = sheet.getRange(range.getRow(), revisionCol); revisionCell.setValue((Number(revisionCell.getValue()) || 0) + 1); }
+      if (operationCol > 0) sheet.getRange(range.getRow(), operationCol).setValue('sheet-edit-' + new Date().getTime());
+      syncTeamColorsSheet_(sheet.getParent());
+      return;
+    }
+    if (['MatchID','TeamA','TeamB'].indexOf(field) >= 0) syncTeamColorsSheet_(sheet.getParent());
   } catch (err) {
-    try { e.range.setBackground('#FFE7EA').setFontColor('#B42335').setNote(String(err && err.message || err)); } catch (_) {}
+    try {
+      e.range.setBackground('#FFE7EA').setFontColor('#B42335').setNote(String(err && err.message || err));
+      if (e.range.getSheet().getName() === PEPSLIVE_TEAM_COLORS_SHEET) e.range.getSheet().getRange(e.range.getRow(), 9).setValue('ERROR: ' + String(err && err.message || err)).setBackground('#FFE7EA').setFontColor('#B42335');
+    } catch (_) {}
   }
 }
 

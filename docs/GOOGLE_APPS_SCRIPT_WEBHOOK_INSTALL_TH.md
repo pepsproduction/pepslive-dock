@@ -6,7 +6,7 @@
 bridge/google_apps_script_save_result.gs
 ```
 
-เวอร์ชันที่คาดหวังใน Dock: `2026-07-14.1`
+เวอร์ชันที่คาดหวังใน Dock: `2026-07-15.1`
 
 Webhook ตัวนี้ใช้สำหรับ Save Result, Finish Match, Online Users, Mobile Remote และ Scoreboard Skin Relay โดยข้อมูลจะถูกเขียนลง Google Sheet ของเจ้าของชีตคนนั้นเอง ไม่ได้ผูกกับชีตของ PepsProduction
 
@@ -91,16 +91,20 @@ PepsLive > Install / Repair Sheet
 
 - จำ Spreadsheet ID ของชีตนี้ไว้ใน Script Properties
 - ตรวจ/เติมหัวตารางหลักของ match sheet
+- สร้างและจัดรูปแบบแท็บ `Team Colors` สำหรับดูหรือแก้สีทั้งสองทีมโดยไม่ต้องเลื่อนไปคอลัมน์ด้านขวา
 - สร้างชีต `PepsLiveConfig`
 - สร้างชีต append-only `PepsLiveOperations` สำหรับป้องกันการบันทึกซ้ำและตรวจ revision
 - สร้างชีตเสริมสำหรับระบบ online/mobile remote ถ้ายังไม่มี
 
-หลังติดตั้งจะมีเมนู `PepsLive > Pick OBS Color` สำหรับเตรียมสี Primary/Secondary ของทั้งสองทีมล่วงหน้า สีจะถูกเก็บเป็น `#RRGGBB` และโหลดไปยัง Dock/OBS โดยตรง
+หลังติดตั้งจะมีแท็บ `Team Colors` และเมนู `PepsLive > Pick OBS Color` สำหรับเตรียมสี Primary/Secondary ของทั้งสองทีมล่วงหน้า แก้ได้ทั้งจากเซลล์สีหรือหน้าต่าง Picker โดยทั้งสองทางจะซิงก์กลับ `Matches` พร้อม `Revision` สีจะถูกเก็บเป็น `#RRGGBB` และโหลดไปยัง Dock/OBS โดยตรง
+
+เมื่อ Dock เรียก `Setup Check` หรือ `ทดสอบ Webhook` Apps Script จะส่ง GID ของตาราง `Matches` กลับไปตั้งค่า `Default GID` ให้อัตโนมัติ เพื่อป้องกันการโหลดผิดแท็บหลังเปิดหน้า `Team Colors`
 
 ชีตเสริมที่อาจถูกสร้าง:
 
 ```text
 PepsLiveConfig
+Team Colors
 PepsLiveUsers
 PepsLiveRemote
 PepsLiveRemoteState
@@ -182,7 +186,7 @@ Setup Check
 
 ```text
 Setup OK
-Webhook V2 OK 2026-07-14.1
+Webhook V2 OK 2026-07-15.1
 ```
 
 ## ทดสอบ Save Result
@@ -227,11 +231,12 @@ LastOperationID
 5. กด Save
 6. กลับไปที่ Google Sheet แล้ว reload
 7. กด `PepsLive > Install / Repair Sheet`
-8. ไปที่ Apps Script แล้วกด `Deploy > Manage deployments`
-9. กดไอคอน edit ของ Web App เดิม
-10. เลือก Version เป็น `New version`
-11. กด Deploy
-12. กลับไปที่ Dock แล้วกด `ทดสอบ Webhook`
+8. ตรวจว่าแท็บ `Team Colors` ถูกสร้างและมีรายการ MatchID
+9. ไปที่ Apps Script แล้วกด `Deploy > Manage deployments`
+10. กดไอคอน edit ของ Web App เดิม
+11. เลือก Version เป็น `New version`
+12. กด Deploy
+13. กลับไปที่ Dock แล้วกด `ทดสอบ Webhook`
 
 สำคัญ: ถ้าแก้โค้ดแล้วไม่สร้าง New version ใน deployment, Web App URL เดิมอาจยังรันโค้ดเก่าอยู่
 
@@ -240,6 +245,16 @@ LastOperationID
 ### ไม่เห็นเมนู PepsLive
 
 ให้ reload หน้า Google Sheet อีกครั้ง ถ้ายังไม่ขึ้น ให้ตรวจว่าโค้ดถูกวางใน Apps Script ที่ผูกกับชีตนั้นจริง ไม่ใช่ standalone script คนละไฟล์
+
+### ไม่เห็นแท็บ Team Colors
+
+แปลว่าชีตยังใช้ Apps Script รุ่นเก่าหรือยังไม่ได้รันตัวติดตั้งล่าสุด ให้ทำตามนี้:
+
+1. แทนที่โค้ดใน `Code.gs` ด้วย `bridge/google_apps_script_save_result.gs` รุ่นล่าสุดและกด Save
+2. reload หน้า Google Sheet
+3. กด `PepsLive > Install / Repair Sheet`
+4. ตรวจว่าแท็บ `Team Colors` เปิดขึ้นมาอัตโนมัติ
+5. ถ้าใช้ Webhook ให้ Deploy แบบ `New version` แล้วกด `ทดสอบ Webhook` ใน Dock
 
 ### ขึ้น `run_pepslive_install_first`
 
@@ -302,13 +317,14 @@ Google Workspace บางองค์กรอาจปิด Apps Script ห�
 ## Checklist ก่อนส่งให้คนอื่นใช้
 
 1. Google Sheet เป็นของผู้ใช้คนนั้นเอง
-2. Apps Script วางโค้ดล่าสุด `v2026-07-14.1`
+2. Apps Script วางโค้ดล่าสุด `v2026-07-15.1`
 3. กด `PepsLive > Install / Repair Sheet` แล้ว
 4. Deploy Web App เป็น `/exec`
 5. Dock ใส่ Google Sheet URL ถูกตัว
 6. Dock ใส่ Apps Script Webhook URL ถูกตัว
 7. ถ้าใช้ token ต้องใส่ token ตรงกัน
 8. `Setup Check` ผ่าน
-9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-14.1`
-10. เปิด `PepsLive > Pick OBS Color` แล้วบันทึกสีทั้ง 4 ช่องได้
-11. Save Result แล้ว Google Sheet อัปเดตคะแนน สี `Revision` และ `LastOperationID` จริง
+9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-15.1`
+10. เห็นแท็บ `Team Colors` และรายการ MatchID ครบ
+11. แก้สีจากแท็บ `Team Colors` หรือ `PepsLive > Pick OBS Color` แล้วค่าใน `Matches` กับ `Revision` เปลี่ยนจริง
+12. Save Result แล้ว Google Sheet อัปเดตคะแนน สี `Revision` และ `LastOperationID` จริง
