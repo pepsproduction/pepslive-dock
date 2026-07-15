@@ -12,7 +12,7 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.4';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.5';
 var PEPSLIVE_SPREADSHEET_ID_KEY = 'PEPSLIVE_SPREADSHEET_ID';
 var PEPSLIVE_WEBHOOK_TOKEN_KEY = 'PEPSLIVE_WEBHOOK_TOKEN';
 var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
@@ -680,6 +680,7 @@ function doPost(e) {
     if (action === 'webhookInfo') return json_(webhookInfo_());
     if (action === 'setupCheck') return json_(setupCheck_());
     if (action === 'setupRepair') return json_(setupRepair_(requestPayload_(payload)));
+    if (action === 'sheetLoad') return json_(sheetLoad_(authorizedPayload_(requestPayload_(payload))));
     if (action === 'remoteOpen') return json_(remoteOpen_(authorizedPayload_(requestPayload_(payload))));
     if (action === 'remoteSend') return json_(remoteSend_(authorizedPayload_(requestPayload_(payload))));
     if (action === 'remotePoll') return json_(remotePoll_(authorizedPayload_(requestPayload_(payload))));
@@ -708,6 +709,7 @@ function doGet(e) {
     if (action === 'webhookInfo') return jsonp_(webhookInfo_(), callback);
     if (action === 'setupCheck') return jsonp_(setupCheck_(), callback);
     if (action === 'setupRepair') return jsonp_(setupRepair_(payload), callback);
+    if (action === 'sheetLoad') return jsonp_(sheetLoad_(authorizedPayload_(payload)), callback);
     if (action === 'remoteOpen') return jsonp_(remoteOpen_(authorizedPayload_(payload)), callback);
     if (action === 'remoteSend') return jsonp_(remoteSend_(authorizedPayload_(payload)), callback);
     if (action === 'remotePoll') return jsonp_(remotePoll_(authorizedPayload_(payload)), callback);
@@ -750,6 +752,7 @@ function webhookInfo_() {
       setupRepair: true,
       spreadsheetIdBinding: true,
       optionalWebhookToken: true,
+      sheetReadProxy: true,
       matchDataV2: true,
       teamColors: true,
       idempotentSave: true,
@@ -765,6 +768,56 @@ function webhookInfo_() {
       teamColorsRevisionPoll: true
     },
     setup: setupCheck_()
+  };
+}
+
+function sheetCellValue_(value, timeZone) {
+  if (Object.prototype.toString.call(value) === '[object Date]') {
+    if (isNaN(value.getTime())) return '';
+    return Utilities.formatDate(value, timeZone || Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm:ss');
+  }
+  return value == null ? '' : value;
+}
+
+function sheetLoad_() {
+  var ss = targetSpreadsheet_();
+  var sheet = matchSheet_(ss);
+  var schema = ensureMatchSchema_(sheet, false);
+  if (schema.missing.length) {
+    return { ok: false, error: 'sheet_schema_missing', missingColumns: schema.missing };
+  }
+
+  var lastColumn = sheet.getLastColumn();
+  var lastRow = Math.max(sheet.getLastRow(), 1);
+  if (!lastColumn) return { ok: false, error: 'sheet_schema_missing', missingColumns: PEPSLIVE_MATCH_SCHEMA };
+  var values = sheet.getRange(1, 1, lastRow, lastColumn).getValues();
+  var headers = values[0].map(function(header) { return String(header || '').trim(); });
+  var matchIdColumn = headers.indexOf('MatchID');
+  if (matchIdColumn < 0) return { ok: false, error: 'sheet_schema_missing', missingColumns: ['MatchID'] };
+
+  var timeZone = ss.getSpreadsheetTimeZone() || Session.getScriptTimeZone();
+  var rows = [];
+  for (var rowIndex = 1; rowIndex < values.length; rowIndex++) {
+    var row = values[rowIndex];
+    if (!String(row[matchIdColumn] == null ? '' : row[matchIdColumn]).trim()) continue;
+    var item = {};
+    headers.forEach(function(header, columnIndex) {
+      if (header) item[header] = sheetCellValue_(row[columnIndex], timeZone);
+    });
+    rows.push(item);
+  }
+
+  return {
+    ok: true,
+    source: 'webhook',
+    direct: true,
+    privateSheet: true,
+    spreadsheetId: ss.getId(),
+    sheetName: sheet.getName(),
+    gid: sheet.getSheetId(),
+    headers: headers,
+    rows: rows,
+    count: rows.length
   };
 }
 
