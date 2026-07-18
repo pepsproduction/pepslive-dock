@@ -12,7 +12,7 @@
  *
  * ใช้ได้กับ GitHub Pages ผ่าน JSONP doGet(e)
  */
-var PEPSLIVE_WEBHOOK_VERSION = '2026-07-15.6';
+var PEPSLIVE_WEBHOOK_VERSION = '2026-07-18.1';
 var PEPSLIVE_SPREADSHEET_ID_KEY = 'PEPSLIVE_SPREADSHEET_ID';
 var PEPSLIVE_WEBHOOK_TOKEN_KEY = 'PEPSLIVE_WEBHOOK_TOKEN';
 var SCOREBOARD_SKIN_RELAY_PROPERTY_KEY = 'pepslive_scoreboard_skin_state_v1';
@@ -52,6 +52,7 @@ function onOpen() {
       .addItem('Sync Selected Fill to HEX', 'pepsliveSyncSelectedColorFill')
       .addItem('Pick OBS Color', 'pepsliveOpenColorPicker')
       .addItem('Generate Webhook Token', 'pepsliveGenerateWebhookToken')
+      .addItem('Connection Info for Other Device', 'pepsliveShowConnectionInfo')
       .addItem('Show Setup Status', 'pepsliveShowSetup')
       .addToUi();
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -70,7 +71,8 @@ function pepsliveInstall() {
     'Match sheet: ' + result.matchSheet + '\n' +
     'Schema: ' + (result.missingColumns.length ? 'missing ' + result.missingColumns.join(', ') : 'OK') + '\n' +
     'Fill color sync: ' + (result.teamColorFormatTrigger ? 'ON' : 'CHECK REQUIRED') + '\n' +
-    'Deploy this Apps Script as a Web App, then paste the Web App URL into PepsLive Dock.'
+    'Deploy this Apps Script as a Web App, then paste the Web App URL into PepsLive Dock.\n' +
+    'For another device using this same Sheet, use PepsLive > Connection Info for Other Device.'
   );
   pepsliveOpenTeamColors();
   return result;
@@ -436,6 +438,57 @@ function pepsliveRefreshTeamColors() {
   return result;
 }
 
+function pepsliveShowConnectionInfo() {
+  var ss = targetSpreadsheet_();
+  var webhookUrl = '';
+  try { webhookUrl = String(ScriptApp.getService().getUrl() || '').trim(); } catch (err) {}
+  var token = webhookToken_();
+  var profile = [
+    'PepsLive Dock Connection Profile',
+    'Version: ' + PEPSLIVE_WEBHOOK_VERSION,
+    '',
+    'Google Sheet URL:',
+    ss.getUrl(),
+    '',
+    'Apps Script Webhook URL:',
+    webhookUrl || '(ยังไม่ได้ Deploy เป็น Web App หรือยังไม่มี URL /exec)',
+    '',
+    'Webhook Token:',
+    token || '(ไม่ได้ตั้งค่า - แนะนำให้ใช้เมนู Generate Webhook Token)',
+    '',
+    'ใช้ค่า 3 รายการนี้เหมือนกันใน Dock ทุกเครื่องที่ต้องใช้ Sheet เดียวกัน',
+    'ถ้าผู้ใช้อื่นต้องการ Sheet แยก ให้คัดลอก Template และ Deploy Apps Script ของบัญชีนั้นเอง'
+  ].join('\n');
+  var escapedProfile = String(profile)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+  var html = HtmlService.createHtmlOutput(
+    '<div style="font:14px Arial,sans-serif;padding:16px;color:#152033">' +
+      '<h2 style="font-size:18px;margin:0 0 10px">ใช้ PepsLive บนเครื่องอื่น</h2>' +
+      '<p style="margin:0 0 10px;line-height:1.45">คัดลอกชุดเชื่อมต่อนี้ไปใส่ที่ Settings &gt; Sheet ของ Dock เครื่องปลายทาง และเก็บ Token เป็นความลับ</p>' +
+      '<textarea id="profile" readonly style="box-sizing:border-box;width:100%;height:250px;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font:12px Consolas,monospace;resize:none">' + escapedProfile + '</textarea>' +
+      '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">' +
+        '<button onclick="copyProfile()" style="padding:8px 14px;border:0;border-radius:6px;background:#0f766e;color:white;cursor:pointer">Copy</button>' +
+        '<button onclick="google.script.host.close()" style="padding:8px 14px;border:1px solid #cbd5e1;border-radius:6px;background:white;cursor:pointer">Close</button>' +
+      '</div>' +
+      '<div id="status" style="margin-top:8px;color:#0f766e"></div>' +
+      '<script>function copyProfile(){var el=document.getElementById("profile");el.focus();el.select();el.setSelectionRange(0,el.value.length);var ok=false;try{ok=document.execCommand("copy")}catch(e){}document.getElementById("status").textContent=ok?"Copied":"กด Ctrl+C เพื่อคัดลอก"}</script>' +
+    '</div>'
+  ).setWidth(560).setHeight(410);
+  SpreadsheetApp.getUi().showModalDialog(html, 'PepsLive Connection Info');
+  return {
+    ok: true,
+    version: PEPSLIVE_WEBHOOK_VERSION,
+    spreadsheetId: ss.getId(),
+    spreadsheetUrl: ss.getUrl(),
+    webhookUrl: webhookUrl,
+    tokenEnabled: !!token,
+    multiDeviceReady: !!webhookUrl
+  };
+}
+
 function syncTeamColorsAfterSave_() {
   try { syncTeamColorsSheet_(targetSpreadsheet_()); } catch (_) {}
 }
@@ -792,7 +845,11 @@ function webhookInfo_() {
       teamColorsRealtimeSet: true,
       teamColorsRealtimeGet: true,
       teamColorsRevisionPoll: true,
-      normalizedMatchIds: true
+      normalizedMatchIds: true,
+      portableInstall: true,
+      multiDeviceClients: true,
+      perSpreadsheetDeployment: true,
+      connectionInfoDialog: true
     },
     setup: setupCheck_()
   };

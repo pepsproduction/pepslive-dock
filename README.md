@@ -101,7 +101,7 @@ Webhook Token เป็นทางเลือกเสริมสำหรั
 
 ### Mobile Remote
 
-1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook V2 OK 2026-07-15.4` หรือใหม่กว่า
+1. ตั้งค่า Apps Script Webhook ให้ขึ้น `Webhook V2 OK 2026-07-18.1` หรือใหม่กว่า
 2. กดปุ่มรูปมือถือบนแถบบนของ Dock
 3. สแกน QR Code ด้วยมือถือ หรือ copy link ไปเปิดในมือถือ
 4. มือถือจะเปิดหน้า Remote แยก พร้อมปุ่มควบคุมคะแนน เวลา Save Result, Finish Match, Load Next Match, Sync OBS และ Source Actions
@@ -456,4 +456,4 @@ The visible Sync panel is no longer shown. Background sync still publishes Dock 
 ### Apps Script Webhook Update Note
 
 - Use the latest `bridge/google_apps_script_save_result.gs` script for Save Result, Presence, and Scoreboard Skin Relay.
-- Latest expected webhook version: `2026-07-15.4` with Match Schema V2, revision-safe saves, the visible Team Colors sheet, automatic Dock-to-Sheet saves, revision-polled Sheet-to-Dock color updates, Fill color-to-HEX sync, and merged-header-safe Sheet repair.
+- Latest expected webhook version: `2026-07-18.1` with Match Schema V2, revision-safe saves, the visible Team Colors sheet, automatic Dock-to-Sheet saves, revision-polled Sheet-to-Dock color updates, Fill color-to-HEX sync, merged-header-safe Sheet repair, and a connection profile for reusing the same Sheet safely on another device.

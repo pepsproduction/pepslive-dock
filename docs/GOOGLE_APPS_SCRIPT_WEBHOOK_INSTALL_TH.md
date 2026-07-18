@@ -6,9 +6,9 @@
 bridge/google_apps_script_save_result.gs
 ```
 
-เวอร์ชันที่คาดหวังใน Dock: `2026-07-15.4`
+เวอร์ชันที่คาดหวังใน Dock: `2026-07-18.1`
 
-Webhook ตัวนี้ใช้สำหรับ Save Result, Finish Match, Online Users, Mobile Remote และ Scoreboard Skin Relay โดยข้อมูลจะถูกเขียนลง Google Sheet ของเจ้าของชีตคนนั้นเอง ไม่ได้ผูกกับชีตของ PepsProduction
+Webhook ตัวนี้ใช้สำหรับ Save Result, Finish Match, Online Users, Mobile Remote และ Scoreboard Skin Relay โดยข้อมูลจะถูกเขียนลง Google Sheet ที่ผูกไว้ตอนรัน `PepsLive > Install / Repair Sheet` ไม่ได้ฝัง Spreadsheet ID ของ PepsProduction ไว้ในไฟล์สคริปต์
 
 ## สิ่งที่ต้องมี
 
@@ -146,7 +146,7 @@ Deploy > New deployment
 Select type: Web app
 Description: PepsLive Dock Webhook
 Execute as: Me
-Who has access: Anyone with the link
+Who has access: Anyone หรือ Anyone with the link
 ```
 
 จากนั้นกด Deploy แล้ว copy URL ที่ได้
@@ -158,6 +158,24 @@ URL ที่ควรใช้จะลงท้ายด้วย:
 ```
 
 อย่าใช้ URL ที่ลงท้ายด้วย `/dev` สำหรับงานจริง เพราะ `/dev` ใช้ทดสอบเฉพาะเจ้าของสคริปต์
+
+## ใช้กับหลายเครื่องหรือหลายผู้ใช้
+
+### ใช้ Google Sheet เดียวกัน
+
+เจ้าของ Sheet ติดตั้งและ Deploy Apps Script เพียงครั้งเดียว จากนั้นในทุกเครื่องให้ใส่ค่าชุดเดียวกัน:
+
+1. Google Sheet URL
+2. Apps Script Webhook URL ที่ลงท้าย `/exec`
+3. Webhook Token
+
+หลัง Deploy แล้วเปิด Google Sheet และใช้เมนู `PepsLive > Connection Info for Other Device` เพื่อคัดลอกข้อมูลทั้งชุดไปยัง Dock เครื่องอื่น เก็บ Webhook URL และ Token เป็นความลับ เพราะ Web App ทำงานด้วยสิทธิ์ของผู้ Deploy
+
+### ผู้ใช้อื่นต้องการ Google Sheet แยกของตัวเอง
+
+ให้ผู้ใช้นั้นดาวน์โหลดหรือคัดลอก Template แล้วติดตั้ง Apps Script ใน `Extensions > Apps Script` ของ Sheet ตัวเอง จากนั้นรัน Install และ Deploy ด้วยบัญชีของตัวเอง ห้ามนำ deployment เดียวไปสลับ Spreadsheet ID ระหว่างหลาย Sheet เพราะอาจเขียนผลลงงานผิดไฟล์
+
+บัญชี Google Workspace ของบริษัทหรือโรงเรียนอาจไม่มีตัวเลือก `Anyone` หากนโยบายองค์กรปิดไว้ กรณีนี้ต้องให้ผู้ดูแลระบบอนุญาต หรือใช้บัญชีที่สามารถ Deploy Web App ให้ OBS Browser/Dock เรียกโดยไม่ติดหน้า Sign in
 
 ## ตั้งค่าใน PepsLive Dock
 
@@ -189,7 +207,7 @@ Setup Check
 
 ```text
 Setup OK
-Webhook V2 OK 2026-07-15.4
+Webhook V2 OK 2026-07-18.1
 ```
 
 ## ทดสอบ Save Result
@@ -333,14 +351,14 @@ Google Workspace บางองค์กรอาจปิด Apps Script ห�
 ## Checklist ก่อนส่งให้คนอื่นใช้
 
 1. Google Sheet เป็นของผู้ใช้คนนั้นเอง
-2. Apps Script วางโค้ดล่าสุด `v2026-07-15.4`
+2. Apps Script วางโค้ดล่าสุด `v2026-07-18.1`
 3. กด `PepsLive > Install / Repair Sheet` แล้ว
 4. Deploy Web App เป็น `/exec`
 5. Dock ใส่ Google Sheet URL ถูกตัว
 6. Dock ใส่ Apps Script Webhook URL ถูกตัว
 7. ถ้าใช้ token ต้องใส่ token ตรงกัน
 8. `Setup Check` ผ่าน
-9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-15.4` และรองรับ `Team Colors Real-time`
+9. `ทดสอบ Webhook` ขึ้น `Webhook V2 OK 2026-07-18.1` และรองรับ `Team Colors Real-time`
 10. เห็นแท็บ `Team Colors` และรายการ MatchID ครบ
 11. กด Fill color ในแท็บ `Team Colors` แล้วรหัส HEX, ค่าใน `Matches` และ `Revision` เปลี่ยนจริง
 12. เปลี่ยนสีใน Dock แล้ว HEX ใน Sheet เปลี่ยนอัตโนมัติ และเปลี่ยนสีใน Sheet แล้ว Dock เปลี่ยนตามภายในประมาณ 3 วินาที
