@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <meta name="robots" content="noindex,nofollow">
+  <title>PepsLive Match Room</title>
+  <link rel="stylesheet" href="assets/match-room.css">
+</head>
+<body class="match-room-viewer">
+  <main class="viewer-shell">
+    <header class="viewer-header">
+      <div class="viewer-brand"><span>PL</span><div><strong>PepsLive</strong><small>Match Room Viewer</small></div></div>
+      <div class="viewer-connection" id="connectionState" data-state="idle">รอเลขห้อง</div>
+    </header>
+
+    <section class="viewer-join" aria-labelledby="joinTitle">
+      <div><p class="eyebrow">READ-ONLY LIVE ROOM</p><h1 id="joinTitle">ติดตามผลการแข่งขัน</h1></div>
+      <form id="joinForm" class="viewer-join-form">
+        <label for="roomCodeInput">เลขห้อง 6 หลัก</label>
+        <div><input id="roomCodeInput" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"><button type="submit">เข้าห้อง</button></div>
+      </form>
+      <p class="viewer-mode" id="firebaseModeText">กำลังเตรียมระบบ…</p>
+    </section>
+
+    <section class="viewer-card viewer-scoreboard" id="scoreboard" aria-live="polite">
+      <div class="viewer-event"><span id="eventName">PepsLive Match Room</span><strong id="roomBadge">ROOM ------</strong></div>
+      <div class="viewer-meta" id="roomMeta">กรอกเลขห้องเพื่อเริ่มติดตาม</div>
+      <div class="viewer-teams">
+        <article class="viewer-team" id="teamACard">
+          <div class="viewer-logo"><img id="teamALogo" src="../logos/default.svg" alt="โลโก้ทีม A"></div>
+          <h2 id="teamAName">TEAM A</h2>
+          <strong class="viewer-score" id="scoreA">0</strong>
+        </article>
+        <div class="viewer-center"><span>VS</span><strong id="clockText">00:00</strong><small id="periodText">-</small></div>
+        <article class="viewer-team" id="teamBCard">
+          <div class="viewer-logo"><img id="teamBLogo" src="../logos/default.svg" alt="โลโก้ทีม B"></div>
+          <h2 id="teamBName">TEAM B</h2>
+          <strong class="viewer-score" id="scoreB">0</strong>
+        </article>
+      </div>
+      <div class="viewer-status-row"><span id="matchStatus">WAITING</span><small id="updatedText">ยังไม่มีข้อมูล</small></div>
+    </section>
+
+    <section class="viewer-card viewer-details">
+      <div><span>รอบ</span><strong id="roundText">-</strong></div>
+      <div><span>กลุ่ม</span><strong id="groupText">-</strong></div>
+      <div><span>สถานที่</span><strong id="venueText">-</strong></div>
+      <div><span>ประวัติ</span><strong id="historyCount">0 แมตช์</strong></div>
+    </section>
+
+    <section class="viewer-actions" aria-label="ส่งออกข้อมูล">
+      <button id="copyMatchButton" type="button" disabled>Copy ข้อมูล</button>
+      <button id="exportExcelButton" type="button" disabled>Export Excel</button>
+    </section>
+
+    <p class="viewer-notice" id="viewerNotice">Viewer นี้อ่านข้อมูลอย่างเดียวและไม่มีปุ่มแก้ไขคะแนน</p>
+  </main>
+  <script type="module" src="assets/viewer.js"></script>
+</body>
+</html>
