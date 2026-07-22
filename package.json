@@ -2,7 +2,8 @@
   "name": "pepslive-dock",
   "private": true,
   "scripts": {
-    "test": "npm run test:firebase:rules",
+    "test": "npm run test:match-room && npm run test:firebase:rules",
+    "test:match-room": "node --test match-room/tests/room-model.test.mjs",
     "test:firebase:rules": "firebase emulators:exec --only database --project demo-pepslive-match-room \"node --test firebase/tests/database.rules.test.mjs\""
   },
   "devDependencies": {

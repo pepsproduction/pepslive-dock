@@ -50,6 +50,27 @@
       <div><span>ประวัติ</span><strong id="historyCount">0 แมตช์</strong></div>
     </section>
 
+    <section class="viewer-card viewer-schedule" aria-labelledby="scheduleTitle">
+      <div class="viewer-schedule-head">
+        <div>
+          <p class="eyebrow">MATCHES FROM SHEET</p>
+          <h2 id="scheduleTitle">ตารางการแข่งขันทุกคู่</h2>
+          <small id="scheduleSource">รอ Host โหลด Google Sheet หรือ Excel</small>
+        </div>
+        <strong id="scheduleCount">0 คู่</strong>
+      </div>
+      <div class="viewer-table-wrap">
+        <table class="viewer-table">
+          <thead>
+            <tr><th>ลำดับ</th><th>คู่แข่งขัน</th><th>ผล</th><th>สถานะ</th><th>นำไปใช้</th></tr>
+          </thead>
+          <tbody id="scheduleRows">
+            <tr class="viewer-table-empty"><td colspan="5">ยังไม่มีรายการแข่งขันจาก Sheet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="viewer-actions" aria-label="ส่งออกข้อมูล">
       <button id="copyMatchButton" type="button" disabled>Copy ข้อมูล</button>
       <button id="exportExcelButton" type="button" disabled>Export Excel</button>

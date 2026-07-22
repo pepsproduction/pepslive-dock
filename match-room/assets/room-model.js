@@ -1,5 +1,6 @@
 export const ROOM_ROOT = "matchRoomsV1";
 export const ROOM_CODE_PATTERN = /^\d{6}$/;
+export const MAX_SCHEDULE_ITEMS = 1000;
 
 const ALLOWED_SPORTS = new Set(["football", "basket3", "basket5"]);
 const ALLOWED_CLOCK_MODES = new Set(["up", "down"]);
@@ -53,6 +54,90 @@ export function safeMatchKey(matchId) {
 export function safeEventKey(eventId) {
   const normalized = text(eventId, 200);
   return `e_${encodeKey(normalized || `${Date.now()}`).slice(0, 108)}`;
+}
+
+function firstValue(input, ...keys) {
+  for (const key of keys) {
+    if (input && input[key] !== undefined && input[key] !== null) return input[key];
+  }
+  return "";
+}
+
+function hasValue(value) {
+  return value !== undefined && value !== null && String(value).trim() !== "";
+}
+
+function scoreValue(value) {
+  if (!hasValue(value)) return null;
+  const normalized = String(value).trim();
+  if (!/^\d{1,3}$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return parsed >= 0 && parsed <= 999 ? parsed : null;
+}
+
+export function normalizeScheduleItem(input = {}, order = 0) {
+  const matchId = text(firstValue(input, "matchId", "MatchID"), 160, String(order + 1));
+  const rawScoreA = firstValue(input, "scoreA", "ScoreA");
+  const rawScoreB = firstValue(input, "scoreB", "ScoreB");
+  const rawFinalScore = text(firstValue(input, "finalScore", "FinalScore"), 32);
+  const parsedFinal = rawFinalScore.match(/^\s*(\d{1,3})\s*[-:]\s*(\d{1,3})\s*$/);
+  const directScoreA = scoreValue(rawScoreA);
+  const directScoreB = scoreValue(rawScoreB);
+  const scoreA = integer(directScoreA ?? parsedFinal?.[1], 0, 999, 0);
+  const scoreB = integer(directScoreB ?? parsedFinal?.[2], 0, 999, 0);
+  const matchStatus = text(firstValue(input, "matchStatus", "MatchStatus"), 50).toUpperCase();
+  const hasScore = (directScoreA !== null && directScoreB !== null) || Boolean(parsedFinal);
+  const hasResult = hasScore && (matchStatus === "FINISHED" || matchStatus === "FULL TIME");
+  const teamAName = text(firstValue(input, "teamAName", "TeamA"), 100, "TEAM A");
+  const teamBName = text(firstValue(input, "teamBName", "TeamB"), 100, "TEAM B");
+  const suppliedWinner = text(firstValue(input, "winner", "Winner"), 100);
+  const winner = hasResult ? (suppliedWinner || (scoreA > scoreB ? teamAName : scoreB > scoreA ? teamBName : "DRAW")) : "";
+
+  return {
+    order: integer(order, 0, MAX_SCHEDULE_ITEMS - 1, 0),
+    matchKey: safeMatchKey(matchId),
+    matchId,
+    teamAName,
+    teamBName,
+    scoreA,
+    scoreB,
+    hasScore,
+    hasResult,
+    matchStatus,
+    winner,
+    label1: text(firstValue(input, "label1", "Label1"), 150),
+    label2: text(firstValue(input, "label2", "Label2"), 150),
+    label3: text(firstValue(input, "label3", "Label3"), 200),
+    label4: text(firstValue(input, "label4", "Label4"), 150),
+    label5: text(firstValue(input, "label5", "Label5"), 200)
+  };
+}
+
+export function normalizeSchedule(input = {}) {
+  const rows = Array.isArray(input) ? input : (Array.isArray(input.rows) ? input.rows : []);
+  if (rows.length > MAX_SCHEDULE_ITEMS) throw new Error(`schedule_limit_${MAX_SCHEDULE_ITEMS}`);
+  const sourceValue = String(Array.isArray(input) ? "" : input.source || "").trim().toLowerCase();
+  const source = sourceValue === "excel" ? "excel" : rows.length ? "google" : "none";
+  const items = {};
+  rows.forEach((row, index) => {
+    items[`i_${String(index).padStart(3, "0")}`] = normalizeScheduleItem(row, index);
+  });
+  return { version: 1, source, count: rows.length, items };
+}
+
+export function scheduleFingerprint(schedule = {}) {
+  const canonical = JSON.stringify({
+    version: Number(schedule.version || 1),
+    source: String(schedule.source || "none"),
+    count: Number(schedule.count || 0),
+    items: schedule.items || {}
+  });
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < canonical.length; index += 1) {
+    hash ^= canonical.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `f_${(hash >>> 0).toString(16).padStart(8, "0").toUpperCase()}`;
 }
 
 export function normalizeMeta(input, timestamps = {}) {

@@ -143,6 +143,88 @@
             ".validate": false
           }
         },
+        "schedule": {
+          ".read": "auth !== null && (data.parent().child('meta/ownerUid').val() === auth.uid || data.parent().child('meta/publicView').val() === true)",
+          ".write": "auth !== null && data.parent().child('meta/ownerUid').val() === auth.uid && data.parent().child('meta/status').val() === 'OPEN' && newData.exists()",
+          ".validate": "newData.hasChildren(['version', 'source', 'fingerprint', 'revision', 'updatedAt', 'count']) && newData.child('count').isNumber() && newData.child('count').val() % 1 === 0 && newData.child('count').val() >= 0 && newData.child('count').val() <= 1000 && (newData.child('count').val() === 0 || newData.child('items').exists())",
+          "version": {
+            ".validate": "newData.isNumber() && newData.val() === 1"
+          },
+          "source": {
+            ".validate": "newData.isString() && newData.val().matches(/^(none|google|excel)$/)"
+          },
+          "fingerprint": {
+            ".validate": "newData.isString() && newData.val().matches(/^f_[0-9A-F]{8}$/)"
+          },
+          "revision": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 9007199254740991 && (!data.exists() || newData.val() > data.val())"
+          },
+          "updatedAt": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() > 0 && newData.val() <= now + 60000 && (!data.exists() || newData.val() >= data.val())"
+          },
+          "count": {
+            ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 1000"
+          },
+          "items": {
+            "$itemKey": {
+              ".validate": "$itemKey.matches(/^i_[0-9]{3}$/) && newData.hasChildren(['order', 'matchKey', 'matchId', 'teamAName', 'teamBName', 'scoreA', 'scoreB', 'hasScore', 'hasResult', 'matchStatus', 'winner', 'label1', 'label2', 'label3', 'label4', 'label5']) && (newData.child('hasResult').val() === false || (newData.child('hasScore').val() === true && newData.child('matchStatus').val().matches(/^(FINISHED|FULL TIME)$/)))",
+              "order": {
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 999"
+              },
+              "matchKey": {
+                ".validate": "newData.isString() && newData.val().matches(/^[A-Za-z0-9_-]{1,120}$/)"
+              },
+              "matchId": {
+                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 160"
+              },
+              "teamAName": {
+                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+              },
+              "teamBName": {
+                ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+              },
+              "scoreA": {
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 999"
+              },
+              "scoreB": {
+                ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 999"
+              },
+              "hasScore": {
+                ".validate": "newData.isBoolean()"
+              },
+              "hasResult": {
+                ".validate": "newData.isBoolean()"
+              },
+              "matchStatus": {
+                ".validate": "newData.isString() && newData.val().length <= 50"
+              },
+              "winner": {
+                ".validate": "newData.isString() && newData.val().length <= 100"
+              },
+              "label1": {
+                ".validate": "newData.isString() && newData.val().length <= 150"
+              },
+              "label2": {
+                ".validate": "newData.isString() && newData.val().length <= 150"
+              },
+              "label3": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "label4": {
+                ".validate": "newData.isString() && newData.val().length <= 150"
+              },
+              "label5": {
+                ".validate": "newData.isString() && newData.val().length <= 200"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
         "matches": {
           ".read": "auth !== null && (data.parent().child('meta/ownerUid').val() === auth.uid || data.parent().child('meta/publicView').val() === true)",
           "$eventId": {

@@ -76,12 +76,49 @@ function currentSnapshot(overrides = {}) {
   };
 }
 
+function scheduleItem(overrides = {}) {
+  return {
+    order: 0,
+    matchKey: 'm_TTAwMQ',
+    matchId: 'M-001',
+    teamAName: 'Team A',
+    teamBName: 'Team B',
+    scoreA: 0,
+    scoreB: 0,
+    hasScore: false,
+    hasResult: false,
+    matchStatus: '',
+    winner: '',
+    label1: 'Round 1',
+    label2: 'Match 1',
+    label3: 'Main Stadium',
+    label4: 'Group A',
+    label5: '',
+    ...overrides,
+  };
+}
+
+function scheduleSnapshot(overrides = {}) {
+  const items = overrides.items ?? { i_000: scheduleItem() };
+  return {
+    version: 1,
+    source: 'google',
+    fingerprint: 'f_1234ABCD',
+    revision: 1,
+    updatedAt: SEEDED_AT,
+    count: Object.keys(items).length,
+    ...(Object.keys(items).length ? { items } : {}),
+    ...overrides,
+  };
+}
+
 function roomFixture({
   ownerUid = OWNER_UID,
   roomCode = ROOM_CODE,
   publicView = true,
   current = {},
   meta = {},
+  schedule,
   matches,
   audit,
 } = {}) {
@@ -102,6 +139,7 @@ function roomFixture({
     current: currentSnapshot(current),
   };
 
+  if (schedule) room.schedule = schedule;
   if (matches) room.matches = matches;
   if (audit) room.audit = audit;
   return room;
@@ -112,6 +150,10 @@ function createRoomPayload(ownerUid = OWNER_UID, roomCode = ROOM_CODE, overrides
   payload.meta.createdAt = serverTimestamp();
   payload.meta.updatedAt = serverTimestamp();
   payload.current.updatedAt = serverTimestamp();
+  if (overrides.schedule !== null) {
+    payload.schedule = overrides.schedule || scheduleSnapshot();
+    payload.schedule.updatedAt = serverTimestamp();
+  }
   return payload;
 }
 
@@ -207,12 +249,14 @@ after(async () => {
 test('authenticated viewer reads only public child paths', async () => {
   const eventId = 'op_public_001';
   await seedRoom({
+    schedule: scheduleSnapshot(),
     matches: { [eventId]: historyEntry(eventId) },
     audit: { [eventId]: auditEntry(eventId) },
   });
   const db = dbFor(VIEWER_UID);
 
   await assertSucceeds(get(ref(db, `${roomPath()}/current`)));
+  await assertSucceeds(get(ref(db, `${roomPath()}/schedule`)));
   await assertSucceeds(get(ref(db, `${roomPath()}/matches`)));
   for (const field of [
     'publicView',
@@ -240,17 +284,20 @@ test('private room is invisible to a viewer but readable by its owner at child p
   const eventId = 'op_private_001';
   await seedRoom({
     publicView: false,
+    schedule: scheduleSnapshot(),
     matches: { [eventId]: historyEntry(eventId) },
     audit: { [eventId]: auditEntry(eventId) },
   });
 
   const viewerDb = dbFor(VIEWER_UID);
   await assertFails(get(ref(viewerDb, `${roomPath()}/current`)));
+  await assertFails(get(ref(viewerDb, `${roomPath()}/schedule`)));
   await assertFails(get(ref(viewerDb, `${roomPath()}/matches`)));
   await assertFails(get(ref(viewerDb, `${roomPath()}/meta/publicView`)));
 
   const ownerDb = dbFor(OWNER_UID);
   await assertSucceeds(get(ref(ownerDb, `${roomPath()}/current`)));
+  await assertSucceeds(get(ref(ownerDb, `${roomPath()}/schedule`)));
   await assertSucceeds(get(ref(ownerDb, `${roomPath()}/matches`)));
   await assertSucceeds(get(ref(ownerDb, `${roomPath()}/audit`)));
   await assertSucceeds(get(ref(ownerDb, `${roomPath()}/meta/ownerUid`)));
@@ -265,6 +312,7 @@ test('unauthenticated clients cannot read a public room', async () => {
   const db = testEnv.unauthenticatedContext().database();
 
   await assertFails(get(ref(db, `${roomPath()}/current`)));
+  await assertFails(get(ref(db, `${roomPath()}/schedule`)));
   await assertFails(get(ref(db, `${roomPath()}/matches`)));
   await assertFails(get(ref(db, `${roomPath()}/meta/status`)));
 });
@@ -277,6 +325,23 @@ test('owner creates one complete six-digit room with server timestamps', async (
 
   const stored = await assertSucceeds(get(ref(ownerDb, `${roomPath()}/current`)));
   assert.equal(stored.val().scoreA, 3);
+  const storedSchedule = await assertSucceeds(get(ref(ownerDb, `${roomPath()}/schedule`)));
+  assert.equal(storedSchedule.val().count, 1);
+
+  await assertSucceeds(
+    set(
+      ref(ownerDb, roomPath('567890')),
+      createRoomPayload(OWNER_UID, '567890', { schedule: null }),
+    ),
+  );
+  await assertFails(
+    set(
+      ref(ownerDb, roomPath('678901')),
+      createRoomPayload(OWNER_UID, '678901', {
+        schedule: scheduleSnapshot({ items: { i_1000: scheduleItem() } }),
+      }),
+    ),
+  );
 
   const otherDb = dbFor(OTHER_UID);
   await assertFails(
@@ -327,6 +392,9 @@ test('viewer, unauthenticated user, and another owner cannot write room data', a
     await assertFails(
       set(ref(db, `${roomPath()}/audit/op_denied`), auditEntry('op_denied')),
     );
+    await assertFails(
+      set(ref(db, `${roomPath()}/schedule`), scheduleSnapshot({ revision: 2, updatedAt: Date.now() })),
+    );
   }
 });
 
@@ -347,6 +415,81 @@ test('owner current transaction succeeds without a meta timestamp write', async 
   const stored = await get(currentRef);
   assert.equal(stored.val().scoreA, 4);
   assert.equal(stored.val().revision, 2);
+});
+
+test('owner replaces the public schedule while schema, revision, and room status stay valid', async () => {
+  await seedRoom({ schedule: scheduleSnapshot() });
+  const ownerDb = dbFor(OWNER_UID);
+  const scheduleRef = ref(ownerDb, `${roomPath()}/schedule`);
+  const twoMatches = {
+    i_000: scheduleItem(),
+    i_001: scheduleItem({
+      order: 1,
+      matchKey: 'm_TTAwMg',
+      matchId: 'M-002',
+      teamAName: 'เธ—เธตเธกเน€เธซเธเธทเธญ',
+      teamBName: 'เธ—เธตเธกเนเธ•เน',
+      scoreA: 2,
+      scoreB: 1,
+      hasScore: true,
+      hasResult: true,
+      matchStatus: 'FINISHED',
+      winner: 'เธ—เธตเธกเน€เธซเธเธทเธญ',
+    }),
+  };
+
+  await assertSucceeds(set(scheduleRef, scheduleSnapshot({
+    items: twoMatches,
+    fingerprint: 'f_2345BCDE',
+    revision: 2,
+    updatedAt: Date.now(),
+  })));
+  const stored = await get(scheduleRef);
+  assert.equal(stored.val().count, 2);
+  assert.equal(stored.val().items.i_001.matchId, 'M-002');
+
+  await assertFails(set(scheduleRef, scheduleSnapshot({
+    items: twoMatches,
+    fingerprint: 'f_3456CDEF',
+    revision: 2,
+    updatedAt: Date.now(),
+  })));
+  await assertFails(remove(scheduleRef));
+
+  const invalidPayloads = [
+    scheduleSnapshot({ count: 1_001, fingerprint: 'f_3456CDEF', revision: 3, updatedAt: Date.now() }),
+    scheduleSnapshot({ source: 'private-url', fingerprint: 'f_3456CDEF', revision: 3, updatedAt: Date.now() }),
+    scheduleSnapshot({ fingerprint: 'not-a-fingerprint', revision: 3, updatedAt: Date.now() }),
+    scheduleSnapshot({ items: { i_1000: scheduleItem() }, fingerprint: 'f_3456CDEF', revision: 3, updatedAt: Date.now() }),
+    scheduleSnapshot({ items: { i_000: scheduleItem({ scoreA: -1 }) }, fingerprint: 'f_3456CDEF', revision: 3, updatedAt: Date.now() }),
+    scheduleSnapshot({ items: { i_000: scheduleItem({ hasResult: true, matchStatus: 'FINISHED' }) }, fingerprint: 'f_3456CDEF', revision: 3, updatedAt: Date.now() }),
+    scheduleSnapshot({ items: { i_000: scheduleItem({ hasScore: true, hasResult: true, matchStatus: 'LIVE' }) }, fingerprint: 'f_3456CDEF', revision: 3, updatedAt: Date.now() }),
+    scheduleSnapshot({ items: { i_000: scheduleItem({ unexpected: true }) }, fingerprint: 'f_3456CDEF', revision: 3, updatedAt: Date.now() }),
+  ];
+  const missingTeam = scheduleSnapshot({ fingerprint: 'f_3456CDEF', revision: 3, updatedAt: Date.now() });
+  delete missingTeam.items.i_000.teamAName;
+  invalidPayloads.push(missingTeam);
+  const missingHasScore = scheduleSnapshot({ fingerprint: 'f_3456CDEF', revision: 3, updatedAt: Date.now() });
+  delete missingHasScore.items.i_000.hasScore;
+  invalidPayloads.push(missingHasScore);
+  for (const payload of invalidPayloads) await assertFails(set(scheduleRef, payload));
+
+  await assertSucceeds(set(scheduleRef, scheduleSnapshot({
+    items: {},
+    source: 'none',
+    fingerprint: 'f_4567DEFA',
+    revision: 3,
+    updatedAt: Date.now(),
+  })));
+  await assertSucceeds(update(ref(ownerDb, `${roomPath()}/meta`), {
+    status: 'CLOSED',
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(set(scheduleRef, scheduleSnapshot({
+    fingerprint: 'f_5678EFAB',
+    revision: 4,
+    updatedAt: Date.now(),
+  })));
 });
 
 test('score, clock, revision, sport, color, and status validators reject bad values', async () => {
@@ -531,10 +674,11 @@ test('history and audit events are append-only and cannot be replayed or deleted
 });
 
 test('owner cannot delete required nodes or an existing room', async () => {
-  await seedRoom();
+  await seedRoom({ schedule: scheduleSnapshot() });
   const db = dbFor(OWNER_UID);
 
   await assertFails(remove(ref(db, `${roomPath()}/current`)));
+  await assertFails(remove(ref(db, `${roomPath()}/schedule`)));
   await assertFails(remove(ref(db, `${roomPath()}/meta`)));
   await assertFails(remove(ref(db, roomPath())));
 });

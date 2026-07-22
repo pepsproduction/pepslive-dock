@@ -3,7 +3,9 @@ import {
   ROOM_ROOT,
   normalizeCurrent,
   normalizeMeta,
+  normalizeSchedule,
   randomRoomCode,
+  scheduleFingerprint,
   safeEventKey
 } from "./room-model.js";
 
@@ -22,11 +24,12 @@ async function startMatchRoomHost() {
   mountStyles();
   const ui = mountUi();
   const backup = loadJson(HOST_BACKUP_KEY, {
-    version: 1,
+    version: 2,
     latestSnapshot: bridge.getSnapshot(),
     pendingCurrent: bridge.getSnapshot(),
     pendingFinishes: {},
-    lastFingerprint: ""
+    lastFingerprint: "",
+    lastScheduleFingerprint: ""
   });
   let session = loadJson(HOST_SESSION_KEY, null);
   let firebase;
@@ -39,7 +42,7 @@ async function startMatchRoomHost() {
   let databaseConnected = false;
 
   function persist() {
-    backup.version = 1;
+    backup.version = 2;
     backup.savedAt = Date.now();
     backup.session = session ? {
       code: session.code,
@@ -70,6 +73,7 @@ async function startMatchRoomHost() {
     backup.pendingFinishes = {};
     backup.pendingCurrent = backup.latestSnapshot || bridge.getSnapshot();
     backup.lastFingerprint = "";
+    backup.lastScheduleFingerprint = "";
   }
 
   function notify(message) {
@@ -163,6 +167,31 @@ async function startMatchRoomHost() {
     return JSON.stringify(normalized);
   }
 
+  function readSchedule() {
+    const input = typeof bridge.getSchedule === "function" ? bridge.getSchedule() : { source: "none", rows: [] };
+    return normalizeSchedule(input);
+  }
+
+  function pendingScheduleFingerprint() {
+    return scheduleFingerprint(readSchedule());
+  }
+
+  function hasPendingSchedule() {
+    try {
+      return pendingScheduleFingerprint() !== backup.lastScheduleFingerprint;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  function hasPendingSync() {
+    return Boolean(
+      backup.pendingCurrent
+      || Object.keys(backup.pendingFinishes || {}).length
+      || hasPendingSchedule()
+    );
+  }
+
   function scheduleSync(delay = 320) {
     clearTimeout(syncTimer);
     syncTimer = setTimeout(() => flushAll().catch(() => {}), delay);
@@ -217,6 +246,25 @@ async function startMatchRoomHost() {
     persist();
   }
 
+  async function flushSchedule() {
+    if (!session || session.status === "CLOSED") return true;
+    const normalized = readSchedule();
+    const nextFingerprint = scheduleFingerprint(normalized);
+    if (nextFingerprint === backup.lastScheduleFingerprint) return true;
+    const scheduleRef = firebase.ref(runtime.database, `${ROOM_ROOT}/${session.code}/schedule`);
+    const result = await firebase.runTransaction(scheduleRef, (current) => ({
+      ...normalized,
+      fingerprint: nextFingerprint,
+      revision: Number(current?.revision || 0) + 1,
+      updatedAt: firebase.serverTimestamp()
+    }), { applyLocally: false });
+    if (!result.committed) throw new Error("schedule_sync_not_committed");
+    backup.lastScheduleFingerprint = nextFingerprint;
+    backup.scheduleError = "";
+    persist();
+    return true;
+  }
+
   async function flushFinish(item) {
     const eventKey = safeEventKey(item.eventId);
     const roomPath = `${ROOM_ROOT}/${session.code}`;
@@ -263,20 +311,29 @@ async function startMatchRoomHost() {
   }
 
   async function flushAll() {
-    const hasPending = () => Boolean(backup.pendingCurrent || Object.keys(backup.pendingFinishes || {}).length);
     if (syncing) {
       syncAgain = true;
       return false;
     }
     if (!runtime || !databaseConnected || !session || session.status === "CLOSED" || navigator.onLine === false) {
-      if (session && hasPending()) setStatus("backup", "Local backup • รอเชื่อมต่อ");
-      return !session || !hasPending();
+      if (session && hasPendingSync()) setStatus("backup", "Local backup • รอเชื่อมต่อ");
+      return !session || !hasPendingSync();
     }
     syncing = true;
     setStatus("backup", "กำลัง Sync Firebase");
     try {
       for (const item of Object.values(backup.pendingFinishes || {})) await flushFinish(item);
       await flushCurrent();
+      try {
+        await flushSchedule();
+      } catch (scheduleError) {
+        backup.scheduleError = String(scheduleError?.message || scheduleError);
+        persist();
+        setStatus("backup", `Room ${session.code} • ตารางรอ Sync`);
+        console.warn("PepsLive Match Room schedule sync pending", scheduleError);
+        scheduleSync(5000);
+        return true;
+      }
       setStatus("online", `Room ${session.code} • ${runtime.mode}`);
       return true;
     } catch (error) {
@@ -314,9 +371,17 @@ async function startMatchRoomHost() {
         updatedAt: timestamp
       };
       const current = { ...normalizeCurrent(initialSnapshot, 1, now), updatedAt: timestamp };
+      const initialSchedule = readSchedule();
+      const initialScheduleFingerprint = scheduleFingerprint(initialSchedule);
+      const schedule = {
+        ...initialSchedule,
+        fingerprint: initialScheduleFingerprint,
+        revision: 1,
+        updatedAt: timestamp
+      };
       const roomRef = firebase.ref(runtime.database, `${ROOM_ROOT}/${code}`);
       try {
-        await firebase.set(roomRef, { meta, current });
+        await firebase.set(roomRef, { meta, current, schedule });
       } catch (error) {
         lastCreateError = error;
         backup.lastError = `room_create:${error?.code || error?.message || error}`;
@@ -325,6 +390,8 @@ async function startMatchRoomHost() {
         continue;
       }
       backup.lastFingerprint = fingerprint(initialSnapshot);
+      backup.lastScheduleFingerprint = initialScheduleFingerprint;
+      backup.scheduleError = "";
       backup.revision = 1;
       if (fingerprint(backup.pendingCurrent) === backup.lastFingerprint) backup.pendingCurrent = null;
       session = {
@@ -372,7 +439,7 @@ async function startMatchRoomHost() {
     ui.close.disabled = true;
     try {
       const flushed = await flushAll();
-      if (!flushed || backup.pendingCurrent || Object.keys(backup.pendingFinishes || {}).length) {
+      if (!flushed || hasPendingSync()) {
         throw new Error("ยังมีข้อมูลรอ Sync กรุณาเชื่อมต่อแล้วลองปิดห้องอีกครั้ง");
       }
       const now = Date.now();
