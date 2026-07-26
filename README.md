@@ -7,8 +7,9 @@ GitHub-ready OBS Dock สำหรับควบคุมคะแนนกี�
 - หน้า Login ก่อนใช้งาน: กรอกชื่อผู้ใช้ + เลือกจังหวัดแบบค้นหา/เลื่อนหา
 - แสดงจำนวนผู้ใช้ออนไลน์ต่อจากจังหวัด
 - คลิกจำนวนออนไลน์เพื่อดู Popup รายชื่อผู้ใช้งานทั้งหมด
-- โหลดแมตช์จาก Google Sheet
-- บันทึกผลกลับ Google Sheet ผ่าน Apps Script Webhook
+- โหลดแมตช์จาก Google Sheet หรือไฟล์ Excel `.xlsx`
+- เลือกบันทึกผลผ่าน Google Apps Script หรือ Firebase Realtime Database ได้อย่างชัดเจน
+- มี Match Room Viewer สำหรับดูตารางทุกคู่และผลแบบเรียลไทม์
 - เชื่อม OBS WebSocket
 - สร้าง Source ราย Tag ด้วยปุ่ม `+`
 - รองรับ Team Color Tags
@@ -31,7 +32,16 @@ PepsLive_Dock_V1.html
 3. เลือก Deploy from branch > main > root
 4. เปิด URL GitHub Pages
 5. Login ด้วยชื่อผู้ใช้และจังหวัด
-6. ไปที่ Settings เพื่อใส่ Google Sheet URL, Apps Script Webhook URL และ OBS WebSocket
+6. ไปที่ Settings > Sheet เลือกระบบอัปเดตผล แล้วตั้งค่า Google Sheet/Excel และ OBS WebSocket ตามงาน
+
+## เลือกระบบอัปเดตผล
+
+Google Sheet และ Excel ใช้เป็นแหล่งรายชื่อและตารางการแข่งขันได้ทั้งสองโหมด โดยไปที่ `Settings > Sheet` เลือกระบบ แล้วกด `บันทึกและเปลี่ยนระบบ`:
+
+- `Google Apps Script (แบบเดิม)` — แสดงเฉพาะการตั้งค่า Apps Script; เมื่อใช้ Google Sheet ปุ่ม Save/Finish จะเขียนผลกลับชีตผ่าน Webhook ส่วน Excel จะเก็บผลใน Dock โดยไม่แก้ไฟล์ต้นฉบับ
+- `Firebase Realtime Database` — แสดงเฉพาะการตั้งค่า Firebase; Google Sheet/Excel ใช้เป็นต้นทางรายชื่อ และ Save/Finish จะส่งผลเข้า Match Room Viewer แบบเรียลไทม์
+
+หลังเปลี่ยนระบบ หน้าจะ reload เพื่อแยกสถานะของทั้งสองโหมดออกจากกัน หากใช้ Firebase ต้องเปิดผ่าน `http://127.0.0.1`, `localhost` หรือ GitHub Pages จากนั้นไปหน้า `04 ระบบ` แล้วกด `สร้างห้อง` ก่อน Save/Finish; การเปิดไฟล์ด้วย `file://` ใช้ Firebase ไม่ได้
 
 ## Google Sheet Schema
 
