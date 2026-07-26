@@ -18,6 +18,13 @@ Dock โหลดตารางได้ทั้ง Google Sheet และ Exc
 | `Google Apps Script` (แบบเดิม) | Google Sheet หรือ Excel | ถ้าโหลดจาก Google Sheet จะเขียนผลกลับผ่าน Apps Script; ถ้าโหลดจาก Excel จะบันทึกใน Dock เท่านั้น | ใช้ Revision, Pending และการซิงก์สีของระบบเดิม; ไม่ส่งผลไป Firebase |
 | `Firebase Realtime Database` (แบบใหม่) | Google Sheet หรือ Excel | บันทึกใน Dock และส่งไป Firebase Match Room ที่เปิดอยู่ | ไม่เขียนผลกลับ Google Sheet และไม่แก้ไฟล์ Excel |
 
+หน้า Settings แยกส่วนแสดงผลตามระบบที่บันทึกแล้วอย่างชัดเจน:
+
+- ส่วน `แหล่งข้อมูลแมตช์` และ `Match Schema V2` แสดงทั้งสองโหมด เพราะ Google Sheet และ Excel เป็นแหล่งรายชื่อร่วม
+- เมื่อใช้ `Google Apps Script` จะแสดงเฉพาะ Webhook, คู่มือติดตั้ง, Setup/Repair และ Google Pending โดยซ่อนส่วนจัดการ Firebase
+- เมื่อใช้ `Firebase Realtime Database` จะแสดงเฉพาะสถานะ Firebase และทางลัดไปจัดการ Match Room โดยซ่อน Webhook, คู่มือติดตั้ง และ Google Pending
+- การคลิกเลือก radio อย่างเดียวยังไม่เปลี่ยนส่วนที่แสดง ต้องกด `บันทึกและเปลี่ยนระบบ` และรอหน้ารีโหลดก่อนเสมอ
+
 ### วิธีเปลี่ยนระบบ
 
 1. เปิด `Settings > Sheet`
@@ -29,6 +36,7 @@ Dock โหลดตารางได้ทั้ง Google Sheet และ Exc
 
 - ระบบจะอ่านสถานะล่าสุดจากเครื่องก่อนเปลี่ยนโหมด และไม่ให้เปลี่ยนขณะที่แมตช์มี Unsaved, Timer กำลังเดิน หรือมี Google Pending ค้างอยู่ แม้รายการนั้นถูกสร้างจากอีกแท็บ
 - ก่อนเปลี่ยนจาก Firebase กลับเป็น Google Apps Script ต้องปิด Firebase Match Room และรอให้รายการซิงก์เสร็จก่อน
+- ถ้าเครื่องมี Firebase Room เดิมค้างอยู่แต่ Settings อยู่ในโหมด Google Apps Script ระบบยังอนุญาตให้สลับกลับ Firebase เพื่อกู้หรือปิดห้องเดิมได้
 - ระบบจะไม่ย้ายรายการ Pending จากระบบหนึ่งไปอีกระบบหนึ่งโดยอัตโนมัติ
 - โหมด Firebase ต้องมีห้องที่เปิดอยู่และ Host พร้อมใช้งาน มิฉะนั้น `Save` / `Finish` จะถูกหยุดพร้อมข้อความแนะนำ
 - Firebase ใช้ได้เมื่อเปิด Dock ผ่าน `http://127.0.0.1`, `localhost` หรือ GitHub Pages เท่านั้น ไม่รองรับการเปิดไฟล์ด้วย `file://`

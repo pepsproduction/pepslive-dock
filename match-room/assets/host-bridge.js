@@ -825,6 +825,11 @@ function mountUi() {
   const mount = document.getElementById("moduleSystem");
   const container = document.createElement("div");
   container.className = "match-room-host";
+  container.dataset.resultModeUi = "firebase";
+  const firebaseModeVisible = document.body.dataset.resultUpdateMode === "firebase";
+  container.hidden = !firebaseModeVisible;
+  container.setAttribute("aria-hidden", firebaseModeVisible ? "false" : "true");
+  if (!firebaseModeVisible) container.setAttribute("inert", "");
   container.innerHTML = `
     <div class="match-room-host-head"><h3>Firebase Match Room</h3><span class="match-room-host-status" data-state="backup">กำลังเริ่มระบบ</span></div>
     <div class="match-room-host-head"><strong class="match-room-host-code">------</strong><small>Viewer อ่านอย่างเดียว</small></div>
