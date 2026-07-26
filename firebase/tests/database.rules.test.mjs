@@ -366,6 +366,48 @@ test('owner creates one complete six-digit room with server timestamps', async (
   );
   await assertFails(
     set(
+      ref(ownerDb, roomPath('456780')),
+      createRoomPayload(OWNER_UID, '456780', {
+        current: { revision: 2 },
+      }),
+    ),
+  );
+  await assertFails(
+    set(
+      ref(ownerDb, roomPath('456781')),
+      createRoomPayload(OWNER_UID, '456781', {
+        meta: { status: 'CLOSED' },
+      }),
+    ),
+  );
+  const seededEventId = 'op_seeded_001';
+  await assertFails(
+    set(
+      ref(ownerDb, roomPath('456782')),
+      createRoomPayload(OWNER_UID, '456782', {
+        current: {
+          status: 'FULL TIME',
+          matchStatus: 'FINISHED',
+          timerRunning: false,
+        },
+        matches: {
+          [seededEventId]: historyEntry(seededEventId, {
+            revision: 1,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          }),
+        },
+        audit: {
+          [seededEventId]: auditEntry(seededEventId, OWNER_UID, {
+            revision: 1,
+            createdAt: serverTimestamp(),
+          }),
+        },
+      }),
+    ),
+  );
+  await assertFails(
+    set(
       ref(ownerDb, `${roomPath('456789')}/meta`),
       createRoomPayload(OWNER_UID, '456789').meta,
     ),
@@ -403,6 +445,20 @@ test('owner current transaction succeeds without a meta timestamp write', async 
   const ownerDb = dbFor(OWNER_UID);
   const currentRef = ref(ownerDb, `${roomPath()}/current`);
 
+  await assertFails(
+    update(currentRef, {
+      scoreA: 4,
+      revision: 1,
+      updatedAt: Date.now(),
+    }),
+  );
+  await assertFails(
+    update(currentRef, {
+      scoreA: 4,
+      revision: 3,
+      updatedAt: Date.now(),
+    }),
+  );
   await assertSucceeds(
     runTransaction(currentRef, (value) => currentSnapshot({
       ...(value || {}),
@@ -496,20 +552,26 @@ test('score, clock, revision, sport, color, and status validators reject bad val
   await seedRoom();
   const db = dbFor(OWNER_UID);
   const currentRef = ref(db, `${roomPath()}/current`);
+  const withNextRevision = (patch) => ({
+    revision: 2,
+    updatedAt: Date.now(),
+    ...patch,
+  });
 
   for (const score of [-1, 1.5, 1_000, '3']) {
-    await assertFails(update(currentRef, { scoreA: score }));
+    await assertFails(update(currentRef, withNextRevision({ scoreA: score })));
   }
-  await assertFails(update(currentRef, { clockSec: -1 }));
-  await assertFails(update(currentRef, { clockSec: 86_401 }));
-  await assertFails(update(currentRef, { clockSec: 1.5 }));
-  await assertFails(update(currentRef, { timerRunning: 'false' }));
-  await assertFails(update(currentRef, { sport: 'basketball' }));
-  await assertFails(update(currentRef, { teamAPrimaryColor: '#FFF' }));
-  await assertFails(update(currentRef, { status: 'FINISHED' }));
-  await assertFails(update(currentRef, { revision: 0 }));
-  await assertFails(update(currentRef, { updatedAt: SEEDED_AT - 1 }));
-  await assertFails(update(currentRef, { updatedAt: Date.now() + 120_000 }));
+  await assertFails(update(currentRef, withNextRevision({ clockSec: -1 })));
+  await assertFails(update(currentRef, withNextRevision({ clockSec: 86_401 })));
+  await assertFails(update(currentRef, withNextRevision({ clockSec: 1.5 })));
+  await assertFails(update(currentRef, withNextRevision({ timerRunning: 'false' })));
+  await assertFails(update(currentRef, withNextRevision({ sport: 'basketball' })));
+  await assertFails(update(currentRef, withNextRevision({ teamAPrimaryColor: '#FFF' })));
+  await assertFails(update(currentRef, withNextRevision({ status: 'FINISHED' })));
+  await assertFails(update(currentRef, withNextRevision({ revision: 0 })));
+  await assertFails(update(currentRef, withNextRevision({ revision: 3 })));
+  await assertFails(update(currentRef, withNextRevision({ updatedAt: SEEDED_AT - 1 })));
+  await assertFails(update(currentRef, withNextRevision({ updatedAt: Date.now() + 120_000 })));
 
   await assertSucceeds(
     update(currentRef, {
@@ -527,31 +589,36 @@ test('text limits, required fields, and allowlists reject malformed snapshots', 
   await seedRoom();
   const db = dbFor(OWNER_UID);
   const currentRef = ref(db, `${roomPath()}/current`);
+  const withNextRevision = (patch) => ({
+    revision: 2,
+    updatedAt: Date.now(),
+    ...patch,
+  });
 
-  await assertFails(update(currentRef, { teamAName: 'A'.repeat(101) }));
-  await assertFails(update(currentRef, { teamAName: '' }));
-  await assertFails(update(currentRef, { label1: 'x'.repeat(151) }));
-  await assertFails(update(currentRef, { matchId: 'x'.repeat(161) }));
-  await assertFails(update(currentRef, { label2: 'x'.repeat(151) }));
-  await assertFails(update(currentRef, { label3: 'x'.repeat(201) }));
-  await assertFails(update(currentRef, { label4: 'x'.repeat(151) }));
-  await assertFails(update(currentRef, { label5: 'x'.repeat(201) }));
-  await assertFails(update(currentRef, { unexpected: true }));
-  await assertFails(remove(ref(db, `${roomPath()}/current/teamAName`)));
+  await assertFails(update(currentRef, withNextRevision({ teamAName: 'A'.repeat(101) })));
+  await assertFails(update(currentRef, withNextRevision({ teamAName: '' })));
+  await assertFails(update(currentRef, withNextRevision({ label1: 'x'.repeat(151) })));
+  await assertFails(update(currentRef, withNextRevision({ matchId: 'x'.repeat(161) })));
+  await assertFails(update(currentRef, withNextRevision({ label2: 'x'.repeat(151) })));
+  await assertFails(update(currentRef, withNextRevision({ label3: 'x'.repeat(201) })));
+  await assertFails(update(currentRef, withNextRevision({ label4: 'x'.repeat(151) })));
+  await assertFails(update(currentRef, withNextRevision({ label5: 'x'.repeat(201) })));
+  await assertFails(update(currentRef, withNextRevision({ unexpected: true })));
+  await assertFails(update(currentRef, withNextRevision({ teamAName: null })));
 
   await assertSucceeds(
-    update(currentRef, {
+    update(currentRef, withNextRevision({
       label1: 'x'.repeat(150),
       matchId: 'x'.repeat(160),
       label2: 'x'.repeat(150),
       label3: 'x'.repeat(200),
       label4: 'x'.repeat(150),
       label5: 'x'.repeat(200),
-    }),
+    })),
   );
 });
 
-test('meta limits, immutable identity fields, and OPEN/CLOSED status are enforced', async () => {
+test('meta limits, immutable identity fields, and terminal CLOSED status are enforced', async () => {
   await seedRoom();
   const db = dbFor(OWNER_UID);
   const metaRef = ref(db, `${roomPath()}/meta`);
@@ -559,7 +626,7 @@ test('meta limits, immutable identity fields, and OPEN/CLOSED status are enforce
   await assertSucceeds(
     update(metaRef, { status: 'CLOSED', updatedAt: serverTimestamp() }),
   );
-  await assertSucceeds(
+  await assertFails(
     update(metaRef, { status: 'OPEN', updatedAt: serverTimestamp() }),
   );
   await assertFails(
@@ -591,6 +658,32 @@ test('meta limits, immutable identity fields, and OPEN/CLOSED status are enforce
   );
 });
 
+test('closed room rejects current, match history, and audit writes', async () => {
+  await seedRoom({ meta: { status: 'CLOSED' } });
+  const db = dbFor(OWNER_UID);
+
+  await assertFails(
+    set(
+      ref(db, `${roomPath()}/current`),
+      currentSnapshot({
+        scoreA: 4,
+        revision: 2,
+        updatedAt: Date.now(),
+      }),
+    ),
+  );
+
+  const eventId = 'op_closed_001';
+  const eventUpdates = finishUpdatePayload(eventId);
+  delete eventUpdates[`${roomPath()}/current`];
+  await assertFails(update(ref(db), eventUpdates));
+
+  const storedHistory = await get(ref(db, `${roomPath()}/matches/${eventId}`));
+  const storedAudit = await get(ref(db, `${roomPath()}/audit/${eventId}`));
+  assert.equal(storedHistory.exists(), false);
+  assert.equal(storedAudit.exists(), false);
+});
+
 test('finish is one authorized multi-path write with matching idempotency event IDs', async () => {
   await seedRoom();
   const db = dbFor(OWNER_UID);
@@ -620,6 +713,10 @@ test('finish rejects orphan, mismatched, invalid, or non-owner event writes', as
   delete missingMatch[`${roomPath()}/matches/${validEventId}`];
   await assertFails(update(ref(ownerDb), missingMatch));
 
+  const missingCurrent = finishUpdatePayload(validEventId);
+  delete missingCurrent[`${roomPath()}/current`];
+  await assertFails(update(ref(ownerDb), missingCurrent));
+
   const mismatchedIds = finishUpdatePayload(validEventId);
   const mismatchedAudit = mismatchedIds[`${roomPath()}/audit/${validEventId}`];
   delete mismatchedIds[`${roomPath()}/audit/${validEventId}`];
@@ -643,6 +740,36 @@ test('finish rejects orphan, mismatched, invalid, or non-owner event writes', as
     audit: { action: 'DELETE' },
   });
   await assertFails(update(ref(ownerDb), badAction));
+
+  const mismatchedAuditMatch = finishUpdatePayload(validEventId, OWNER_UID, {
+    audit: { matchId: 'M-OTHER' },
+  });
+  await assertFails(update(ref(ownerDb), mismatchedAuditMatch));
+
+  const mismatchedAuditRevision = finishUpdatePayload(validEventId, OWNER_UID, {
+    audit: { revision: 3 },
+  });
+  await assertFails(update(ref(ownerDb), mismatchedAuditRevision));
+
+  const mismatchedHistoryScore = finishUpdatePayload(validEventId, OWNER_UID, {
+    history: { scoreA: 99 },
+  });
+  await assertFails(update(ref(ownerDb), mismatchedHistoryScore));
+
+  const mismatchedHistoryLogo = finishUpdatePayload(validEventId, OWNER_UID, {
+    history: { logoA: 'https://example.com/wrong-logo.png' },
+  });
+  await assertFails(update(ref(ownerDb), mismatchedHistoryLogo));
+
+  const mismatchedHistoryColor = finishUpdatePayload(validEventId, OWNER_UID, {
+    history: { teamAPrimaryColor: '#ABCDEF' },
+  });
+  await assertFails(update(ref(ownerDb), mismatchedHistoryColor));
+
+  const mismatchedHistoryLabel = finishUpdatePayload(validEventId, OWNER_UID, {
+    history: { label3: 'Wrong history label' },
+  });
+  await assertFails(update(ref(ownerDb), mismatchedHistoryLabel));
 
   const badKey = 'event id with spaces';
   await assertFails(update(ref(ownerDb), finishUpdatePayload(badKey)));

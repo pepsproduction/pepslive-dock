@@ -21,28 +21,72 @@ if (bridge && params.get("remote") !== "1" && window.location.protocol !== "file
 }
 
 async function startMatchRoomHost() {
+  const isEnabled = () => typeof bridge.isEnabled !== "function" || bridge.isEnabled();
   mountStyles();
   const ui = mountUi();
   const backup = loadJson(HOST_BACKUP_KEY, {
-    version: 2,
+    version: 3,
     latestSnapshot: bridge.getSnapshot(),
-    pendingCurrent: bridge.getSnapshot(),
+    pendingCurrent: isEnabled() ? bridge.getSnapshot() : null,
+    pendingCurrentSequence: 0,
+    currentSequence: 0,
+    syncedSequence: 0,
+    pendingResults: {},
     pendingFinishes: {},
     lastFingerprint: "",
     lastScheduleFingerprint: ""
   });
-  let session = loadJson(HOST_SESSION_KEY, null);
+  backup.pendingResults = backup.pendingResults && typeof backup.pendingResults === "object" ? backup.pendingResults : {};
+  backup.pendingFinishes = backup.pendingFinishes && typeof backup.pendingFinishes === "object" ? backup.pendingFinishes : {};
+  Object.entries(backup.pendingResults).forEach(([eventId, item]) => {
+    if (!item || typeof item !== "object") {
+      delete backup.pendingResults[eventId];
+      return;
+    }
+    if (!item.snapshot) item.snapshot = backup.pendingFinishes[eventId]?.snapshot || backup.pendingCurrent || backup.latestSnapshot;
+  });
+  backup.currentSequence = Math.max(0, Number(backup.currentSequence || 0));
+  backup.pendingCurrentSequence = Math.max(0, Number(backup.pendingCurrentSequence || 0));
+  backup.syncedSequence = Math.max(0, Number(backup.syncedSequence || 0));
+  const storedSession = loadJson(HOST_SESSION_KEY, null);
+  let session = Object.prototype.hasOwnProperty.call(backup, "session")
+    ? (backup.session ? { ...(storedSession || {}), ...backup.session } : null)
+    : storedSession;
   let firebase;
   let runtime;
   let syncing = false;
   let syncAgain = false;
+  let syncWaiters = [];
   let syncTimer;
   let closing = false;
   let databaseConnectionStop;
   let databaseConnected = false;
+  let backupPersistenceError = "";
+
+  function hostState() {
+    const active = Boolean(session && ROOM_CODE_PATTERN.test(session.code || ""));
+    return {
+      available: true,
+      enabled: isEnabled(),
+      connected: Boolean(runtime && databaseConnected),
+      roomCode: active ? session.code : "",
+      roomStatus: active ? session.status : "",
+      pending: active && session.status !== "CLOSED" ? hasPendingSync() : false,
+      resultPending: active && session.status !== "CLOSED" ? hasPendingResultSync() : false,
+      syncing,
+      closing,
+      backupError: backupPersistenceError,
+      statusText: ui.status.textContent || "",
+      mode: runtime?.mode || session?.mode || ""
+    };
+  }
+
+  function reportHostState() {
+    if (typeof bridge.reportHostState === "function") bridge.reportHostState(hostState());
+  }
 
   function persist() {
-    backup.version = 2;
+    backup.version = 3;
     backup.savedAt = Date.now();
     backup.session = session ? {
       code: session.code,
@@ -51,27 +95,39 @@ async function startMatchRoomHost() {
       publicView: session.publicView,
       mode: session.mode
     } : null;
-    try { localStorage.setItem(HOST_BACKUP_KEY, JSON.stringify(backup)); } catch (_) {}
+    let backupSaved = false;
+    try {
+      localStorage.setItem(HOST_BACKUP_KEY, JSON.stringify(backup));
+      backupSaved = true;
+      backupPersistenceError = "";
+    } catch (_) {
+      backupPersistenceError = "firebase_local_backup_failed";
+    }
     try {
       if (session) localStorage.setItem(HOST_SESSION_KEY, JSON.stringify(session));
       else localStorage.removeItem(HOST_SESSION_KEY);
     } catch (_) {}
+    return backupSaved;
   }
 
   function quarantinePending(reason) {
     const pendingFinishes = backup.pendingFinishes || {};
-    if (session || backup.pendingCurrent || Object.keys(pendingFinishes).length) {
+    const pendingResults = backup.pendingResults || {};
+    if (session || backup.pendingCurrent || Object.keys(pendingFinishes).length || Object.keys(pendingResults).length) {
       const entries = Array.isArray(backup.orphanedSessions) ? backup.orphanedSessions : [];
       backup.orphanedSessions = [...entries, {
         reason,
         quarantinedAt: Date.now(),
         session,
         pendingCurrent: backup.pendingCurrent || null,
+        pendingResults,
         pendingFinishes
       }].slice(-3);
     }
+    backup.pendingResults = {};
     backup.pendingFinishes = {};
     backup.pendingCurrent = backup.latestSnapshot || bridge.getSnapshot();
+    backup.pendingCurrentSequence = backup.currentSequence;
     backup.lastFingerprint = "";
     backup.lastScheduleFingerprint = "";
   }
@@ -83,6 +139,7 @@ async function startMatchRoomHost() {
   function setStatus(state, message) {
     ui.status.dataset.state = state;
     ui.status.textContent = message;
+    reportHostState();
   }
 
   function waitForDatabaseConnection(nextRuntime, timeoutMs = 15000) {
@@ -124,14 +181,17 @@ async function startMatchRoomHost() {
   function renderSession() {
     const active = Boolean(session && ROOM_CODE_PATTERN.test(session.code || ""));
     const closed = active && session.status === "CLOSED";
-    const writable = Boolean(runtime && databaseConnected);
+    const enabled = isEnabled();
+    const connectedWritable = Boolean(runtime && databaseConnected);
+    const writable = enabled && connectedWritable;
+    ui.container.dataset.enabled = enabled ? "true" : "false";
     ui.code.textContent = active ? session.code : "------";
     ui.create.disabled = !writable || (active && !closed);
     ui.create.textContent = closed ? "สร้างห้องใหม่" : "สร้างห้อง";
     ui.save.disabled = !writable || !active || closed;
     ui.copy.disabled = !active;
     ui.open.disabled = !active;
-    ui.close.disabled = !writable || !active || closed;
+    ui.close.disabled = !connectedWritable || !active || closed || closing;
     ui.link.textContent = active ? session.viewerUrl : "ยังไม่ได้สร้างห้อง";
     ui.publicView.checked = session ? session.publicView !== false : true;
     if (session?.meta) {
@@ -140,11 +200,21 @@ async function startMatchRoomHost() {
       ui.round.value = session.meta.round || ui.round.value;
       ui.group.value = session.meta.group || ui.group.value;
     }
-    if (active) {
+    [ui.eventName, ui.venue, ui.round, ui.group, ui.publicView].forEach((field) => {
+      field.disabled = !enabled || closed;
+    });
+    if (backupPersistenceError) {
+      setStatus("error", "Firebase Local backup เขียนไม่ได้");
+    } else if (!enabled) {
+      setStatus("backup", active && !closed
+        ? `Firebase พักอยู่ • ปิด Room ${session.code} ก่อนเปลี่ยนระบบ`
+        : "Firebase ไม่ได้ถูกเลือกใน Settings");
+    } else if (active) {
       if (closed) setStatus("backup", `Room ${session.code} ปิดแล้ว`);
       else if (!databaseConnected) setStatus("backup", "Local backup • รอเชื่อมต่อ");
       else setStatus("online", `Room ${session.code} • ${session.mode}`);
-    }
+    } else if (runtime && databaseConnected) setStatus("online", `Firebase ${runtime.mode} พร้อม`);
+    else reportHostState();
   }
 
   function readMetaDraft(code = session?.code || "") {
@@ -177,6 +247,7 @@ async function startMatchRoomHost() {
   }
 
   function hasPendingSchedule() {
+    if (!isEnabled() || !session || session.status === "CLOSED") return false;
     try {
       return pendingScheduleFingerprint() !== backup.lastScheduleFingerprint;
     } catch (_) {
@@ -184,29 +255,67 @@ async function startMatchRoomHost() {
     }
   }
 
+  function hasPendingResultSync() {
+    if (!session || session.status === "CLOSED") return false;
+    return Boolean(
+      Object.keys(backup.pendingResults || {}).length
+      || Object.keys(backup.pendingFinishes || {}).length
+    );
+  }
+
   function hasPendingSync() {
+    if (!session || session.status === "CLOSED") return false;
     return Boolean(
       backup.pendingCurrent
+      || Object.keys(backup.pendingResults || {}).length
       || Object.keys(backup.pendingFinishes || {}).length
       || hasPendingSchedule()
     );
   }
 
+  function markSequenceSynced(sequence) {
+    const nextSequence = Math.max(0, Number(sequence || 0));
+    backup.syncedSequence = Math.max(Number(backup.syncedSequence || 0), nextSequence);
+  }
+
   function scheduleSync(delay = 320) {
     clearTimeout(syncTimer);
+    if (!isEnabled()) return;
     syncTimer = setTimeout(() => flushAll().catch(() => {}), delay);
   }
 
   bridge.subscribe((event) => {
     backup.latestSnapshot = event.snapshot;
+    if (!isEnabled()) {
+      persist();
+      reportHostState();
+      return;
+    }
+    const sequence = Math.max(0, Number(backup.currentSequence || 0)) + 1;
+    backup.currentSequence = sequence;
     const isFinish = event.type === "finish" && Boolean(event.eventId);
+    const isResult = (event.type === "result" || isFinish) && Boolean(event.eventId);
     const roomOpen = Boolean(session && session.status !== "CLOSED");
     const queueForRoom = !closing && (!session || session.status !== "CLOSED");
-    if (queueForRoom) backup.pendingCurrent = event.snapshot;
+    if (queueForRoom) {
+      backup.pendingCurrent = event.snapshot;
+      backup.pendingCurrentSequence = sequence;
+    }
+    if (isResult && roomOpen) {
+      backup.pendingResults[event.eventId] = {
+        eventId: event.eventId,
+        type: event.type,
+        sequence,
+        capturedAt: event.capturedAt,
+        snapshot: event.snapshot
+      };
+    }
     if (isFinish && roomOpen) {
       backup.pendingCurrent = event.snapshot;
+      backup.pendingCurrentSequence = sequence;
       backup.pendingFinishes[event.eventId] = {
         eventId: event.eventId,
+        sequence,
         capturedAt: event.capturedAt,
         snapshot: event.snapshot
       };
@@ -216,18 +325,27 @@ async function startMatchRoomHost() {
       persist();
       return;
     }
-    persist();
+    if (!persist()) {
+      setStatus("error", "Firebase Local backup เขียนไม่ได้");
+      return;
+    }
     if (!closing && (queueForRoom || (isFinish && roomOpen))) {
       scheduleSync(isFinish ? 0 : (event.snapshot.timerRunning ? 850 : 280));
     }
+    reportHostState();
   });
 
   async function flushCurrent() {
     if (!backup.pendingCurrent || !session || session.status === "CLOSED") return;
     const pendingSnapshot = backup.pendingCurrent;
+    const pendingSequence = Math.max(0, Number(backup.pendingCurrentSequence || backup.currentSequence || 0));
     const nextFingerprint = fingerprint(pendingSnapshot);
     if (nextFingerprint === backup.lastFingerprint) {
-      backup.pendingCurrent = null;
+      if (fingerprint(backup.pendingCurrent) === nextFingerprint) {
+        markSequenceSynced(Math.max(pendingSequence, Number(backup.pendingCurrentSequence || 0)));
+        backup.pendingCurrent = null;
+        backup.pendingCurrentSequence = 0;
+      }
       persist();
       return;
     }
@@ -241,7 +359,13 @@ async function startMatchRoomHost() {
     }, { applyLocally: false });
     if (!result.committed) throw new Error("current_sync_not_committed");
     backup.lastFingerprint = nextFingerprint;
-    if (fingerprint(backup.pendingCurrent) === nextFingerprint) backup.pendingCurrent = null;
+    if (fingerprint(backup.pendingCurrent) === nextFingerprint) {
+      markSequenceSynced(Math.max(pendingSequence, Number(backup.pendingCurrentSequence || 0)));
+      backup.pendingCurrent = null;
+      backup.pendingCurrentSequence = 0;
+    } else {
+      markSequenceSynced(pendingSequence);
+    }
     backup.revision = Number(result.snapshot.val()?.revision || backup.revision || 0);
     persist();
   }
@@ -265,12 +389,43 @@ async function startMatchRoomHost() {
     return true;
   }
 
+  async function flushResult(item) {
+    if (!item?.eventId || !item.snapshot) throw new Error("firebase_result_operation_invalid");
+    const nextFingerprint = fingerprint(item.snapshot);
+    if (nextFingerprint !== backup.lastFingerprint) {
+      const currentRef = firebase.ref(runtime.database, `${ROOM_ROOT}/${session.code}/current`);
+      const result = await firebase.runTransaction(currentRef, (current) => {
+        const revision = Number(current?.revision || 0) + 1;
+        return {
+          ...normalizeCurrent(item.snapshot, revision, Date.now()),
+          updatedAt: firebase.serverTimestamp()
+        };
+      }, { applyLocally: false });
+      if (!result.committed) throw new Error("result_sync_not_committed");
+      backup.lastFingerprint = nextFingerprint;
+      backup.revision = Number(result.snapshot.val()?.revision || backup.revision || 0);
+    }
+    delete backup.pendingResults[item.eventId];
+    markSequenceSynced(item.sequence);
+    if (fingerprint(backup.pendingCurrent) === nextFingerprint) {
+      markSequenceSynced(Math.max(Number(item.sequence || 0), Number(backup.pendingCurrentSequence || 0)));
+      backup.pendingCurrent = null;
+      backup.pendingCurrentSequence = 0;
+    }
+    persist();
+  }
+
   async function flushFinish(item) {
     const eventKey = safeEventKey(item.eventId);
     const roomPath = `${ROOM_ROOT}/${session.code}`;
     const existing = await firebase.get(firebase.ref(runtime.database, `${roomPath}/matches/${eventKey}`));
     if (existing.exists()) {
+      if (fingerprint(existing.val()) !== fingerprint(item.snapshot)) {
+        throw new Error("firebase_finish_operation_payload_mismatch");
+      }
       delete backup.pendingFinishes[item.eventId];
+      delete backup.pendingResults[item.eventId];
+      markSequenceSynced(item.sequence);
       persist();
       return;
     }
@@ -301,7 +456,13 @@ async function startMatchRoomHost() {
         backup.lastFingerprint = fingerprint(item.snapshot);
         backup.revision = revision;
         delete backup.pendingFinishes[item.eventId];
-        if (fingerprint(backup.pendingCurrent) === backup.lastFingerprint) backup.pendingCurrent = null;
+        delete backup.pendingResults[item.eventId];
+        markSequenceSynced(item.sequence);
+        if (fingerprint(backup.pendingCurrent) === backup.lastFingerprint) {
+          markSequenceSynced(Math.max(Number(item.sequence || 0), Number(backup.pendingCurrentSequence || 0)));
+          backup.pendingCurrent = null;
+          backup.pendingCurrentSequence = 0;
+        }
         persist();
         return;
       } catch (error) {
@@ -310,7 +471,8 @@ async function startMatchRoomHost() {
     }
   }
 
-  async function flushAll() {
+  async function flushAll(force = false) {
+    if (!isEnabled() && !force) return true;
     if (syncing) {
       syncAgain = true;
       return false;
@@ -322,6 +484,17 @@ async function startMatchRoomHost() {
     syncing = true;
     setStatus("backup", "กำลัง Sync Firebase");
     try {
+      const orderedResults = Object.values(backup.pendingResults || {})
+        .sort((left, right) => Number(left?.sequence || 0) - Number(right?.sequence || 0));
+      for (const item of orderedResults) {
+        if (item.type === "finish") {
+          const finish = backup.pendingFinishes?.[item.eventId];
+          if (!finish) throw new Error("firebase_finish_operation_missing");
+          await flushFinish(finish);
+        } else {
+          await flushResult(item);
+        }
+      }
       for (const item of Object.values(backup.pendingFinishes || {})) await flushFinish(item);
       await flushCurrent();
       try {
@@ -344,6 +517,10 @@ async function startMatchRoomHost() {
       return false;
     } finally {
       syncing = false;
+      const waiters = syncWaiters;
+      syncWaiters = [];
+      waiters.forEach((resolve) => resolve());
+      reportHostState();
       if (syncAgain) {
         syncAgain = false;
         scheduleSync(50);
@@ -351,7 +528,61 @@ async function startMatchRoomHost() {
     }
   }
 
+  function waitForActiveSync() {
+    if (!syncing) return Promise.resolve();
+    return new Promise((resolve) => syncWaiters.push(resolve));
+  }
+
+  async function flushForDock(options = {}) {
+    if (!isEnabled()) {
+      const state = hostState();
+      return { ok: false, pending: state.pending, error: "firebase_result_mode_disabled", state };
+    }
+    const operationId = String(options?.operationId || "");
+    const operation = operationId
+      ? (backup.pendingResults?.[operationId] || backup.pendingFinishes?.[operationId])
+      : null;
+    const targetSequence = Math.max(
+      0,
+      Number(operation?.sequence || backup.pendingCurrentSequence || backup.currentSequence || 0)
+    );
+    const targetAcknowledged = () => {
+      if (operationId && (backup.pendingResults?.[operationId] || backup.pendingFinishes?.[operationId])) return false;
+      return Number(backup.syncedSequence || 0) >= targetSequence;
+    };
+    if (!persist()) {
+      const state = hostState();
+      return { ok: false, pending: true, error: "firebase_local_backup_failed", state };
+    }
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      await waitForActiveSync();
+      await flushAll();
+      await waitForActiveSync();
+      if (targetAcknowledged()) {
+        backup.lastError = "";
+        if (!persist()) {
+          const state = hostState();
+          return { ok: false, pending: true, error: "firebase_local_backup_failed", state };
+        }
+        const state = hostState();
+        return { ok: Boolean(state.connected && state.roomStatus === "OPEN"), pending: false, error: "", state };
+      }
+      if (!runtime || !databaseConnected || navigator.onLine === false) break;
+    }
+    const state = hostState();
+    return {
+      ok: false,
+      pending: true,
+      error: backupPersistenceError || backup.lastError || "firebase_sync_pending",
+      state
+    };
+  }
+
   async function createRoom() {
+    if (!isEnabled()) {
+      notify("เลือก Firebase Realtime Database ที่ Settings > Sheet ก่อนสร้างห้อง");
+      return;
+    }
     if (!runtime || !databaseConnected || (session && session.status !== "CLOSED")) return;
     ui.create.disabled = true;
     setStatus("backup", "กำลังจองเลขห้อง");
@@ -404,7 +635,12 @@ async function startMatchRoomHost() {
         viewerUrl: firebase.viewerUrlForRoom(code, runtime.mode),
         createdAt: now
       };
-      persist();
+      if (!persist()) {
+        setStatus("error", "สร้าง Room แล้ว แต่ Firebase Local backup เขียนไม่ได้");
+        renderSession();
+        notify(`สร้าง Match Room ${code} แล้ว แต่ห้ามปิดหน้านี้จนกว่าจะบันทึก Local backup ได้`);
+        return;
+      }
       renderSession();
       await flushAll();
       notify(`สร้าง Match Room ${code} แล้ว`);
@@ -415,7 +651,7 @@ async function startMatchRoomHost() {
   }
 
   async function saveMeta() {
-    if (!runtime || !databaseConnected || !session || session.status === "CLOSED") return;
+    if (!isEnabled() || !runtime || !databaseConnected || !session || session.status === "CLOSED") return;
     const draft = readMetaDraft(session.code);
     const patch = {
       publicView: draft.publicView,
@@ -437,8 +673,9 @@ async function startMatchRoomHost() {
     if (!runtime || !databaseConnected || !session || session.status === "CLOSED") return;
     closing = true;
     ui.close.disabled = true;
+    reportHostState();
     try {
-      const flushed = await flushAll();
+      const flushed = await flushAll(true);
       if (!flushed || hasPendingSync()) {
         throw new Error("ยังมีข้อมูลรอ Sync กรุณาเชื่อมต่อแล้วลองปิดห้องอีกครั้ง");
       }
@@ -448,14 +685,11 @@ async function startMatchRoomHost() {
         updatedAt: firebase.serverTimestamp()
       });
       if (Object.keys(backup.pendingFinishes || {}).length) {
-        await firebase.update(firebase.ref(runtime.database, `${ROOM_ROOT}/${session.code}/meta`), {
-          status: "OPEN",
-          updatedAt: firebase.serverTimestamp()
-        });
-        throw new Error("มี Finish เกิดขึ้นระหว่างปิดห้อง ระบบเปิดห้องกลับเพื่อ Sync History กรุณารอแล้วปิดอีกครั้ง");
+        quarantinePending("finish_during_room_close");
+        notify("พบ Finish ระหว่างปิดห้อง จึงเก็บสำรองไว้ในเครื่องและไม่เปิดห้องเก่ากลับ");
       }
       session = { ...session, status: "CLOSED", meta: { ...session.meta, status: "CLOSED", updatedAt: now } };
-      persist();
+      if (!persist()) setStatus("error", "ปิด Room แล้ว แต่ Local session backup เขียนไม่ได้");
       renderSession();
       notify(`ปิด Match Room ${session.code} แล้ว`);
     } finally {
@@ -492,6 +726,12 @@ async function startMatchRoomHost() {
   ui.copy.addEventListener("click", () => copyViewerUrl().catch((error) => notify(`Copy ไม่สำเร็จ: ${error.message || error}`)));
   ui.open.addEventListener("click", () => { if (session?.viewerUrl) window.open(session.viewerUrl, "_blank", "noopener"); });
   ui.close.addEventListener("click", () => closeRoom().catch((error) => notify(`ปิดห้องไม่สำเร็จ: ${error.message || error}`)));
+  const unregisterHostAdapter = typeof bridge.registerHostAdapter === "function"
+    ? bridge.registerHostAdapter({ getState: hostState, flush: flushForDock })
+    : null;
+  window.addEventListener("pagehide", () => {
+    if (typeof unregisterHostAdapter === "function") unregisterHostAdapter();
+  }, { once: true });
   let firebaseInitPromise;
   let firebaseRetryTimer;
 
@@ -536,7 +776,7 @@ async function startMatchRoomHost() {
       clearTimeout(firebaseRetryTimer);
       renderSession();
       if (!session && !ownershipLost) setStatus("online", `Firebase ${runtime.mode} พร้อม`);
-      scheduleSync(50);
+      if (isEnabled()) scheduleSync(50);
       return runtime;
     })();
     try {
@@ -555,17 +795,21 @@ async function startMatchRoomHost() {
       setStatus("error", "Firebase Offline • Local backup ทำงาน");
       renderSession();
       clearTimeout(firebaseRetryTimer);
-      if (navigator.onLine !== false) {
+      if (navigator.onLine !== false && (isEnabled() || session?.status === "OPEN")) {
         firebaseRetryTimer = setTimeout(() => connectFirebase().catch(() => {}), 5000);
       }
       throw error;
     }
   }
 
-  window.addEventListener("online", () => connectFirebase().then(() => scheduleSync(100)).catch(() => {}));
-  setStatus("backup", "Local backup พร้อม");
-  persist();
-  await connectFirebase().catch(() => {});
+  window.addEventListener("online", () => {
+    if (!isEnabled() && session?.status !== "OPEN") return;
+    connectFirebase().then(() => scheduleSync(100)).catch(() => {});
+  });
+  if (persist()) setStatus("backup", "Local backup พร้อม");
+  else setStatus("error", "Firebase Local backup เขียนไม่ได้");
+  renderSession();
+  if (isEnabled() || session?.status === "OPEN") await connectFirebase().catch(() => {});
 }
 
 function mountStyles() {
