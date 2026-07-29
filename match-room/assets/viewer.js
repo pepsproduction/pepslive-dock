@@ -1,14 +1,28 @@
 import { copyMatch, copyResult, copyTeams, exportExcel } from "./export.js";
-import { ROOM_CODE_PATTERN, ROOM_ROOT, sanitizeRoomCode } from "./room-model.js";
+import {
+  ROOM_CODE_PATTERN,
+  ROOM_ROOT,
+  safeLogoKey,
+  safeTeamKey,
+  sanitizeRoomCode
+} from "./room-model.js";
 
 const byId = (id) => document.getElementById(id);
 const DEFAULT_LOGO = "../logos/default.svg";
 let unsubscribe = [];
 let roomCode = "";
-let viewState = { meta: {}, current: null, matches: {}, schedule: emptySchedule() };
+let viewState = { meta: {}, current: null, matches: {}, schedule: emptySchedule(), teamColors: {}, logoAssets: {} };
 let renderedScheduleRows = [];
 let scheduleNeedsRender = true;
 let renderedCurrentScheduleKey = "";
+let firebaseApi = null;
+let firebaseRuntime = null;
+let canEditColors = false;
+let activeColorProfile = null;
+let colorEditorReturnFocus = null;
+let colorEditorReturnSelector = "";
+let joinGeneration = 0;
+let logoAssetsByRef = new Map();
 
 function emptySchedule() {
   return { version: 0, source: "", sourceName: "", sourceTab: "", count: 0, updatedAt: 0, items: {} };
@@ -46,14 +60,18 @@ function loadCache(code) {
   const current = readCachePart(code, "current");
   const matches = readCachePart(code, "matches");
   const schedule = readCachePart(code, "schedule");
-  const restored = [meta, current, matches, schedule].some((value) => value !== null);
+  const teamColors = readCachePart(code, "teamColors");
+  const restored = [meta, current, matches, schedule, teamColors].some((value) => value !== null);
+  try { localStorage.removeItem(cacheKey(code, "logoAssets")); } catch (_) {}
 
   if (restored) {
     viewState = {
       meta: meta && typeof meta === "object" && !Array.isArray(meta) ? meta : {},
       current: current && typeof current === "object" && !Array.isArray(current) ? current : null,
       matches: matches && typeof matches === "object" && !Array.isArray(matches) ? matches : {},
-      schedule: normalizeSchedule(schedule)
+      schedule: normalizeSchedule(schedule),
+      teamColors: teamColors && typeof teamColors === "object" && !Array.isArray(teamColors) ? teamColors : {},
+      logoAssets: {}
     };
   } else {
     try {
@@ -63,7 +81,9 @@ function loadCache(code) {
           meta: parsed.meta && typeof parsed.meta === "object" ? parsed.meta : {},
           current: parsed.current || null,
           matches: parsed.matches && typeof parsed.matches === "object" ? parsed.matches : {},
-          schedule: normalizeSchedule(parsed.schedule)
+          schedule: normalizeSchedule(parsed.schedule),
+          teamColors: {},
+          logoAssets: {}
         };
       }
     } catch (_) {
@@ -76,7 +96,7 @@ function loadCache(code) {
 }
 
 function saveCachePart(part) {
-  if (!roomCode || !Object.prototype.hasOwnProperty.call(viewState, part)) return;
+  if (part === "logoAssets" || !roomCode || !Object.prototype.hasOwnProperty.call(viewState, part)) return;
   try {
     localStorage.setItem(cacheKey(roomCode, part), JSON.stringify({
       value: viewState[part],
@@ -97,10 +117,32 @@ function setNotice(message) {
   byId("viewerNotice").textContent = message;
 }
 
+function normalizedLogoRef(value) {
+  return text(value).normalize("NFKC").replace(/\s+/g, " ").trim().toLocaleLowerCase("th-TH");
+}
+
+function rebuildLogoAssetLookup() {
+  logoAssetsByRef = new Map();
+  for (const asset of Object.values(viewState.logoAssets || {})) {
+    const key = normalizedLogoRef(asset?.logoRef);
+    if (key && !logoAssetsByRef.has(key)) logoAssetsByRef.set(key, asset);
+  }
+}
+
+function logoAssetFor(value) {
+  const key = safeLogoKey(value);
+  const direct = key ? viewState.logoAssets?.[key] : null;
+  const asset = direct || logoAssetsByRef.get(normalizedLogoRef(value));
+  return asset && /^data:image\/(?:png|jpeg|webp);base64,/i.test(String(asset.dataUrl || "")) ? asset : null;
+}
+
 function setLogo(element, value) {
   const safe = String(value || "").trim();
   let source = DEFAULT_LOGO;
-  if (/^https:\/\//i.test(safe) || /^\.\.\/logos\/[A-Za-z0-9%._~-]+$/i.test(safe)) {
+  const roomAsset = logoAssetFor(safe);
+  if (roomAsset) {
+    source = roomAsset.dataUrl;
+  } else if (/^https:\/\//i.test(safe) || /^\.\.\/logos\/[A-Za-z0-9%._~-]+$/i.test(safe)) {
     source = safe;
   } else {
     const leaf = safe.replace(/^logos\//i, "");
@@ -124,6 +166,29 @@ function text(value, fallback = "") {
 function number(value) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.max(0, Math.min(999, Math.floor(parsed))) : 0;
+}
+
+function normalizeColor(value, fallback = "") {
+  const normalized = String(value || "").trim().toUpperCase();
+  return /^#[0-9A-F]{6}$/.test(normalized) ? normalized : fallback;
+}
+
+function profileForTeam(teamName, logoRef, explicitKey = "") {
+  const key = text(explicitKey) || safeTeamKey(teamName, logoRef);
+  return viewState.teamColors?.[key] || null;
+}
+
+function resolvedTeamStyle(teamName, logoRef, explicitKey, sheetPrimary, sheetSecondary, side = "A") {
+  const profile = profileForTeam(teamName, logoRef, explicitKey);
+  const defaults = side === "B"
+    ? { primary: "#0057FF", secondary: "#FFFFFF" }
+    : { primary: "#FF6A00", secondary: "#111111" };
+  return {
+    profile,
+    teamKey: text(explicitKey) || safeTeamKey(teamName, logoRef),
+    primaryColor: normalizeColor(profile?.primaryColor, normalizeColor(sheetPrimary, defaults.primary)),
+    secondaryColor: normalizeColor(profile?.secondaryColor, normalizeColor(sheetSecondary, defaults.secondary))
+  };
 }
 
 function matchAliases(match = {}) {
@@ -182,10 +247,38 @@ function mergedSchedule() {
     const hasScore = active ? true : history ? true : Boolean(scheduled.hasScore);
     const hasResult = active ? isFinalMatch(active) : history ? true : Boolean(scheduled.hasResult);
     const pendingStatus = text(merged.matchStatus || merged.status).toUpperCase();
+    const teamAStyle = resolvedTeamStyle(
+      merged.teamAName,
+      merged.logoA,
+      scheduled.teamAKey,
+      merged.teamAPrimaryColor,
+      merged.teamASecondaryColor,
+      "A"
+    );
+    const teamBStyle = resolvedTeamStyle(
+      merged.teamBName,
+      merged.logoB,
+      scheduled.teamBKey,
+      merged.teamBPrimaryColor,
+      merged.teamBSecondaryColor,
+      "B"
+    );
     return {
       ...merged,
       teamAName: text(merged.teamAName, "TEAM A"),
       teamBName: text(merged.teamBName, "TEAM B"),
+      teamAKey: teamAStyle.teamKey,
+      teamBKey: teamBStyle.teamKey,
+      teamAProfile: teamAStyle.profile,
+      teamBProfile: teamBStyle.profile,
+      teamASheetPrimaryColor: normalizeColor(scheduled.teamAPrimaryColor),
+      teamASheetSecondaryColor: normalizeColor(scheduled.teamASecondaryColor),
+      teamBSheetPrimaryColor: normalizeColor(scheduled.teamBPrimaryColor),
+      teamBSheetSecondaryColor: normalizeColor(scheduled.teamBSecondaryColor),
+      teamAPrimaryColor: teamAStyle.primaryColor,
+      teamASecondaryColor: teamAStyle.secondaryColor,
+      teamBPrimaryColor: teamBStyle.primaryColor,
+      teamBSecondaryColor: teamBStyle.secondaryColor,
       scoreA: number(merged.scoreA),
       scoreB: number(merged.scoreB),
       hasScore,
@@ -217,6 +310,45 @@ function createCell(label, className = "") {
   cell.dataset.label = label;
   if (className) cell.className = className;
   return cell;
+}
+
+function createMatchupTeam(name, logoRef) {
+  const line = document.createElement("div");
+  line.className = "viewer-matchup-team";
+  const logo = document.createElement("img");
+  logo.alt = `โลโก้ ${name}`;
+  setLogo(logo, logoRef);
+  const label = document.createElement("strong");
+  label.textContent = name;
+  line.append(logo, label);
+  return line;
+}
+
+function createTeamColorRow(match, side, rowIndex) {
+  const name = match[`team${side}Name`];
+  const primaryColor = match[`team${side}PrimaryColor`];
+  const row = document.createElement("div");
+  row.className = "viewer-team-color-row";
+  const teamLabel = document.createElement("span");
+  teamLabel.className = "viewer-team-color-name";
+  teamLabel.textContent = `${side} • ${name}`;
+  teamLabel.title = name;
+  const dot = document.createElement("i");
+  dot.className = "viewer-team-color-dot";
+  dot.style.setProperty("--team-primary", primaryColor);
+  dot.title = `${name}: ${primaryColor}`;
+  const value = document.createElement("span");
+  value.textContent = primaryColor;
+  const edit = document.createElement("button");
+  edit.type = "button";
+  edit.dataset.editTeamColor = side;
+  edit.dataset.rowIndex = String(rowIndex);
+  edit.textContent = "แก้สี";
+  edit.hidden = !canEditColors;
+  edit.disabled = viewState.meta?.status === "CLOSED";
+  edit.setAttribute("aria-label", `แก้สีทีม ${name}`);
+  row.append(teamLabel, dot, value, edit);
+  return row;
 }
 
 function currentScheduleKey() {
@@ -256,7 +388,7 @@ function renderSchedule() {
     const row = document.createElement("tr");
     row.className = "viewer-table-empty";
     const cell = document.createElement("td");
-    cell.colSpan = 5;
+    cell.colSpan = 6;
     cell.textContent = "ยังไม่มีรายการแข่งขันจาก Sheet";
     row.appendChild(cell);
     body.appendChild(row);
@@ -274,15 +406,25 @@ function renderSchedule() {
     const teamsCell = createCell("คู่แข่งขัน");
     const matchup = document.createElement("div");
     matchup.className = "viewer-matchup";
-    const teams = document.createElement("strong");
-    teams.textContent = `${match.teamAName} vs ${match.teamBName}`;
-    matchup.appendChild(teams);
+    matchup.append(
+      createMatchupTeam(match.teamAName, match.logoA),
+      createMatchupTeam(match.teamBName, match.logoB)
+    );
     if (text(match.matchId)) {
       const matchId = document.createElement("small");
       matchId.textContent = `Match ID: ${match.matchId}`;
       matchup.appendChild(matchId);
     }
     teamsCell.appendChild(matchup);
+
+    const colorsCell = createCell("PEPS Team Color");
+    const colors = document.createElement("div");
+    colors.className = "viewer-team-colors";
+    colors.append(
+      createTeamColorRow(match, "A", index),
+      createTeamColorRow(match, "B", index)
+    );
+    colorsCell.appendChild(colors);
 
     const scoreCell = createCell("ผล", "viewer-result-cell");
     scoreCell.textContent = match.hasScore ? `${match.scoreA}-${match.scoreB}` : "—";
@@ -314,7 +456,7 @@ function renderSchedule() {
     actions.append(copyTeamsButton, copyResultButton);
     actionsCell.appendChild(actions);
 
-    row.append(orderCell, teamsCell, scoreCell, statusCell, actionsCell);
+    row.append(orderCell, teamsCell, colorsCell, scoreCell, statusCell, actionsCell);
     body.appendChild(row);
   }
 }
@@ -345,6 +487,10 @@ function render() {
   byId("venueText").textContent = meta.venue || "-";
   byId("historyCount").textContent = `${Object.keys(viewState.matches || {}).length} แมตช์`;
   byId("roomMeta").textContent = [meta.round, meta.group, meta.venue].filter(Boolean).join(" • ") || "รอข้อมูลจาก Host";
+  byId("roomAccessLabel").textContent = canEditColors ? "OWNER LIVE ROOM" : "READ-ONLY LIVE ROOM";
+  byId("colorEditorMode").textContent = canEditColors
+    ? (meta.status === "CLOSED" ? "ห้องปิดแล้ว • ดูสีได้แต่แก้ไขไม่ได้" : "โหมดเจ้าของห้อง • แก้สีทีมใน Firebase ได้และ Dock รับแบบเรียลไทม์")
+    : "ผู้ชมเห็นสีและโลโก้แบบเรียลไทม์ • ไม่มีสิทธิ์แก้คะแนนหรือสี";
   renderSchedule();
   byId("exportExcelButton").disabled = !current && !hasScheduleItems();
 
@@ -362,8 +508,10 @@ function render() {
   byId("periodText").textContent = current.period || "-";
   setLogo(byId("teamALogo"), current.logoA);
   setLogo(byId("teamBLogo"), current.logoB);
-  byId("teamACard").style.setProperty("--team-color", current.teamAPrimaryColor || "#ff7a21");
-  byId("teamBCard").style.setProperty("--team-color", current.teamBPrimaryColor || "#4cc9ff");
+  const teamAStyle = resolvedTeamStyle(current.teamAName, current.logoA, "", current.teamAPrimaryColor, current.teamASecondaryColor, "A");
+  const teamBStyle = resolvedTeamStyle(current.teamBName, current.logoB, "", current.teamBPrimaryColor, current.teamBSecondaryColor, "B");
+  byId("teamACard").style.setProperty("--team-color", teamAStyle.primaryColor);
+  byId("teamBCard").style.setProperty("--team-color", teamBStyle.primaryColor);
 
   const closed = meta.status === "CLOSED";
   const status = byId("matchStatus");
@@ -371,6 +519,136 @@ function render() {
   status.classList.toggle("closed", closed);
   byId("updatedText").textContent = `อัปเดต ${new Date(Number(current.updatedAt || Date.now())).toLocaleString("th-TH")}`;
   byId("copyMatchButton").disabled = false;
+}
+
+function setColorEditorValues(primary, secondary) {
+  const primaryColor = normalizeColor(primary, "#FF6A00");
+  const secondaryColor = normalizeColor(secondary, "#111111");
+  byId("teamPrimaryColorInput").value = primaryColor;
+  byId("teamPrimaryHexInput").value = primaryColor;
+  byId("teamSecondaryColorInput").value = secondaryColor;
+  byId("teamSecondaryHexInput").value = secondaryColor;
+  byId("teamPrimaryHexInput").setAttribute("aria-invalid", "false");
+  byId("teamSecondaryHexInput").setAttribute("aria-invalid", "false");
+}
+
+function setColorEditorNotice(message, isError = false) {
+  const notice = byId("teamColorEditorNotice");
+  if (!notice) return;
+  notice.textContent = message || "";
+  notice.dataset.state = isError ? "error" : "idle";
+}
+
+function closeTeamColorEditor() {
+  const backdrop = byId("teamColorEditorBackdrop");
+  if (!backdrop) return;
+  backdrop.classList.remove("show");
+  backdrop.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("viewer-dialog-open");
+  activeColorProfile = null;
+  const fallback = colorEditorReturnSelector ? document.querySelector(colorEditorReturnSelector) : null;
+  const focusTarget = colorEditorReturnFocus?.isConnected ? colorEditorReturnFocus : fallback || byId("scheduleTitle");
+  if (focusTarget?.focus) focusTarget.focus();
+  colorEditorReturnFocus = null;
+  colorEditorReturnSelector = "";
+}
+
+function openTeamColorEditor(match, side, trigger) {
+  if (!canEditColors || viewState.meta?.status === "CLOSED") return;
+  const teamKey = match[`team${side}Key`];
+  const profile = viewState.teamColors?.[teamKey] || {};
+  const teamName = match[`team${side}Name`];
+  const logoRef = match[`logo${side}`];
+  const defaultPrimary = side === "B" ? "#0057FF" : "#FF6A00";
+  const defaultSecondary = side === "B" ? "#FFFFFF" : "#111111";
+  activeColorProfile = {
+    teamKey,
+    teamName,
+    logoRef,
+    side,
+    primaryColor: normalizeColor(profile.primaryColor, match[`team${side}PrimaryColor`] || defaultPrimary),
+    secondaryColor: normalizeColor(profile.secondaryColor, match[`team${side}SecondaryColor`] || defaultSecondary),
+    sheetPrimaryColor: normalizeColor(profile.sheetPrimaryColor, match[`team${side}SheetPrimaryColor`]),
+    sheetSecondaryColor: normalizeColor(profile.sheetSecondaryColor, match[`team${side}SheetSecondaryColor`]),
+    defaultPrimary,
+    defaultSecondary,
+    source: text(profile.source, match[`team${side}SheetPrimaryColor`] ? text(viewState.schedule.source, "google") : "dock")
+  };
+  const appearances = renderedScheduleRows.filter((row) => row.teamAKey === teamKey || row.teamBKey === teamKey).length;
+  byId("teamColorEditorName").textContent = teamName;
+  byId("teamColorEditorScope").textContent = `ใช้กับทีมนี้ทุกคู่ • ${appearances} คู่ในตาราง`;
+  byId("teamColorEditorSource").textContent = activeColorProfile.source === "viewer"
+    ? "แก้ล่าสุดใน Firebase Match Room"
+    : activeColorProfile.source === "excel" ? "ค่าเริ่มต้นจาก Excel" : activeColorProfile.source === "google" ? "ค่าเริ่มต้นจาก Google Sheet" : "ค่าเริ่มต้นจาก Dock";
+  setLogo(byId("teamColorEditorLogo"), logoRef);
+  setColorEditorValues(activeColorProfile.primaryColor, activeColorProfile.secondaryColor);
+  setColorEditorNotice("");
+  byId("resetTeamColorButton").disabled = !activeColorProfile.sheetPrimaryColor && !activeColorProfile.sheetSecondaryColor;
+  colorEditorReturnFocus = trigger || document.activeElement;
+  colorEditorReturnSelector = trigger?.dataset?.rowIndex
+    ? `button[data-edit-team-color="${side}"][data-row-index="${trigger.dataset.rowIndex}"]`
+    : "";
+  const backdrop = byId("teamColorEditorBackdrop");
+  backdrop.classList.add("show");
+  backdrop.setAttribute("aria-hidden", "false");
+  document.body.classList.add("viewer-dialog-open");
+  setTimeout(() => byId("teamPrimaryColorInput").focus(), 0);
+}
+
+function editorColorValue(inputId) {
+  return normalizeColor(byId(inputId).value);
+}
+
+async function saveTeamColorProfile(resetToSheet = false) {
+  if (!activeColorProfile || !canEditColors || !firebaseApi || !firebaseRuntime || viewState.meta?.status === "CLOSED") return false;
+  const profile = { ...activeColorProfile };
+  const primaryColor = resetToSheet
+    ? (profile.sheetPrimaryColor || profile.defaultPrimary)
+    : editorColorValue("teamPrimaryHexInput");
+  const secondaryColor = resetToSheet
+    ? (profile.sheetSecondaryColor || profile.defaultSecondary)
+    : editorColorValue("teamSecondaryHexInput");
+  if (!normalizeColor(primaryColor) || !normalizeColor(secondaryColor)) {
+    const invalid = !normalizeColor(primaryColor) ? byId("teamPrimaryHexInput") : byId("teamSecondaryHexInput");
+    invalid.setAttribute("aria-invalid", "true");
+    setColorEditorNotice("รูปแบบสีไม่ถูกต้อง • ใช้ #RRGGBB เช่น #FF6A00", true);
+    invalid.focus();
+    return false;
+  }
+  setColorEditorNotice("กำลังบันทึกสีลง Firebase");
+  const source = resetToSheet
+    ? (profile.sheetPrimaryColor || profile.sheetSecondaryColor ? (viewState.schedule.source === "excel" ? "excel" : "google") : "dock")
+    : "viewer";
+  const saveButton = byId("saveTeamColorButton");
+  const resetButton = byId("resetTeamColorButton");
+  saveButton.disabled = true;
+  resetButton.disabled = true;
+  try {
+    const profileRef = firebaseApi.ref(firebaseRuntime.database, `${ROOM_ROOT}/${roomCode}/teamColors/${profile.teamKey}`);
+    const result = await firebaseApi.runTransaction(profileRef, (current) => ({
+      teamKey: profile.teamKey,
+      teamName: profile.teamName,
+      logoRef: profile.logoRef,
+      primaryColor,
+      secondaryColor,
+      sheetPrimaryColor: normalizeColor(current?.sheetPrimaryColor, profile.sheetPrimaryColor),
+      sheetSecondaryColor: normalizeColor(current?.sheetSecondaryColor, profile.sheetSecondaryColor),
+      source,
+      revision: Number(current?.revision || 0) + 1,
+      updatedAt: firebaseApi.serverTimestamp()
+    }), { applyLocally: false });
+    if (!result.committed) throw new Error("team_color_not_committed");
+    const affectsCurrent = renderedScheduleRows.some((row) => row.isCurrent && (row.teamAKey === profile.teamKey || row.teamBKey === profile.teamKey));
+    closeTeamColorEditor();
+    setNotice(affectsCurrent ? "บันทึกแล้ว • Dock LIVE SCORE กำลังอัปเดตแบบเรียลไทม์" : "บันทึกแล้ว • สีนี้จะใช้เมื่อ Host โหลดคู่ของทีม");
+    return true;
+  } catch (error) {
+    setColorEditorNotice(`บันทึกสีไม่สำเร็จ: ${error.message || error}`, true);
+    return false;
+  } finally {
+    saveButton.disabled = false;
+    if (activeColorProfile) resetButton.disabled = !activeColorProfile.sheetPrimaryColor && !activeColorProfile.sheetSecondaryColor;
+  }
 }
 
 function stopListening() {
@@ -383,14 +661,20 @@ function stopListening() {
 async function joinRoom(code) {
   const normalized = sanitizeRoomCode(code);
   if (!ROOM_CODE_PATTERN.test(normalized)) {
-    setConnection("error", "เลขห้องไม่ถูกต้อง");
-    setNotice("กรุณากรอกเลขห้อง 6 หลัก");
+    setNotice("กรุณากรอกเลขห้อง 6 หลัก • ห้องเดิมยังเชื่อมต่ออยู่");
     return;
   }
-
+  const generation = ++joinGeneration;
+  const isCurrentJoin = () => generation === joinGeneration;
   stopListening();
+
   roomCode = normalized;
-  viewState = { meta: {}, current: null, matches: {}, schedule: emptySchedule() };
+  viewState = { meta: {}, current: null, matches: {}, schedule: emptySchedule(), teamColors: {}, logoAssets: {} };
+  logoAssetsByRef = new Map();
+  canEditColors = false;
+  firebaseApi = null;
+  firebaseRuntime = null;
+  closeTeamColorEditor();
   loadCache(roomCode);
   render();
   const hasCachedRoomData = Boolean(viewState.current || hasScheduleItems());
@@ -404,28 +688,47 @@ async function joinRoom(code) {
   try {
     const firebase = await import("./firebase-runtime.js");
     const runtime = await firebase.getFirebaseRuntime();
+    if (!isCurrentJoin()) return;
+    firebaseApi = firebase;
+    firebaseRuntime = runtime;
     byId("firebaseModeText").textContent = runtime.mode === "emulator" ? "Local development • Firebase Emulator" : "Production • Firebase Realtime Database";
     const base = `${ROOM_ROOT}/${roomCode}`;
+    try {
+      const ownerSnapshot = await firebase.get(firebase.ref(runtime.database, `${base}/meta/ownerUid`));
+      canEditColors = ownerSnapshot.val() === runtime.user.uid;
+    } catch (_) {
+      canEditColors = false;
+    }
+    if (!isCurrentJoin()) return;
+    scheduleNeedsRender = true;
+    render();
     let liveRead = false;
     const onReadError = () => {
+      if (!isCurrentJoin()) return;
       setConnection(viewState.current ? "offline" : "error", viewState.current ? "ข้อมูลสำรอง" : "เข้าห้องไม่ได้");
       setNotice(viewState.current ? "Firebase อ่านไม่ได้ จึงแสดงข้อมูลสำรองล่าสุด" : "ไม่พบห้อง ห้องเป็น Private หรือคุณไม่มีสิทธิ์อ่าน");
     };
 
     for (const field of ["publicView", "status", "eventName", "venue", "round", "group", "createdAt", "updatedAt"]) {
       unsubscribe.push(firebase.onValue(firebase.ref(runtime.database, `${base}/meta/${field}`), (snapshot) => {
+        if (!isCurrentJoin()) return;
         viewState.meta[field] = snapshot.val();
+        if (field === "status") {
+          scheduleNeedsRender = true;
+          if (viewState.meta.status === "CLOSED") closeTeamColorEditor();
+        }
         render();
         saveCachePart("meta");
       }, onReadError));
     }
 
     unsubscribe.push(firebase.onValue(firebase.ref(runtime.database, `${base}/current`), (snapshot) => {
+      if (!isCurrentJoin()) return;
       if (snapshot.exists()) {
         liveRead = true;
         viewState.current = snapshot.val();
         setConnection("online", "LIVE");
-        setNotice("เชื่อมต่อแบบ Real-time • Viewer อ่านอย่างเดียว");
+        setNotice(canEditColors ? "เชื่อมต่อแบบ Real-time • เจ้าของห้องแก้ได้เฉพาะสีทีม คะแนนยังเป็น Read-only" : "เชื่อมต่อแบบ Real-time • Viewer อ่านอย่างเดียว");
         render();
         saveCachePart("current");
       } else if (!liveRead) {
@@ -435,6 +738,7 @@ async function joinRoom(code) {
     }, onReadError));
 
     unsubscribe.push(firebase.onValue(firebase.ref(runtime.database, `${base}/matches`), (snapshot) => {
+      if (!isCurrentJoin()) return;
       viewState.matches = snapshot.val() || {};
       scheduleNeedsRender = true;
       render();
@@ -442,15 +746,38 @@ async function joinRoom(code) {
     }, onReadError));
 
     unsubscribe.push(firebase.onValue(firebase.ref(runtime.database, `${base}/schedule`), (snapshot) => {
+      if (!isCurrentJoin()) return;
       viewState.schedule = normalizeSchedule(snapshot.val());
       scheduleNeedsRender = true;
       render();
       saveCachePart("schedule");
     }, () => {
+      if (!isCurrentJoin()) return;
       byId("scheduleSource").textContent = "ตาราง Sheet ยังไม่พร้อมใช้งานในห้องนี้";
       if (viewState.current) setNotice("เชื่อมต่อคะแนนแบบ Real-time แล้ว • ตารางทุกคู่ยังไม่พร้อม");
     }));
+
+    unsubscribe.push(firebase.onValue(firebase.ref(runtime.database, `${base}/teamColors`), (snapshot) => {
+      if (!isCurrentJoin()) return;
+      viewState.teamColors = snapshot.val() || {};
+      scheduleNeedsRender = true;
+      render();
+      saveCachePart("teamColors");
+    }, onReadError));
+
+    unsubscribe.push(firebase.onValue(firebase.ref(runtime.database, `${base}/logoAssets`), (snapshot) => {
+      if (!isCurrentJoin()) return;
+      viewState.logoAssets = snapshot.val() || {};
+      rebuildLogoAssetLookup();
+      scheduleNeedsRender = true;
+      render();
+      saveCachePart("logoAssets");
+    }, () => {
+      if (!isCurrentJoin()) return;
+      if (viewState.current) setNotice("คะแนนและสีเชื่อมต่อแล้ว • โลโก้ local ยังไม่พร้อมในห้องนี้");
+    }));
   } catch (error) {
+    if (!isCurrentJoin()) return;
     setConnection(viewState.current ? "offline" : "error", viewState.current ? "ข้อมูลสำรอง" : "Firebase Offline");
     setNotice(viewState.current ? "กำลังแสดง local backup ล่าสุด" : `เชื่อมต่อ Firebase ไม่สำเร็จ: ${error.message || error}`);
   }
@@ -472,6 +799,12 @@ byId("copyMatchButton").addEventListener("click", async () => {
   }
 });
 byId("scheduleRows").addEventListener("click", async (event) => {
+  const editTarget = event.target instanceof Element ? event.target.closest("button[data-edit-team-color]") : null;
+  if (editTarget && !editTarget.disabled) {
+    const editMatch = renderedScheduleRows[Number(editTarget.dataset.rowIndex)];
+    if (editMatch) openTeamColorEditor(editMatch, editTarget.dataset.editTeamColor, editTarget);
+    return;
+  }
   const target = event.target instanceof Element ? event.target.closest("button[data-copy-kind]") : null;
   if (!target || target.disabled) return;
   const match = renderedScheduleRows[Number(target.dataset.rowIndex)];
@@ -493,6 +826,60 @@ byId("exportExcelButton").addEventListener("click", () => {
   const scheduleRows = hasScheduleItems() ? renderedScheduleRows : [];
   const result = exportExcel({ roomCode, ...viewState.meta }, viewState.current || {}, viewState.matches || {}, scheduleRows);
   setNotice(`สร้างไฟล์ Excel แล้ว: ${result.filename}`);
+});
+byId("closeTeamColorEditor").addEventListener("click", closeTeamColorEditor);
+byId("teamColorEditorBackdrop").addEventListener("click", (event) => {
+  if (event.target === byId("teamColorEditorBackdrop")) closeTeamColorEditor();
+});
+byId("teamColorEditor").addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveTeamColorProfile(false);
+});
+byId("resetTeamColorButton").addEventListener("click", () => saveTeamColorProfile(true));
+[
+  ["teamPrimaryColorInput", "teamPrimaryHexInput"],
+  ["teamSecondaryColorInput", "teamSecondaryHexInput"]
+].forEach(([colorId, hexId]) => {
+  byId(colorId).addEventListener("input", () => {
+    byId(hexId).value = byId(colorId).value.toUpperCase();
+  });
+  byId(hexId).addEventListener("input", () => {
+    const value = normalizeColor(byId(hexId).value);
+    byId(hexId).setAttribute("aria-invalid", value ? "false" : "true");
+    if (value) setColorEditorNotice("");
+    if (value) byId(colorId).value = value;
+  });
+  byId(hexId).addEventListener("change", () => {
+    const value = normalizeColor(byId(hexId).value);
+    byId(hexId).setAttribute("aria-invalid", value ? "false" : "true");
+    if (value) {
+      byId(hexId).value = value;
+      byId(colorId).value = value;
+    }
+  });
+});
+document.addEventListener("keydown", (event) => {
+  const editorOpen = byId("teamColorEditorBackdrop").classList.contains("show");
+  if (event.key === "Escape" && editorOpen) {
+    event.preventDefault();
+    closeTeamColorEditor();
+    return;
+  }
+  if (event.key === "Tab" && editorOpen) {
+    const controls = Array.from(byId("teamColorEditor").querySelectorAll(
+      'button:not([disabled]),input:not([disabled]),summary,[href],[tabindex]:not([tabindex="-1"])'
+    )).filter((element) => element.getClientRects().length > 0);
+    if (!controls.length) return;
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 });
 
 window.addEventListener("offline", () => {

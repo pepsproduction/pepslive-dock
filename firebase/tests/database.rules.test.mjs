@@ -83,6 +83,14 @@ function scheduleItem(overrides = {}) {
     matchId: 'M-001',
     teamAName: 'Team A',
     teamBName: 'Team B',
+    teamAKey: 't_team_a',
+    teamBKey: 't_team_b',
+    logoA: 'A1',
+    logoB: 'B1',
+    teamAPrimaryColor: '#FF3366',
+    teamASecondaryColor: '#FFFFFF',
+    teamBPrimaryColor: '#3366FF',
+    teamBSecondaryColor: '#000000',
     scoreA: 0,
     scoreB: 0,
     hasScore: false,
@@ -112,6 +120,36 @@ function scheduleSnapshot(overrides = {}) {
   };
 }
 
+function teamColorProfile(overrides = {}) {
+  return {
+    teamKey: 't_team_a',
+    teamName: 'Team A',
+    logoRef: 'A1',
+    primaryColor: '#FF3366',
+    secondaryColor: '#FFFFFF',
+    sheetPrimaryColor: '#AA0000',
+    sheetSecondaryColor: '#111111',
+    source: 'google',
+    revision: 1,
+    updatedAt: SEEDED_AT,
+    ...overrides,
+  };
+}
+
+function logoAsset(overrides = {}) {
+  return {
+    logoKey: 'l_000',
+    logoRef: 'A1',
+    fileName: 'A1.png',
+    mime: 'image/webp',
+    bytes: 9,
+    dataUrl: 'data:image/webp;base64,AAAAAAAAAAAA',
+    revision: 1,
+    updatedAt: SEEDED_AT,
+    ...overrides,
+  };
+}
+
 function roomFixture({
   ownerUid = OWNER_UID,
   roomCode = ROOM_CODE,
@@ -119,6 +157,8 @@ function roomFixture({
   current = {},
   meta = {},
   schedule,
+  teamColors,
+  logoAssets,
   matches,
   audit,
 } = {}) {
@@ -140,6 +180,8 @@ function roomFixture({
   };
 
   if (schedule) room.schedule = schedule;
+  if (teamColors) room.teamColors = teamColors;
+  if (logoAssets) room.logoAssets = logoAssets;
   if (matches) room.matches = matches;
   if (audit) room.audit = audit;
   return room;
@@ -250,6 +292,8 @@ test('authenticated viewer reads only public child paths', async () => {
   const eventId = 'op_public_001';
   await seedRoom({
     schedule: scheduleSnapshot(),
+    teamColors: { t_team_a: teamColorProfile() },
+    logoAssets: { l_000: logoAsset() },
     matches: { [eventId]: historyEntry(eventId) },
     audit: { [eventId]: auditEntry(eventId) },
   });
@@ -257,6 +301,8 @@ test('authenticated viewer reads only public child paths', async () => {
 
   await assertSucceeds(get(ref(db, `${roomPath()}/current`)));
   await assertSucceeds(get(ref(db, `${roomPath()}/schedule`)));
+  await assertSucceeds(get(ref(db, `${roomPath()}/teamColors`)));
+  await assertSucceeds(get(ref(db, `${roomPath()}/logoAssets`)));
   await assertSucceeds(get(ref(db, `${roomPath()}/matches`)));
   for (const field of [
     'publicView',
@@ -285,6 +331,8 @@ test('private room is invisible to a viewer but readable by its owner at child p
   await seedRoom({
     publicView: false,
     schedule: scheduleSnapshot(),
+    teamColors: { t_team_a: teamColorProfile() },
+    logoAssets: { l_000: logoAsset() },
     matches: { [eventId]: historyEntry(eventId) },
     audit: { [eventId]: auditEntry(eventId) },
   });
@@ -292,12 +340,16 @@ test('private room is invisible to a viewer but readable by its owner at child p
   const viewerDb = dbFor(VIEWER_UID);
   await assertFails(get(ref(viewerDb, `${roomPath()}/current`)));
   await assertFails(get(ref(viewerDb, `${roomPath()}/schedule`)));
+  await assertFails(get(ref(viewerDb, `${roomPath()}/teamColors`)));
+  await assertFails(get(ref(viewerDb, `${roomPath()}/logoAssets`)));
   await assertFails(get(ref(viewerDb, `${roomPath()}/matches`)));
   await assertFails(get(ref(viewerDb, `${roomPath()}/meta/publicView`)));
 
   const ownerDb = dbFor(OWNER_UID);
   await assertSucceeds(get(ref(ownerDb, `${roomPath()}/current`)));
   await assertSucceeds(get(ref(ownerDb, `${roomPath()}/schedule`)));
+  await assertSucceeds(get(ref(ownerDb, `${roomPath()}/teamColors`)));
+  await assertSucceeds(get(ref(ownerDb, `${roomPath()}/logoAssets`)));
   await assertSucceeds(get(ref(ownerDb, `${roomPath()}/matches`)));
   await assertSucceeds(get(ref(ownerDb, `${roomPath()}/audit`)));
   await assertSucceeds(get(ref(ownerDb, `${roomPath()}/meta/ownerUid`)));
@@ -546,6 +598,153 @@ test('owner replaces the public schedule while schema, revision, and room status
     revision: 4,
     updatedAt: Date.now(),
   })));
+});
+
+test('owner manages the Firebase team color database while viewers remain read-only', async () => {
+  await seedRoom({ schedule: scheduleSnapshot() });
+  const ownerDb = dbFor(OWNER_UID);
+  const viewerDb = dbFor(VIEWER_UID);
+  const otherDb = dbFor(OTHER_UID);
+  const unauthDb = testEnv.unauthenticatedContext().database();
+  const profileRef = ref(ownerDb, `${roomPath()}/teamColors/t_team_a`);
+  const first = { ...teamColorProfile(), updatedAt: serverTimestamp() };
+
+  await assertFails(set(ref(viewerDb, `${roomPath()}/teamColors/t_team_a`), first));
+  await assertFails(set(ref(otherDb, `${roomPath()}/teamColors/t_team_a`), first));
+  await assertFails(set(ref(unauthDb, `${roomPath()}/teamColors/t_team_a`), first));
+  await assertSucceeds(set(profileRef, first));
+
+  await assertSucceeds(set(profileRef, {
+    ...teamColorProfile({
+      primaryColor: '#ABCDEF',
+      secondaryColor: '#222222',
+      source: 'viewer',
+      revision: 2,
+    }),
+    updatedAt: serverTimestamp(),
+  }));
+  await assertSucceeds(set(profileRef, {
+    ...teamColorProfile({
+      primaryColor: '#AA0000',
+      secondaryColor: '#111111',
+      source: 'google',
+      revision: 3,
+    }),
+    updatedAt: serverTimestamp(),
+  }));
+  await assertSucceeds(set(profileRef, {
+    ...teamColorProfile({
+      sheetPrimaryColor: '#123456',
+      sheetSecondaryColor: '#654321',
+      revision: 4,
+    }),
+    updatedAt: serverTimestamp(),
+  }));
+
+  const invalidProfiles = [
+    teamColorProfile({ primaryColor: '#FFF', revision: 5 }),
+    teamColorProfile({ source: 'apps-script', revision: 5 }),
+    teamColorProfile({ revision: 6 }),
+    teamColorProfile({ teamName: 'Tampered', revision: 5 }),
+    teamColorProfile({ unexpected: true, revision: 5 }),
+  ];
+  for (const profile of invalidProfiles) {
+    await assertFails(set(profileRef, { ...profile, updatedAt: serverTimestamp() }));
+  }
+  await assertFails(remove(profileRef));
+});
+
+test('local logo assets are public-readable but owner-only, raster-only, and size-capped', async () => {
+  await seedRoom();
+  const ownerDb = dbFor(OWNER_UID);
+  const viewerDb = dbFor(VIEWER_UID);
+  const assetRef = ref(ownerDb, `${roomPath()}/logoAssets/l_000`);
+  const first = { ...logoAsset(), updatedAt: serverTimestamp() };
+
+  await assertFails(set(ref(viewerDb, `${roomPath()}/logoAssets/l_000`), first));
+  await assertSucceeds(set(assetRef, first));
+  await assertSucceeds(get(ref(viewerDb, `${roomPath()}/logoAssets/l_000`)));
+  await assertSucceeds(set(assetRef, {
+    ...logoAsset({
+      dataUrl: 'data:image/png;base64,AAAAAAAAAAAA',
+      mime: 'image/png',
+      revision: 2,
+    }),
+    updatedAt: serverTimestamp(),
+  }));
+
+  const invalidAssets = [
+    logoAsset({ mime: 'image/svg+xml', dataUrl: 'data:image/svg+xml;base64,AAAA', revision: 3 }),
+    logoAsset({ bytes: 52_001, revision: 3 }),
+    logoAsset({ dataUrl: 'data:text/html;base64,AAAA', revision: 3 }),
+    logoAsset({ revision: 4 }),
+    logoAsset({ unexpected: true, revision: 3 }),
+  ];
+  for (const asset of invalidAssets) {
+    await assertFails(set(assetRef, { ...asset, updatedAt: serverTimestamp() }));
+  }
+  await assertFails(remove(ref(viewerDb, `${roomPath()}/logoAssets/l_000`)));
+  await assertSucceeds(remove(assetRef));
+
+  const cappedCatalog = Object.fromEntries(Array.from({ length: 128 }, (_, index) => {
+    const key = `l_${String(index).padStart(3, '0')}`;
+    return [key, logoAsset({ logoKey: key, logoRef: `ASSET-${index}`, fileName: `${index}.webp` })];
+  }));
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await set(ref(context.database(), `${roomPath()}/logoAssets`), cappedCatalog);
+  });
+  const overflow = logoAsset({
+    logoKey: 'l_128',
+    logoRef: 'OVERFLOW',
+    fileName: 'overflow.webp',
+  });
+  await assertFails(set(ref(ownerDb, `${roomPath()}/logoAssets/l_128`), {
+    ...overflow,
+    updatedAt: serverTimestamp(),
+  }));
+  await assertSucceeds(remove(ref(ownerDb, `${roomPath()}/logoAssets/l_000`)));
+  await assertSucceeds(set(ref(ownerDb, `${roomPath()}/logoAssets/l_000`), {
+    ...logoAsset({ logoRef: 'REPLACEMENT', fileName: 'replacement.webp' }),
+    updatedAt: serverTimestamp(),
+  }));
+});
+
+test('closed Firebase room rejects team color and logo asset changes', async () => {
+  await seedRoom({
+    meta: { status: 'CLOSED' },
+    teamColors: { t_team_a: teamColorProfile() },
+    logoAssets: { l_000: logoAsset() },
+  });
+  const ownerDb = dbFor(OWNER_UID);
+  await assertFails(set(ref(ownerDb, `${roomPath()}/teamColors/t_team_a`), {
+    ...teamColorProfile({ primaryColor: '#ABCDEF', revision: 2 }),
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(set(ref(ownerDb, `${roomPath()}/logoAssets/l_000`), {
+    ...logoAsset({ revision: 2 }),
+    updatedAt: serverTimestamp(),
+  }));
+  await assertFails(remove(ref(ownerDb, `${roomPath()}/logoAssets/l_000`)));
+});
+
+test('owner clears local logo payloads before closing a room', async () => {
+  await seedRoom({
+    logoAssets: {
+      l_000: logoAsset(),
+      l_001: logoAsset({ logoKey: 'l_001', logoRef: 'A2', fileName: 'A2.webp' }),
+    },
+  });
+  const ownerDb = dbFor(OWNER_UID);
+  const assetsRef = ref(ownerDb, `${roomPath()}/logoAssets`);
+  await assertSucceeds(update(ref(ownerDb, roomPath()), {
+    logoAssets: null,
+    'meta/status': 'CLOSED',
+    'meta/updatedAt': serverTimestamp(),
+  }));
+  const cleared = await assertSucceeds(get(assetsRef));
+  assert.equal(cleared.exists(), false);
+  const status = await assertSucceeds(get(ref(ownerDb, `${roomPath()}/meta/status`)));
+  assert.equal(status.val(), 'CLOSED');
 });
 
 test('score, clock, revision, sport, color, and status validators reject bad values', async () => {

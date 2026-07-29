@@ -3,9 +3,16 @@ import test from 'node:test';
 
 import { formatResultText, formatTeamsText } from '../assets/export.js';
 import {
+  MAX_LOGO_DATA_URL_LENGTH,
   MAX_SCHEDULE_ITEMS,
+  logoAssetsFingerprint,
+  normalizeLogoAssets,
   normalizeSchedule,
+  normalizeTeamColors,
   scheduleFingerprint,
+  safeLogoKey,
+  safeTeamKey,
+  teamColorsFingerprint,
 } from '../assets/room-model.js';
 
 test('schedule keeps Sheet order, Thai names, leading-zero IDs, and finished scores', () => {
@@ -119,4 +126,118 @@ test('copy formats stay concise for the Final Score workflow', () => {
   const match = { teamAName: 'ทีมเหนือ', teamBName: 'ทีมใต้', scoreA: 4, scoreB: 3 };
   assert.equal(formatTeamsText(match), 'ทีมเหนือ vs ทีมใต้');
   assert.equal(formatResultText(match), 'ทีมเหนือ 4-3 ทีมใต้');
+});
+
+test('schedule publishes team keys, logo references, and normalized Sheet colors', () => {
+  const schedule = normalizeSchedule({
+    source: 'google',
+    rows: [{
+      MatchID: '021',
+      TeamA: 'Peps United',
+      LogoA: 'PEPS-A',
+      TeamA_PrimaryColor: '#aa11ff',
+      TeamA_SecondaryColor: 'invalid',
+      TeamB: 'Bangkok FC',
+      LogoB: 'BKK.png',
+      TeamB_PrimaryColor: '#0022CC',
+      TeamB_SecondaryColor: '#ffffff',
+    }],
+  });
+  const match = schedule.items.i_000;
+  assert.equal(match.teamAKey, safeTeamKey('Peps United', 'PEPS-A'));
+  assert.equal(match.teamBKey, safeTeamKey('Bangkok FC', 'BKK.png'));
+  assert.equal(match.logoA, 'PEPS-A');
+  assert.equal(match.logoB, 'BKK.png');
+  assert.equal(match.teamAPrimaryColor, '#AA11FF');
+  assert.equal(match.teamASecondaryColor, '');
+  assert.equal(match.teamBPrimaryColor, '#0022CC');
+  assert.equal(match.teamBSecondaryColor, '#FFFFFF');
+});
+
+test('team color database is seeded once per team and retains Sheet defaults', () => {
+  const schedule = normalizeSchedule({
+    source: 'excel',
+    rows: [
+      {
+        MatchID: '031',
+        TeamA: 'Same Team',
+        LogoA: 'same',
+        TeamA_PrimaryColor: '#123456',
+        TeamB: 'First Rival',
+      },
+      {
+        MatchID: '032',
+        TeamA: 'Second Rival',
+        TeamB: 'Same Team',
+        LogoB: 'same',
+        TeamB_PrimaryColor: '#654321',
+      },
+    ],
+  });
+  const colors = normalizeTeamColors(schedule);
+  const key = safeTeamKey('Same Team', 'same');
+  assert.equal(colors.count, 3);
+  assert.equal(colors.items[key].primaryColor, '#123456');
+  assert.equal(colors.items[key].sheetPrimaryColor, '#123456');
+  assert.equal(colors.items[key].source, 'excel');
+  assert.match(teamColorsFingerprint(colors), /^c_[0-9A-F]{8}$/);
+});
+
+test('local logo assets accept only capped raster data URLs and fingerprint deterministically', () => {
+  const accepted = normalizeLogoAssets({
+    assets: [{
+      logoRef: 'PEPS-A',
+      fileName: 'PEPS-A.svg',
+      dataUrl: 'data:image/webp;base64,AAAAAAAAAAAA',
+      bytes: 9,
+    }],
+  });
+  const key = 'l_000';
+  assert.equal(accepted.count, 1);
+  assert.equal(accepted.items[key].mime, 'image/webp');
+  assert.equal(accepted.items[key].dataUrl, 'data:image/webp;base64,AAAAAAAAAAAA');
+  assert.match(logoAssetsFingerprint(accepted), /^a_[0-9A-F]{8}$/);
+
+  const stableSlots = normalizeLogoAssets({
+    assets: [
+      {
+        slot: 126,
+        logoRef: 'LIVE-A',
+        fileName: 'LIVE-A.webp',
+        dataUrl: 'data:image/webp;base64,AAAAAAAAAAAA',
+        bytes: 9,
+      },
+      {
+        slot: 127,
+        logoRef: 'LIVE-B',
+        fileName: 'LIVE-B.webp',
+        dataUrl: 'data:image/webp;base64,BBBBBBBBBBBB',
+        bytes: 9,
+      },
+    ],
+  });
+  assert.equal(stableSlots.items.l_126.logoRef, 'LIVE-A');
+  assert.equal(stableSlots.items.l_127.logoRef, 'LIVE-B');
+
+  const rejected = normalizeLogoAssets({
+    assets: [
+      { logoRef: 'svg', dataUrl: 'data:image/svg+xml;base64,AAAA', bytes: 3 },
+      { logoRef: 'huge', dataUrl: `data:image/png;base64,${'A'.repeat(MAX_LOGO_DATA_URL_LENGTH)}`, bytes: 3 },
+    ],
+  });
+  assert.equal(rejected.count, 0);
+});
+
+test('team and logo keys stay distinct when long Thai labels share the same prefix', () => {
+  const teamPrefix = 'ทีมเยาวชนจังหวัดเชียงใหม่'.repeat(3);
+  const logoPrefix = 'โลโก้การแข่งขันกีฬาประจำจังหวัด'.repeat(8);
+  const firstTeamKey = safeTeamKey(`${teamPrefix}หนึ่ง`, 'ตราสโมสรเดียวกัน');
+  const secondTeamKey = safeTeamKey(`${teamPrefix}สอง`, 'ตราสโมสรเดียวกัน');
+  const firstLogoKey = safeLogoKey(`${logoPrefix}หนึ่ง`);
+  const secondLogoKey = safeLogoKey(`${logoPrefix}สอง`);
+
+  assert.notEqual(firstTeamKey, secondTeamKey);
+  assert.notEqual(firstLogoKey, secondLogoKey);
+  assert.match(firstTeamKey, /^t_[A-Za-z0-9_-]{1,96}$/);
+  assert.match(firstLogoKey, /^l_[A-Za-z0-9_-]{1,96}$/);
 });

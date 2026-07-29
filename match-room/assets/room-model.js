@@ -1,6 +1,8 @@
 export const ROOM_ROOT = "matchRoomsV1";
 export const ROOM_CODE_PATTERN = /^\d{6}$/;
 export const MAX_SCHEDULE_ITEMS = 1000;
+export const MAX_LOGO_ASSETS = 128;
+export const MAX_LOGO_DATA_URL_LENGTH = 70000;
 
 const ALLOWED_SPORTS = new Set(["football", "basket3", "basket5"]);
 const ALLOWED_CLOCK_MODES = new Set(["up", "down"]);
@@ -56,6 +58,42 @@ export function safeEventKey(eventId) {
   return `e_${encodeKey(normalized || `${Date.now()}`).slice(0, 108)}`;
 }
 
+function normalizedIdentity(value, maxLength = 160) {
+  return text(value, maxLength)
+    .normalize("NFKC")
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase("th-TH");
+}
+
+function identityHash(value) {
+  let first = 0xdeadbeef;
+  let second = 0x41c6ce57;
+  const normalized = String(value || "");
+  for (let index = 0; index < normalized.length; index += 1) {
+    const code = normalized.charCodeAt(index);
+    first = Math.imul(first ^ code, 2654435761);
+    second = Math.imul(second ^ code, 1597334677);
+  }
+  first = Math.imul(first ^ (first >>> 16), 2246822507) ^ Math.imul(second ^ (second >>> 13), 3266489909);
+  second = Math.imul(second ^ (second >>> 16), 2246822507) ^ Math.imul(first ^ (first >>> 13), 3266489909);
+  return `${(first >>> 0).toString(16).padStart(8, "0")}${(second >>> 0).toString(16).padStart(8, "0")}`.toUpperCase();
+}
+
+function compactIdentityKey(prefix, identity) {
+  const encoded = encodeKey(identity);
+  return `${prefix}_${encoded.slice(0, 72)}_${identityHash(identity)}`;
+}
+
+export function safeTeamKey(teamName, logoRef = "") {
+  const identity = `${normalizedIdentity(teamName, 100)}\u001f${normalizedIdentity(logoRef, 500)}`;
+  return compactIdentityKey("t", identity || "team");
+}
+
+export function safeLogoKey(logoRef) {
+  const identity = normalizedIdentity(logoRef, 500);
+  return identity ? compactIdentityKey("l", identity) : "";
+}
+
 function firstValue(input, ...keys) {
   for (const key of keys) {
     if (input && input[key] !== undefined && input[key] !== null) return input[key];
@@ -90,6 +128,8 @@ export function normalizeScheduleItem(input = {}, order = 0) {
   const hasResult = hasScore && (matchStatus === "FINISHED" || matchStatus === "FULL TIME");
   const teamAName = text(firstValue(input, "teamAName", "TeamA"), 100, "TEAM A");
   const teamBName = text(firstValue(input, "teamBName", "TeamB"), 100, "TEAM B");
+  const logoA = text(firstValue(input, "logoA", "LogoA"), 500);
+  const logoB = text(firstValue(input, "logoB", "LogoB"), 500);
   const suppliedWinner = text(firstValue(input, "winner", "Winner"), 100);
   const winner = hasResult ? (suppliedWinner || (scoreA > scoreB ? teamAName : scoreB > scoreA ? teamBName : "DRAW")) : "";
 
@@ -99,6 +139,14 @@ export function normalizeScheduleItem(input = {}, order = 0) {
     matchId,
     teamAName,
     teamBName,
+    teamAKey: safeTeamKey(teamAName, logoA),
+    teamBKey: safeTeamKey(teamBName, logoB),
+    logoA,
+    logoB,
+    teamAPrimaryColor: color(firstValue(input, "teamAPrimaryColor", "TeamA_PrimaryColor")),
+    teamASecondaryColor: color(firstValue(input, "teamASecondaryColor", "TeamA_SecondaryColor")),
+    teamBPrimaryColor: color(firstValue(input, "teamBPrimaryColor", "TeamB_PrimaryColor")),
+    teamBSecondaryColor: color(firstValue(input, "teamBSecondaryColor", "TeamB_SecondaryColor")),
     scoreA,
     scoreB,
     hasScore,
@@ -138,6 +186,131 @@ export function scheduleFingerprint(schedule = {}) {
     hash = Math.imul(hash, 0x01000193);
   }
   return `f_${(hash >>> 0).toString(16).padStart(8, "0").toUpperCase()}`;
+}
+
+function fingerprint(value, prefix) {
+  const canonical = JSON.stringify(value);
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < canonical.length; index += 1) {
+    hash ^= canonical.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `${prefix}_${(hash >>> 0).toString(16).padStart(8, "0").toUpperCase()}`;
+}
+
+export function normalizeTeamColors(schedule = {}, current = {}) {
+  const items = {};
+  const source = schedule.source === "excel" ? "excel" : schedule.source === "google" ? "google" : "dock";
+
+  function addTeam(teamKey, teamName, logoRef, primaryColor, secondaryColor, defaults) {
+    if (!teamKey || items[teamKey]) return;
+    const sheetPrimaryColor = color(primaryColor);
+    const sheetSecondaryColor = color(secondaryColor);
+    items[teamKey] = {
+      teamKey,
+      teamName: text(teamName, 100, "TEAM"),
+      logoRef: text(logoRef, 500),
+      primaryColor: sheetPrimaryColor || defaults.primary,
+      secondaryColor: sheetSecondaryColor || defaults.secondary,
+      sheetPrimaryColor,
+      sheetSecondaryColor,
+      source: sheetPrimaryColor || sheetSecondaryColor ? source : "dock"
+    };
+  }
+
+  for (const item of Object.values(schedule.items || {})) {
+    if (!item || typeof item !== "object") continue;
+    addTeam(
+      item.teamAKey || safeTeamKey(item.teamAName, item.logoA),
+      item.teamAName,
+      item.logoA,
+      item.teamAPrimaryColor,
+      item.teamASecondaryColor,
+      { primary: "#FF6A00", secondary: "#111111" }
+    );
+    addTeam(
+      item.teamBKey || safeTeamKey(item.teamBName, item.logoB),
+      item.teamBName,
+      item.logoB,
+      item.teamBPrimaryColor,
+      item.teamBSecondaryColor,
+      { primary: "#0057FF", secondary: "#FFFFFF" }
+    );
+  }
+
+  const currentTeams = [
+    {
+      key: safeTeamKey(current.teamAName, current.logoA),
+      primary: color(current.teamAPrimaryColor),
+      secondary: color(current.teamASecondaryColor)
+    },
+    {
+      key: safeTeamKey(current.teamBName, current.logoB),
+      primary: color(current.teamBPrimaryColor),
+      secondary: color(current.teamBSecondaryColor)
+    }
+  ];
+  for (const currentTeam of currentTeams) {
+    const item = items[currentTeam.key];
+    if (!item || item.sheetPrimaryColor || item.sheetSecondaryColor) continue;
+    if (currentTeam.primary) item.primaryColor = currentTeam.primary;
+    if (currentTeam.secondary) item.secondaryColor = currentTeam.secondary;
+  }
+
+  return { version: 1, count: Object.keys(items).length, items };
+}
+
+export function teamColorsFingerprint(teamColors = {}) {
+  return fingerprint({
+    version: Number(teamColors.version || 1),
+    count: Number(teamColors.count || 0),
+    items: teamColors.items || {}
+  }, "c");
+}
+
+function validLogoDataUrl(value) {
+  return /^data:image\/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=\r\n]+$/i.test(value);
+}
+
+export function normalizeLogoAssets(input = {}) {
+  const source = Array.isArray(input) ? input : Array.isArray(input.assets) ? input.assets : [];
+  const items = {};
+  const seenRefs = new Set();
+  const usedSlots = new Set();
+  for (const asset of source) {
+    if (Object.keys(items).length >= MAX_LOGO_ASSETS) break;
+    const logoRef = text(asset?.logoRef, 500);
+    const refKey = safeLogoKey(logoRef);
+    const dataUrl = String(asset?.dataUrl || "").trim();
+    if (!refKey || seenRefs.has(refKey) || dataUrl.length <= 30 || !validLogoDataUrl(dataUrl) || dataUrl.length > MAX_LOGO_DATA_URL_LENGTH) continue;
+    seenRefs.add(refKey);
+    const requestedSlot = Number(asset?.slot);
+    let slot = Number.isInteger(requestedSlot) && requestedSlot >= 0 && requestedSlot < MAX_LOGO_ASSETS && !usedSlots.has(requestedSlot)
+      ? requestedSlot
+      : 0;
+    while (usedSlots.has(slot) && slot < MAX_LOGO_ASSETS) slot += 1;
+    if (slot >= MAX_LOGO_ASSETS) continue;
+    usedSlots.add(slot);
+    const logoKey = `l_${String(slot).padStart(3, "0")}`;
+    const mimeMatch = dataUrl.match(/^data:(image\/(?:png|jpeg|webp));base64,/i);
+    items[logoKey] = {
+      logoKey,
+      logoRef,
+      fileName: text(asset?.fileName, 180),
+      mime: String(mimeMatch?.[1] || "image/webp").toLowerCase(),
+      bytes: integer(asset?.bytes, 1, 52000, Math.max(1, Math.floor((dataUrl.length * 3) / 4))),
+      dataUrl
+    };
+  }
+  return { version: 1, count: Object.keys(items).length, items };
+}
+
+export function logoAssetsFingerprint(logoAssets = {}) {
+  return fingerprint({
+    version: Number(logoAssets.version || 1),
+    count: Number(logoAssets.count || 0),
+    items: logoAssets.items || {}
+  }, "a");
 }
 
 export function normalizeMeta(input, timestamps = {}) {

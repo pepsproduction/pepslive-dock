@@ -9,7 +9,7 @@ GitHub-ready OBS Dock สำหรับควบคุมคะแนนกี�
 - คลิกจำนวนออนไลน์เพื่อดู Popup รายชื่อผู้ใช้งานทั้งหมด
 - โหลดแมตช์จาก Google Sheet หรือไฟล์ Excel `.xlsx`
 - เลือกบันทึกผลผ่าน Google Apps Script หรือ Firebase Realtime Database ได้อย่างชัดเจน
-- มี Match Room Viewer สำหรับดูตารางทุกคู่และผลแบบเรียลไทม์
+- มี Match Room Viewer สำหรับดูตารางทุกคู่ โลโก้จริง สีทีม และผลแบบเรียลไทม์
 - เชื่อม OBS WebSocket
 - สร้าง Source ราย Tag ด้วยปุ่ม `+`
 - รองรับ Team Color Tags
@@ -42,6 +42,15 @@ Google Sheet และ Excel ใช้เป็นแหล่งรายชื
 - `Firebase Realtime Database` — แสดงเฉพาะการตั้งค่า Firebase; Google Sheet/Excel ใช้เป็นต้นทางรายชื่อ และ Save/Finish จะส่งผลเข้า Match Room Viewer แบบเรียลไทม์
 
 หลังเปลี่ยนระบบ หน้าจะ reload เพื่อแยกสถานะของทั้งสองโหมดออกจากกัน หากใช้ Firebase ต้องเปิดผ่าน `http://127.0.0.1`, `localhost` หรือ GitHub Pages จากนั้นไปหน้า `04 ระบบ` แล้วกด `สร้างห้อง` ก่อน Save/Finish; การเปิดไฟล์ด้วย `file://` ใช้ Firebase ไม่ได้
+
+### Firebase Match Room: สีทีมและโลโก้
+
+- ตารางการแข่งขันทุกคู่แสดงโลโก้ สีหลัก และปุ่ม `Copy ทีม` / `Copy ผลแข่ง`
+- ผู้ชมทั่วไปยังเป็น `READ-ONLY LIVE ROOM`
+- Browser profile เดียวกับ Host จะเป็น `OWNER LIVE ROOM` และแก้ `PEPS_Team_PrimaryColor` / สีรองของทีมได้
+- สีที่บันทึกจะใช้กับทีมนั้นทุกคู่ และอัปเดต Dock LIVE SCORE กับ OBS Color Source แบบเรียลไทม์
+- ปุ่ม `คืนค่าจาก Sheet` ใช้ค่าต้นทางครั้งแรกที่ทีมนั้นถูกส่งจาก Google Sheet หรือ Excel เข้า Room
+- ฐานสีนี้อยู่ใน Firebase Match Room เท่านั้น ไม่เรียก Webhook และไม่เขียนกลับ Google Apps Script
 
 ## Google Sheet Schema
 
@@ -148,13 +157,22 @@ logos/A1.svg
 ```
 
 ### Local Folder Mode
-ใช้สำหรับเครื่องงานจริงที่ต้องการกรอก path เช่น:
+
+1. ไปที่ `Settings > Logos`
+2. กด `เลือกโฟลเดอร์โลโก้` แล้วเลือกโฟลเดอร์ใดก็ได้
+3. ระบบจะย่อภาพและจำภาพย่อใน Browser เครื่องนี้ด้วย IndexedDB
+4. Dock ใช้ภาพจริงทันที และ Firebase Match Room ส่งเฉพาะภาพย่อของโลโก้ที่ตารางเรียกใช้ให้ Viewer
+5. ถ้าสิทธิ์โฟลเดอร์หมด ให้กด `เชื่อมโฟลเดอร์เดิม`
+
+ชื่อไฟล์จับคู่กับ `LogoA` / `LogoB` โดยไม่สนตัวพิมพ์และนามสกุล และรองรับ path โฟลเดอร์ย่อยที่ระบุใน Sheet
+
+สำหรับ OBS Image Source เท่านั้น Browser อ่าน path `C:\` จริงไม่ได้ จึงกรอก `OBS Folder Path` ใน `ตั้งค่าขั้นสูง` เพิ่มอีกหนึ่งครั้ง เช่น:
 
 ```text
 C:\\PepsLive\\logos\\
 ```
 
-> หมายเหตุ: GitHub Pages ไม่สามารถอ่าน path ในเครื่องได้เต็มแบบโปรแกรม desktop จึงแนะนำให้ใช้ `logos/` ใน repo หรือ URL สำหรับงานผ่านเว็บ
+> หมายเหตุ: path ของเครื่องและชื่อโฟลเดอร์ส่วนตัวไม่ถูกส่งขึ้น Firebase; ผู้ชมต่างเครื่องได้รับเฉพาะภาพย่อ PNG/JPEG/WebP ที่จำกัดขนาด
 
 ## Stream Deck
 
@@ -198,14 +216,14 @@ docs/OBS_SOURCES.md
 1. วางโลโก้ไว้ในเครื่อง เช่น C:/PepsLive/logos/A1.png
 2. ใน Google Sheet ใส่ LogoA = A1 และ LogoB = A2
 3. Settings > Logos
-4. Logo Mode = Local Folder
-5. Local Folder Path = C:/PepsLive/logos/
-6. กด บันทึกค่าโลโก้
-7. กด ซ่อม Logo Image Sources
-8. กด Sync OBS
+4. กด `เลือกโฟลเดอร์โลโก้`
+5. เปิด `ตั้งค่าขั้นสูงสำหรับ GitHub และ OBS`
+6. ใส่ `OBS Folder Path = C:/PepsLive/logos/`
+7. กด `บันทึกค่าขั้นสูง`
+8. กด `ซ่อม OBS Logo Sources` แล้วกด Sync OBS
 ```
 
-ปุ่มเลือกโฟลเดอร์ใช้สำหรับแสดงตัวอย่างใน Dock เท่านั้น ถ้าจะให้ OBS Image Source แสดงผล ต้องกรอก `Local Folder Path` จริง
+ปุ่มเลือกโฟลเดอร์ใช้กับ Dock และ Firebase Match Room ได้จริง ส่วน OBS Image Source ยังต้องกรอก `OBS Folder Path` จริง
 
 
 ## หมายเหตุโลโก้ใน Dock และ OBS
@@ -217,7 +235,7 @@ docs/OBS_SOURCES.md
 
 ## Fixed9: Dock Logo Preview
 
-ถ้า OBS แสดงโลโก้แล้วแต่หน้า Dock ไม่แสดง ให้ตรวจว่าไฟล์โลโก้อยู่ใน `logos/` บน GitHub หรือกดเลือกโฟลเดอร์โลโก้ใน Settings > Logos เพื่อให้ Dock ใช้ไฟล์นั้น preview ได้ใน session ปัจจุบัน. ระบบจะลองนามสกุลอัตโนมัติ เช่น `.png`, `.jpg`, `.webp`, `.svg`.
+ถ้า OBS แสดงโลโก้แล้วแต่หน้า Dock ไม่แสดง ให้ตรวจว่าไฟล์โลโก้อยู่ใน `logos/` บน GitHub หรือกดเลือกโฟลเดอร์โลโก้ใน Settings > Logos ระบบจะจำภาพย่อไว้ใน Browser และลองนามสกุลอัตโนมัติ เช่น `.png`, `.jpg`, `.webp`, `.svg`.
 
 OBS ยังใช้ Local Folder Path จริง เช่น `C:/PepsLive/logos/` สำหรับ Image Source เหมือนเดิม.
 

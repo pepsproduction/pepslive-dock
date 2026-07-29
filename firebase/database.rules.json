@@ -167,7 +167,7 @@
           },
           "items": {
             "$itemKey": {
-              ".validate": "$itemKey.matches(/^i_[0-9]{3}$/) && newData.hasChildren(['order', 'matchKey', 'matchId', 'teamAName', 'teamBName', 'scoreA', 'scoreB', 'hasScore', 'hasResult', 'matchStatus', 'winner', 'label1', 'label2', 'label3', 'label4', 'label5']) && (newData.child('hasResult').val() === false || (newData.child('hasScore').val() === true && newData.child('matchStatus').val().matches(/^(FINISHED|FULL TIME)$/)))",
+              ".validate": "$itemKey.matches(/^i_[0-9]{3}$/) && newData.hasChildren(['order', 'matchKey', 'matchId', 'teamAName', 'teamBName', 'teamAKey', 'teamBKey', 'logoA', 'logoB', 'teamAPrimaryColor', 'teamASecondaryColor', 'teamBPrimaryColor', 'teamBSecondaryColor', 'scoreA', 'scoreB', 'hasScore', 'hasResult', 'matchStatus', 'winner', 'label1', 'label2', 'label3', 'label4', 'label5']) && (newData.child('hasResult').val() === false || (newData.child('hasScore').val() === true && newData.child('matchStatus').val().matches(/^(FINISHED|FULL TIME)$/)))",
               "order": {
                 ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 999"
               },
@@ -182,6 +182,30 @@
               },
               "teamBName": {
                 ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100"
+              },
+              "teamAKey": {
+                ".validate": "newData.isString() && newData.val().matches(/^t_[A-Za-z0-9_-]{1,96}$/)"
+              },
+              "teamBKey": {
+                ".validate": "newData.isString() && newData.val().matches(/^t_[A-Za-z0-9_-]{1,96}$/)"
+              },
+              "logoA": {
+                ".validate": "newData.isString() && newData.val().length <= 500"
+              },
+              "logoB": {
+                ".validate": "newData.isString() && newData.val().length <= 500"
+              },
+              "teamAPrimaryColor": {
+                ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^#[0-9A-Fa-f]{6}$/))"
+              },
+              "teamASecondaryColor": {
+                ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^#[0-9A-Fa-f]{6}$/))"
+              },
+              "teamBPrimaryColor": {
+                ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^#[0-9A-Fa-f]{6}$/))"
+              },
+              "teamBSecondaryColor": {
+                ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^#[0-9A-Fa-f]{6}$/))"
               },
               "scoreA": {
                 ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 0 && newData.val() <= 999"
@@ -223,6 +247,81 @@
           },
           "$other": {
             ".validate": false
+          }
+        },
+        "teamColors": {
+          ".read": "auth !== null && (data.parent().child('meta/ownerUid').val() === auth.uid || data.parent().child('meta/publicView').val() === true)",
+          "$teamKey": {
+            ".write": "auth !== null && data.parent().parent().child('meta/ownerUid').val() === auth.uid && data.parent().parent().child('meta/status').val() === 'OPEN' && newData.exists()",
+            ".validate": "newData.exists() && $teamKey.matches(/^t_[A-Za-z0-9_-]{1,96}$/) && newData.hasChildren(['teamKey', 'teamName', 'logoRef', 'primaryColor', 'secondaryColor', 'sheetPrimaryColor', 'sheetSecondaryColor', 'source', 'revision', 'updatedAt']) && newData.child('teamKey').val() === $teamKey && ((!data.exists() && newData.child('revision').val() === 1) || (data.exists() && newData.child('revision').val() === data.child('revision').val() + 1))",
+            "teamKey": {
+              ".validate": "newData.isString() && newData.val() === $teamKey"
+            },
+            "teamName": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 100 && (!data.exists() || newData.val() === data.val())"
+            },
+            "logoRef": {
+              ".validate": "newData.isString() && newData.val().length <= 500 && (!data.exists() || newData.val() === data.val())"
+            },
+            "primaryColor": {
+              ".validate": "newData.isString() && newData.val().matches(/^#[0-9A-Fa-f]{6}$/)"
+            },
+            "secondaryColor": {
+              ".validate": "newData.isString() && newData.val().matches(/^#[0-9A-Fa-f]{6}$/)"
+            },
+            "sheetPrimaryColor": {
+              ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^#[0-9A-Fa-f]{6}$/))"
+            },
+            "sheetSecondaryColor": {
+              ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^#[0-9A-Fa-f]{6}$/))"
+            },
+            "source": {
+              ".validate": "newData.isString() && newData.val().matches(/^(google|excel|dock|viewer)$/)"
+            },
+            "revision": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 9007199254740991"
+            },
+            "updatedAt": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() === now && (!data.exists() || newData.val() >= data.val())"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "logoAssets": {
+          ".read": "auth !== null && (data.parent().child('meta/ownerUid').val() === auth.uid || data.parent().child('meta/publicView').val() === true)",
+          ".write": "auth !== null && data.parent().child('meta/ownerUid').val() === auth.uid && data.parent().child('meta/status').val() === 'OPEN' && !newData.exists()",
+          "$logoKey": {
+            ".write": "auth !== null && data.parent().parent().child('meta/ownerUid').val() === auth.uid && data.parent().parent().child('meta/status').val() === 'OPEN'",
+            ".validate": "newData.exists() && $logoKey.matches(/^l_(0[0-9][0-9]|1[01][0-9]|12[0-7])$/) && newData.hasChildren(['logoKey', 'logoRef', 'fileName', 'mime', 'bytes', 'dataUrl', 'revision', 'updatedAt']) && newData.child('logoKey').val() === $logoKey && ((!data.exists() && newData.child('revision').val() === 1) || (data.exists() && newData.child('revision').val() === data.child('revision').val() + 1))",
+            "logoKey": {
+              ".validate": "newData.isString() && newData.val() === $logoKey"
+            },
+            "logoRef": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500"
+            },
+            "fileName": {
+              ".validate": "newData.isString() && newData.val().length <= 180"
+            },
+            "mime": {
+              ".validate": "newData.isString() && newData.val().matches(/^image\\/(png|jpeg|webp)$/)"
+            },
+            "bytes": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 52000"
+            },
+            "dataUrl": {
+              ".validate": "newData.isString() && newData.val().length > 30 && newData.val().length <= 70000 && newData.val().matches(/^data:image\\/(png|jpeg|webp);base64,[A-Za-z0-9+\\/=]+$/)"
+            },
+            "revision": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() >= 1 && newData.val() <= 9007199254740991"
+            },
+            "updatedAt": {
+              ".validate": "newData.isNumber() && newData.val() % 1 === 0 && newData.val() === now && (!data.exists() || newData.val() >= data.val())"
+            },
+            "$other": {
+              ".validate": false
+            }
           }
         },
         "matches": {

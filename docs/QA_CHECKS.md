@@ -45,7 +45,7 @@
 ## Fixed8 Dock Logo Preview
 - OBS Image Source ยังใช้ `Logo Folder Path` จริง เช่น `C:/PepsLive/logos/`
 - หน้า Dock preview จะพยายามแสดงจากลำดับนี้:
-  1. ไฟล์ที่เลือกจากปุ่มเลือกโฟลเดอร์ใน session ปัจจุบัน
+  1. ภาพย่อจากโฟลเดอร์ที่เลือกและจำไว้ใน IndexedDB
   2. URL หรือ Data URL จาก logoMap
   3. Repo/Base Path เช่น `logos/A1.png`
   4. `logos/default.svg` ถ้าโหลดไม่สำเร็จ
@@ -58,3 +58,17 @@
 - `renderMatch()` uses `setDockLogoImage()` for `logoA` and `logoB`.
 - `logoObsFile()` remains separated from Dock preview and still returns OBS Image Source path.
 - OBS Image Source pipeline is unchanged from Fixed7/Fixed8.
+
+## Firebase Team Color / Local Logo QA
+
+- เจ้าของห้องจาก Browser profile เดียวกับ Host เห็น `OWNER LIVE ROOM`; Viewer อื่นไม่เห็นปุ่มแก้สี
+- แก้สีทีมปัจจุบันแล้วตาราง Viewer, Dock LIVE SCORE และ OBS Color Source เปลี่ยนตรงกัน
+- แก้ทีมที่ยังไม่แข่งแล้วสีถูกใช้เมื่อ Load คู่นั้น
+- `คืนค่าจาก Sheet` กลับไปใช้ค่าต้นทางครั้งแรกที่ทีมนั้นถูก seed จาก Google Sheet/Excel เข้า Room
+- โหมด Firebase ไม่เรียก Apps Script color sync และหลังปิดห้อง/สลับโหมดสี Firebase ไม่ไหลไป Google Sheet
+- เลือก Folder A แล้วเปลี่ยน Folder B หรือกด `ลืมโฟลเดอร์` โลโก้เก่าต้องหายจาก Viewer
+- reload หน้า Dock แล้วภาพย่อ local กลับมาจาก IndexedDB; ถ้าสิทธิ์หมดต้องมีปุ่มเชื่อมโฟลเดอร์เดิม
+- path โฟลเดอร์ย่อยจับคู่ได้ และ basename ซ้ำต้องไม่เลือกไฟล์ผิดโฟลเดอร์
+- Viewer ไม่ cache Base64 catalog ลง localStorage และ Firebase Rules ปฏิเสธ slot โลโก้เกิน `l_127`
+- เปิด Dock สองแท็บแล้วมีเพียงแท็บเดียวเป็น Firebase writer
+- ทดสอบ Viewer ที่ 390×650 และ 1280×720 รวม Escape, focus return และ Tab ภายในตัวแก้สี
