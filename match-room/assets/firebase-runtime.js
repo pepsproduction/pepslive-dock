@@ -49,6 +49,7 @@ export async function getFirebaseRuntime() {
       connectDatabaseEmulator(database, "127.0.0.1", 9000);
     }
 
+    if (typeof auth.authStateReady === "function") await auth.authStateReady();
     const credential = auth.currentUser
       ? { user: auth.currentUser }
       : await signInAnonymously(auth);

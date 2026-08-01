@@ -16,7 +16,7 @@
     </header>
 
     <section class="viewer-join" aria-labelledby="joinTitle">
-      <div><p class="eyebrow">READ-ONLY LIVE ROOM</p><h1 id="joinTitle">ติดตามผลการแข่งขัน</h1></div>
+      <div><p class="eyebrow" id="roomAccessLabel">READ-ONLY LIVE ROOM</p><h1 id="joinTitle">ติดตามผลการแข่งขัน</h1></div>
       <form id="joinForm" class="viewer-join-form">
         <label for="roomCodeInput">เลขห้อง 6 หลัก</label>
         <div><input id="roomCodeInput" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"><button type="submit">เข้าห้อง</button></div>
@@ -54,18 +54,19 @@
       <div class="viewer-schedule-head">
         <div>
           <p class="eyebrow">MATCHES FROM SHEET</p>
-          <h2 id="scheduleTitle">ตารางการแข่งขันทุกคู่</h2>
+          <h2 id="scheduleTitle" tabindex="-1">ตารางการแข่งขันทุกคู่</h2>
           <small id="scheduleSource">รอ Host โหลด Google Sheet หรือ Excel</small>
+          <small id="colorEditorMode">แสดงสีหลักและสีรองแบบเรียลไทม์ • เจ้าของห้องแก้สีทีมได้จากตารางนี้</small>
         </div>
         <strong id="scheduleCount">0 คู่</strong>
       </div>
       <div class="viewer-table-wrap">
         <table class="viewer-table">
           <thead>
-            <tr><th>ลำดับ</th><th>คู่แข่งขัน</th><th>ผล</th><th>สถานะ</th><th>นำไปใช้</th></tr>
+            <tr><th>ลำดับ</th><th>คู่แข่งขัน</th><th>PEPS Team Color</th><th>ผล</th><th>สถานะ</th><th>นำไปใช้</th></tr>
           </thead>
           <tbody id="scheduleRows">
-            <tr class="viewer-table-empty"><td colspan="5">ยังไม่มีรายการแข่งขันจาก Sheet</td></tr>
+            <tr class="viewer-table-empty"><td colspan="6">ยังไม่มีรายการแข่งขันจาก Sheet</td></tr>
           </tbody>
         </table>
       </div>
@@ -76,7 +77,25 @@
       <button id="exportExcelButton" type="button" disabled>Export Excel</button>
     </section>
 
-    <p class="viewer-notice" id="viewerNotice">Viewer นี้อ่านข้อมูลอย่างเดียวและไม่มีปุ่มแก้ไขคะแนน</p>
+    <div class="viewer-color-editor-backdrop" id="teamColorEditorBackdrop" aria-hidden="true">
+      <form class="viewer-color-editor" id="teamColorEditor" role="dialog" aria-modal="true" aria-labelledby="teamColorEditorTitle" novalidate>
+        <div class="viewer-color-editor-head"><div><p class="eyebrow">FIREBASE TEAM DATABASE</p><h2 id="teamColorEditorTitle">ตั้งค่าสีทีม</h2><small id="teamColorEditorScope">ใช้กับทีมนี้ทุกคู่</small></div><button type="button" class="viewer-icon-button" id="closeTeamColorEditor" aria-label="ปิด">×</button></div>
+        <div class="viewer-color-team"><img id="teamColorEditorLogo" src="../logos/default.svg" alt=""><div><strong id="teamColorEditorName">TEAM</strong><small id="teamColorEditorSource">ค่าเริ่มต้นจาก Sheet</small></div></div>
+        <div class="viewer-color-preview" id="teamColorEditorPreview" aria-label="ตัวอย่างสีหลักและสีรอง">
+          <span class="primary"><i aria-hidden="true"></i><small>สีหลัก</small><strong id="teamColorPreviewPrimary">#FF6A00</strong></span>
+          <span class="secondary"><i aria-hidden="true"></i><small>สีรอง</small><strong id="teamColorPreviewSecondary">#111111</strong></span>
+        </div>
+        <div class="viewer-color-fields">
+          <label class="viewer-color-field"><span>สีหลัก • PEPS_Team_PrimaryColor</span><div><input id="teamPrimaryColorInput" type="color" value="#FF6A00" aria-label="เลือกสีหลักของทีม"><input id="teamPrimaryHexInput" type="text" value="#FF6A00" maxlength="7" pattern="#[0-9A-Fa-f]{6}" required autocomplete="off" aria-label="รหัสสีหลัก HEX"></div></label>
+          <label class="viewer-color-field"><span>สีรอง • PEPS_Team_SecondaryColor</span><div><input id="teamSecondaryColorInput" type="color" value="#111111" aria-label="เลือกสีรองของทีม"><input id="teamSecondaryHexInput" type="text" value="#111111" maxlength="7" pattern="#[0-9A-Fa-f]{6}" required autocomplete="off" aria-label="รหัสสีรอง HEX"></div></label>
+        </div>
+        <p class="viewer-color-help">บันทึกครั้งเดียว ใช้สีนี้กับทีมเดียวกันทุกคู่ และส่งไปหน้าให้คะแนนของ Dock แบบเรียลไทม์ • ไม่เขียนกลับ Google Sheet หรือ Apps Script</p>
+        <p class="viewer-color-editor-notice" id="teamColorEditorNotice" role="alert" aria-live="assertive"></p>
+        <div class="viewer-color-editor-actions"><button type="button" class="viewer-reset-button" id="resetTeamColorButton">คืนค่าจาก Sheet</button><button type="submit" id="saveTeamColorButton">บันทึกสีแบบเรียลไทม์</button></div>
+      </form>
+    </div>
+
+    <p class="viewer-notice" id="viewerNotice" role="status" aria-live="polite">ผู้ชมอ่านข้อมูลและคะแนนอย่างเดียว • เจ้าของห้องจาก Browser เดียวกับ Host แก้ได้เฉพาะสีทีม</p>
   </main>
   <script type="module" src="assets/viewer.js"></script>
 </body>
