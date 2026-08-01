@@ -324,30 +324,46 @@ function createMatchupTeam(name, logoRef) {
   return line;
 }
 
+function createTeamColorChip(label, color, teamName) {
+  const chip = document.createElement("span");
+  chip.className = "viewer-team-color-chip";
+  chip.title = `${teamName} • ${label}: ${color}`;
+  const slot = document.createElement("b");
+  slot.textContent = label;
+  const dot = document.createElement("i");
+  dot.className = "viewer-team-color-dot";
+  dot.style.setProperty("--team-color-value", color);
+  const value = document.createElement("code");
+  value.textContent = color;
+  chip.append(slot, dot, value);
+  return chip;
+}
+
 function createTeamColorRow(match, side, rowIndex) {
   const name = match[`team${side}Name`];
   const primaryColor = match[`team${side}PrimaryColor`];
+  const secondaryColor = match[`team${side}SecondaryColor`];
   const row = document.createElement("div");
   row.className = "viewer-team-color-row";
   const teamLabel = document.createElement("span");
   teamLabel.className = "viewer-team-color-name";
   teamLabel.textContent = `${side} • ${name}`;
   teamLabel.title = name;
-  const dot = document.createElement("i");
-  dot.className = "viewer-team-color-dot";
-  dot.style.setProperty("--team-primary", primaryColor);
-  dot.title = `${name}: ${primaryColor}`;
-  const value = document.createElement("span");
-  value.textContent = primaryColor;
+  const colorPair = document.createElement("div");
+  colorPair.className = "viewer-team-color-pair";
+  colorPair.append(
+    createTeamColorChip("หลัก", primaryColor, name),
+    createTeamColorChip("รอง", secondaryColor, name)
+  );
   const edit = document.createElement("button");
   edit.type = "button";
   edit.dataset.editTeamColor = side;
   edit.dataset.rowIndex = String(rowIndex);
-  edit.textContent = "แก้สี";
+  edit.textContent = "แก้ 2 สี";
   edit.hidden = !canEditColors;
   edit.disabled = viewState.meta?.status === "CLOSED";
-  edit.setAttribute("aria-label", `แก้สีทีม ${name}`);
-  row.append(teamLabel, dot, value, edit);
+  edit.setAttribute("aria-label", `แก้สีหลักและสีรองของทีม ${name}`);
+  row.append(teamLabel, edit, colorPair);
   return row;
 }
 
@@ -474,7 +490,9 @@ function renderEmptyCurrent() {
   setLogo(byId("teamALogo"), "");
   setLogo(byId("teamBLogo"), "");
   byId("teamACard").style.setProperty("--team-color", "#ff7a21");
+  byId("teamACard").style.setProperty("--team-secondary", "#111111");
   byId("teamBCard").style.setProperty("--team-color", "#4cc9ff");
+  byId("teamBCard").style.setProperty("--team-secondary", "#ffffff");
 }
 
 function render() {
@@ -511,7 +529,9 @@ function render() {
   const teamAStyle = resolvedTeamStyle(current.teamAName, current.logoA, "", current.teamAPrimaryColor, current.teamASecondaryColor, "A");
   const teamBStyle = resolvedTeamStyle(current.teamBName, current.logoB, "", current.teamBPrimaryColor, current.teamBSecondaryColor, "B");
   byId("teamACard").style.setProperty("--team-color", teamAStyle.primaryColor);
+  byId("teamACard").style.setProperty("--team-secondary", teamAStyle.secondaryColor);
   byId("teamBCard").style.setProperty("--team-color", teamBStyle.primaryColor);
+  byId("teamBCard").style.setProperty("--team-secondary", teamBStyle.secondaryColor);
 
   const closed = meta.status === "CLOSED";
   const status = byId("matchStatus");
@@ -530,6 +550,18 @@ function setColorEditorValues(primary, secondary) {
   byId("teamSecondaryHexInput").value = secondaryColor;
   byId("teamPrimaryHexInput").setAttribute("aria-invalid", "false");
   byId("teamSecondaryHexInput").setAttribute("aria-invalid", "false");
+  renderColorEditorPreview(primaryColor, secondaryColor);
+}
+
+function renderColorEditorPreview(primary, secondary) {
+  const preview = byId("teamColorEditorPreview");
+  if (!preview) return;
+  const primaryColor = normalizeColor(primary, "#FF6A00");
+  const secondaryColor = normalizeColor(secondary, "#111111");
+  preview.style.setProperty("--preview-primary", primaryColor);
+  preview.style.setProperty("--preview-secondary", secondaryColor);
+  byId("teamColorPreviewPrimary").textContent = primaryColor;
+  byId("teamColorPreviewSecondary").textContent = secondaryColor;
 }
 
 function setColorEditorNotice(message, isError = false) {
@@ -842,12 +874,22 @@ byId("resetTeamColorButton").addEventListener("click", () => saveTeamColorProfil
 ].forEach(([colorId, hexId]) => {
   byId(colorId).addEventListener("input", () => {
     byId(hexId).value = byId(colorId).value.toUpperCase();
+    renderColorEditorPreview(
+      byId("teamPrimaryColorInput").value,
+      byId("teamSecondaryColorInput").value
+    );
   });
   byId(hexId).addEventListener("input", () => {
     const value = normalizeColor(byId(hexId).value);
     byId(hexId).setAttribute("aria-invalid", value ? "false" : "true");
     if (value) setColorEditorNotice("");
-    if (value) byId(colorId).value = value;
+    if (value) {
+      byId(colorId).value = value;
+      renderColorEditorPreview(
+        byId("teamPrimaryColorInput").value,
+        byId("teamSecondaryColorInput").value
+      );
+    }
   });
   byId(hexId).addEventListener("change", () => {
     const value = normalizeColor(byId(hexId).value);
@@ -855,6 +897,10 @@ byId("resetTeamColorButton").addEventListener("click", () => saveTeamColorProfil
     if (value) {
       byId(hexId).value = value;
       byId(colorId).value = value;
+      renderColorEditorPreview(
+        byId("teamPrimaryColorInput").value,
+        byId("teamSecondaryColorInput").value
+      );
     }
   });
 });

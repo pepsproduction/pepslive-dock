@@ -61,7 +61,7 @@
 
 ## Firebase Team Color / Local Logo QA
 
-- เจ้าของห้องจาก Browser profile เดียวกับ Host เห็น `OWNER LIVE ROOM`; Viewer อื่นไม่เห็นปุ่มแก้สี
+- เจ้าของห้องที่เปิด Viewer จาก Host ต้นทางเดียวกันเห็น `OWNER LIVE ROOM` และปุ่ม `แก้ 2 สี`; Viewer จาก URL/ต้นทางอื่นเห็นสีหลักกับสีรอง แต่ไม่เห็นปุ่มแก้สี
 - แก้สีทีมปัจจุบันแล้วตาราง Viewer, Dock LIVE SCORE และ OBS Color Source เปลี่ยนตรงกัน
 - แก้ทีมที่ยังไม่แข่งแล้วสีถูกใช้เมื่อ Load คู่นั้น
 - `คืนค่าจาก Sheet` กลับไปใช้ค่าต้นทางครั้งแรกที่ทีมนั้นถูก seed จาก Google Sheet/Excel เข้า Room
