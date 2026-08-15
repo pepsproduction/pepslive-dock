@@ -1,0 +1,111 @@
+/* Shared PepsLive black / orange / gold treatment for public Match Room. */
+:root {
+  --mr-bg: #080a0d;
+  --mr-panel: rgba(17, 21, 26, 0.96);
+  --mr-line: #2a3038;
+  --mr-copy: #f5f3ee;
+  --mr-muted: #9da3aa;
+  --mr-orange: #ff6a00;
+  --mr-gold: #d9a441;
+  --mr-blue: #d9a441;
+  --mr-green: #35c985;
+  --mr-red: #ed5b68;
+}
+
+body.match-room-viewer {
+  background:
+    radial-gradient(circle at 15% -10%, rgba(255, 106, 0, 0.14), transparent 34%),
+    radial-gradient(circle at 100% 10%, rgba(217, 164, 65, 0.08), transparent 28%),
+    linear-gradient(160deg, #080a0d, #0d1116 62%, #070809) !important;
+}
+
+body.match-room-viewer::before {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.014) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
+}
+
+.viewer-brand > span {
+  background: linear-gradient(145deg, var(--mr-orange), #c84e00) !important;
+  box-shadow: 0 10px 28px rgba(255, 106, 0, 0.22) !important;
+}
+
+.viewer-join,
+.viewer-card {
+  border-color: var(--mr-line) !important;
+  background: var(--mr-panel) !important;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.28) !important;
+}
+
+.eyebrow {
+  color: #ffae79 !important;
+}
+
+.viewer-join-form button,
+.viewer-actions button,
+.viewer-color-editor-actions button {
+  background: linear-gradient(145deg, #ff7415, #e95700) !important;
+  border-color: rgba(255, 154, 91, 0.55) !important;
+}
+
+.viewer-event > strong,
+.viewer-schedule-head > strong,
+.match-room-host-code {
+  color: #f0c875 !important;
+}
+
+.viewer-scoreboard {
+  border-top: 2px solid var(--mr-orange) !important;
+}
+
+.viewer-team {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)) !important;
+}
+
+.viewer-status-row > span {
+  background: rgba(53, 201, 133, 0.11) !important;
+  color: #baf2d4 !important;
+}
+
+.viewer-status-row > span.closed {
+  background: rgba(237, 91, 104, 0.11) !important;
+  color: #ffc4c9 !important;
+}
+
+.viewer-table-wrap {
+  border-color: var(--mr-line) !important;
+}
+
+.viewer-table tbody tr.current {
+  background: rgba(255, 106, 0, 0.08) !important;
+  box-shadow: inset 3px 0 0 var(--mr-orange) !important;
+}
+
+.viewer-table tbody tr.finished:not(.current) {
+  background: rgba(53, 201, 133, 0.035) !important;
+}
+
+.viewer-schedule-actions button,
+.viewer-team-color-row button {
+  border-color: rgba(255, 106, 0, 0.38) !important;
+  background: rgba(255, 106, 0, 0.1) !important;
+}
+
+.viewer-schedule-actions button:last-child {
+  border-color: rgba(217, 164, 65, 0.42) !important;
+  background: rgba(217, 164, 65, 0.12) !important;
+}
+
+.viewer-color-editor {
+  border-color: var(--mr-line) !important;
+  background: #11151a !important;
+}
+
+.viewer-color-editor-notice {
+  color: #f0c875 !important;
+}
+
+.match-room-host {
+  border-top-color: var(--mr-line) !important;
+}

@@ -7,6 +7,7 @@
   <meta name="robots" content="noindex,nofollow">
   <title>PepsLive Match Room</title>
   <link rel="stylesheet" href="assets/match-room.css">
+  <link rel="stylesheet" href="assets/match-room-ux.css">
 </head>
 <body class="match-room-viewer">
   <main class="viewer-shell">
@@ -16,7 +17,7 @@
     </header>
 
     <section class="viewer-join" aria-labelledby="joinTitle">
-      <div><p class="eyebrow" id="roomAccessLabel">READ-ONLY LIVE ROOM</p><h1 id="joinTitle">ติดตามผลการแข่งขัน</h1></div>
+      <div><p class="eyebrow" id="roomAccessLabel">LIVE SCORE ROOM</p><h1 id="joinTitle">ติดตามผลการแข่งขัน</h1></div>
       <form id="joinForm" class="viewer-join-form">
         <label for="roomCodeInput">เลขห้อง 6 หลัก</label>
         <div><input id="roomCodeInput" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"><button type="submit">เข้าห้อง</button></div>
@@ -53,10 +54,10 @@
     <section class="viewer-card viewer-schedule" aria-labelledby="scheduleTitle">
       <div class="viewer-schedule-head">
         <div>
-          <p class="eyebrow">MATCHES FROM SHEET</p>
+          <p class="eyebrow">ตารางการแข่งขัน</p>
           <h2 id="scheduleTitle" tabindex="-1">ตารางการแข่งขันทุกคู่</h2>
           <small id="scheduleSource">รอ Host โหลด Google Sheet หรือ Excel</small>
-          <small id="colorEditorMode">แสดงสีหลักและสีรองแบบเรียลไทม์ • เจ้าของห้องแก้สีทีมได้จากตารางนี้</small>
+          <small id="colorEditorMode">แสดงสีทีมแบบเรียลไทม์ • เจ้าของห้องแก้สีได้จากตารางนี้</small>
         </div>
         <strong id="scheduleCount">0 คู่</strong>
       </div>
@@ -73,8 +74,8 @@
     </section>
 
     <section class="viewer-actions" aria-label="ส่งออกข้อมูล">
-      <button id="copyMatchButton" type="button" disabled>Copy ข้อมูล</button>
-      <button id="exportExcelButton" type="button" disabled>Export Excel</button>
+      <button id="copyMatchButton" type="button" disabled>คัดลอกผล</button>
+      <button id="exportExcelButton" type="button" disabled>ส่งออก Excel</button>
     </section>
 
     <div class="viewer-color-editor-backdrop" id="teamColorEditorBackdrop" aria-hidden="true">
