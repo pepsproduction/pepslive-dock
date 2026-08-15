@@ -487,6 +487,7 @@ body.dock-compact-ui[data-dock-view="match"] #moduleQuick .sheet-load-actions{gr
   .firebase-sheet-mirror-status[data-state="warn"]{color:#ffe8aa}
   .firebase-sheet-mirror-status[data-state="error"]{color:#ffd1d1}
 </style>
+<link rel="stylesheet" href="src/dock-ux.css">
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body class="dock-compact-ui" data-dock-view="score" data-result-update-mode="apps-script">
@@ -526,64 +527,68 @@ body.dock-compact-ui[data-dock-view="match"] #moduleQuick .sheet-load-actions{gr
     <div class="statusbar"><span id="stObs" class="status bad">OBS: Off</span><span id="stSheet" class="status warn">Sheet: Not loaded</span><span id="stLogo" class="status warn">Logo: Not checked</span><span id="stSave" class="status warn">Save: Local</span><button id="btnMobileRemote" class="ghost tiny icon-btn top-remote" type="button" title="Mobile Remote"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="2"></rect><path d="M11 18h2"></path></svg></button><button id="btnDonate" class="ghost tiny icon-btn" type="button" title="Donate / Support"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.4-9.2-8.5C.9 8.8 3.1 5 6.8 5c2 0 3.4 1 4.2 2.2C11.8 6 13.2 5 15.2 5c3.7 0 5.9 3.8 4 7.5C19 16.6 12 21 12 21z"></path></svg></button><button id="btnOpenSkinStudio" class="primary tiny top-settings skin-studio-btn" type="button">Skin</button><button id="btnOpenSettings" class="primary tiny top-settings">ตั้งค่า</button><button id="btnLogout" class="ghost tiny">ออกจากระบบ</button></div>
   </div>
   <div class="dock-view-head" aria-live="polite">
-    <div><span class="dock-view-kicker" id="dockViewKicker">LIVE SCORE</span><strong id="dockViewTitle">ให้คะแนน</strong></div>
+    <div><span class="dock-view-kicker" id="dockViewKicker">LIVE CONTROL</span><strong id="dockViewTitle">ถ่ายทอดสด</strong></div>
     <span class="dock-view-state" id="dockViewState">ON AIR</span>
+  </div>
+  <div class="dock-readiness-strip" id="dockReadinessStrip" data-state="warn" role="status" aria-live="polite">
+    <div class="dock-readiness-main"><span class="dock-readiness-dot" aria-hidden="true"></span><div><strong id="dockReadinessLabel">กำลังเตรียมระบบ</strong><span id="dockReadinessDetail">ตรวจสอบการเชื่อมต่อและเลือกคู่แข่งขันก่อนเริ่ม</span></div></div>
+    <div class="dock-readiness-meta"><span id="dockMatchSummary">ยังไม่ได้เลือกคู่</span><span id="dockRuntimeMode">ระบบผล: กำลังตรวจสอบ</span></div>
   </div>
   <div class="dock-recovery" id="dockRecoveryBanner" role="alert" aria-live="assertive" hidden><strong id="dockRecoveryText">มีรายการบันทึกที่ต้องตรวจสอบ</strong><div><button class="soft tiny" id="btnBannerLoadSheet" type="button">Load Sheet</button><button class="primary tiny" id="btnBannerRetry" type="button">Retry</button><button class="danger tiny" id="btnBannerDiscard" type="button">Discard</button></div></div>
   <div class="grid main">
     <main class="grid">
       <section class="card dock-module" id="moduleQuick" data-module="quick">
-        <div class="section-title"><h2>Quick Match</h2><span class="small muted">เลือกคู่แข่งขัน</span></div>
+        <div class="section-title"><h2>เลือกคู่แข่งขัน</h2><span class="small muted">เตรียมแมตช์ก่อนออกอากาศ</span></div>
         <div class="sport-row">
           <label>เลือกกีฬา<select id="sportSelect"><option value="football">ฟุตบอล</option><option value="basket3">บาส 3x3</option><option value="basket5">บาส 5v5</option></select></label>
           <label>ค้นหา MatchID / ทีม / สนาม / รอบ<input id="matchSearch" placeholder="พิมพ์เพื่อกรองรายการทันที"></label>
           <div class="sheet-load-actions" role="group" aria-label="เลือกแหล่งข้อมูลแมตช์"><button class="primary" id="btnLoadSheet">Google Sheet</button><button class="soft" id="btnLoadExcel">Excel (.xlsx)</button></div>
         </div>
-        <div class="matchbar"><select id="matchSelect"><option value="">ยังไม่มีข้อมูลแมตช์</option></select><button class="success" id="btnLoadMatch">Load Match</button><button class="primary" id="btnNextMatchTop">Next</button></div>
+        <div class="matchbar"><select id="matchSelect"><option value="">ยังไม่มีข้อมูลแมตช์</option></select><button class="primary" id="btnLoadMatch">โหลดคู่</button><button class="attention" id="btnNextMatchTop">คู่ถัดไป</button></div>
         <div class="match-meta" id="matchMeta"></div>
         <div class="pill" id="currentMatchStatus">Current: ยังไม่ได้โหลดคู่แข่งขัน</div>
       </section>
             <section class="card score-card dock-module" id="moduleScore" data-module="score">
         <div class="teams">
           <div class="team"><img id="logoA" class="logo-preview" alt="Logo A" onerror="this.onerror=null;this.src='logos/default.svg'"><div class="team-name" id="teamAName">TEAM A</div><div class="team-meta-row"><div class="team-sub" id="teamASub">LogoA</div><div class="team-colors" data-team-color-panel="A"><label class="team-color-swatch" id="teamAColor1" data-team-color="A" data-slot="1" title="Team A Color 1"><input id="teamAColor1Input" type="color" data-team-color-input="A" data-slot="1"></label><label class="team-color-swatch" id="teamAColor2" data-team-color="A" data-slot="2" title="Team A Color 2"><input id="teamAColor2Input" type="color" data-team-color-input="A" data-slot="2"></label></div></div><div class="score-buttons" id="scoreBtnsA"></div></div>
-          <div class="score-mid"><div class="vs">SCORE</div><div class="scoreline"><span id="scoreA">0</span><span> - </span><span id="scoreB">0</span></div><button class="ghost tiny" id="btnUndo">Undo Last Score</button></div>
+          <div class="score-mid"><div class="vs">LIVE SCORE</div><div class="scoreline"><span id="scoreA">0</span><span> - </span><span id="scoreB">0</span></div><button class="ghost tiny" id="btnUndo">ย้อนคะแนนล่าสุด</button></div>
           <div class="team right"><img id="logoB" class="logo-preview" alt="Logo B" onerror="this.onerror=null;this.src='logos/default.svg'"><div class="team-name" id="teamBName">TEAM B</div><div class="team-meta-row"><div class="team-sub" id="teamBSub">LogoB</div><div class="team-colors" data-team-color-panel="B"><label class="team-color-swatch" id="teamBColor1" data-team-color="B" data-slot="1" title="Team B Color 1"><input id="teamBColor1Input" type="color" data-team-color-input="B" data-slot="1"></label><label class="team-color-swatch" id="teamBColor2" data-team-color="B" data-slot="2" title="Team B Color 2"><input id="teamBColor2Input" type="color" data-team-color-input="B" data-slot="2"></label></div></div><div class="score-buttons" id="scoreBtnsB"></div></div>
         </div>
       </section>
       <section class="card timerbox dock-module" id="moduleClock" data-module="clock">
-        <div class="section-title"><h2>Clock / Status</h2><span class="pill" id="sportPill">ฟุตบอล</span></div>
+        <div class="section-title"><h2>เวลาและสถานะ</h2><span class="pill" id="sportPill">ฟุตบอล</span></div>
         <div class="clock" id="clock">00:00</div>
         <div class="time-edit"><label>นาที<input id="timeMin" type="number" min="0" value="0"></label><label>วินาที<input id="timeSec" type="number" min="0" max="59" value="0"></label><button class="soft" id="btnApplyTime">บันทึกเวลา</button></div>
         <div class="period-row"><select id="periodSelect"></select><select id="statusSelect"></select></div>
-        <div class="action-row"><button class="success" id="btnStart">Start</button><button class="warn" id="btnPause">Pause</button><button class="danger" id="btnResetTime">Reset Time</button></div>
+        <div class="action-row"><button class="primary" id="btnStart">เริ่มเวลา</button><button class="attention" id="btnPause">หยุดเวลา</button><button class="danger" id="btnResetTime">รีเซ็ตเวลา</button></div>
       </section>
       <section class="card dock-module" id="moduleActions" data-module="actions">
-        <div class="section-title"><h2>Source Actions</h2><button class="ghost tiny" id="btnHideActionSources">Hide All</button></div>
+        <div class="section-title"><h2>ควบคุมกราฟิก</h2><button class="ghost tiny" id="btnHideActionSources">ซ่อนทั้งหมด</button></div>
         <div class="action-buttons" id="sourceActionButtons"></div>
       </section>
     </main>
     <aside class="side-panel">
-      <section class="card dock-module" id="moduleResult" data-module="result"><div class="section-title"><h2>Live Actions</h2><span id="dirtyBadge" class="pill" role="status" aria-live="polite">Saved</span></div><div class="dock-action-grid"><button class="soft" id="btnSyncObsDock" type="button">Sync OBS</button><button class="ghost" id="btnHideFxDock" type="button">Hide FX</button><button class="primary" id="btnSaveResult">Save</button><button class="danger" id="btnFinishMatch">Finish</button><button class="success" id="btnNextMatch">Next</button><button class="ghost" id="btnOpenMatchDock" type="button">Match</button></div></section>
-      <section class="card dock-module" id="moduleSystem" data-module="system"><div class="section-title"><h2>System Status</h2></div><div class="ready-list small muted"><div class="ready-row"><span>Readiness</span><strong id="miniReadyStatus">BLOCKED</strong></div><div class="ready-row"><span>OBS</span><strong id="miniObsStatus">Off</strong></div><div class="ready-row"><span>Sheet</span><strong id="miniSheetStatus">Not loaded</strong></div><div class="ready-row"><span>Update System</span><strong id="miniUpdateSystemStatus">Google Script</strong></div><div class="ready-row"><span>Save</span><strong id="miniSaveStatus">Local</strong></div></div><div class="readiness-details small" id="miniReadinessDetails" aria-live="polite"></div></section>
+      <section class="card dock-module" id="moduleResult" data-module="result"><div class="section-title"><h2>คำสั่งถ่ายทอดสด</h2><span id="dirtyBadge" class="pill" role="status" aria-live="polite">บันทึกแล้ว</span></div><div class="dock-action-grid"><button class="primary" id="btnSyncObsDock" type="button">ซิงก์ OBS</button><button class="ghost" id="btnHideFxDock" type="button">ซ่อนเอฟเฟกต์</button><button class="primary" id="btnSaveResult">บันทึกผล</button><button class="danger" id="btnFinishMatch">จบการแข่งขัน</button><button class="attention" id="btnNextMatch">คู่ถัดไป</button><button class="ghost" id="btnOpenMatchDock" type="button">เลือกคู่</button></div></section>
+      <section class="card dock-module" id="moduleSystem" data-module="system"><div class="section-title"><h2>ความพร้อมระบบ</h2></div><div class="ready-list small muted"><div class="ready-row"><span>สถานะรวม</span><strong id="miniReadyStatus">ต้องตรวจสอบ</strong></div><div class="ready-row"><span>OBS</span><strong id="miniObsStatus">ยังไม่เชื่อมต่อ</strong></div><div class="ready-row"><span>ข้อมูลแมตช์</span><strong id="miniSheetStatus">ยังไม่ได้โหลด</strong></div><div class="ready-row"><span>ระบบผล</span><strong id="miniUpdateSystemStatus">Google Script</strong></div><div class="ready-row"><span>การบันทึก</span><strong id="miniSaveStatus">ในเครื่อง</strong></div></div><div class="readiness-details small" id="miniReadinessDetails" aria-live="polite"></div></section>
       <section class="dock-system-launchpad" id="dockSystemLaunchpad" aria-label="ทางลัดตั้งค่าระบบ">
-        <button type="button" data-open-settings-tab="tabObs"><strong>OBS</strong><span>WebSocket</span></button>
-        <button type="button" data-open-settings-tab="tabSheet"><strong>SHEET</strong><span>Match Data</span></button>
-        <button type="button" data-open-settings-tab="tabLogos"><strong>LOGOS</strong><span>Team Assets</span></button>
-        <button type="button" data-open-settings-tab="tabAdvanced"><strong>TOOLS</strong><span>Safety &amp; Log</span></button>
+        <button type="button" data-open-settings-tab="tabObs"><strong>OBS</strong><span>เชื่อมต่อและซิงก์</span></button>
+        <button type="button" data-open-settings-tab="tabSheet"><strong>ข้อมูลแมตช์</strong><span>Sheet / Excel</span></button>
+        <button type="button" data-open-settings-tab="tabLogos"><strong>โลโก้ทีม</strong><span>ไฟล์และสีทีม</span></button>
+        <button type="button" data-open-settings-tab="tabAdvanced"><strong>ขั้นสูง</strong><span>ความปลอดภัยและ Log</span></button>
       </section>
 
     </aside>
   </div>
   <nav class="dock-workspace-nav" id="dockWorkspaceNav" role="tablist" aria-label="หน้าใช้งานหลัก">
-    <button class="dock-workspace-tab active" type="button" role="tab" data-dock-view-target="score" aria-controls="moduleScore moduleClock moduleResult" aria-selected="true" tabindex="0"><span class="dock-tab-code">01</span><span class="dock-tab-label">คะแนน</span></button>
+    <button class="dock-workspace-tab active" type="button" role="tab" data-dock-view-target="score" aria-controls="moduleScore moduleClock moduleResult" aria-selected="true" tabindex="0"><span class="dock-tab-code">01</span><span class="dock-tab-label">ถ่ายทอดสด</span></button>
     <button class="dock-workspace-tab" type="button" role="tab" data-dock-view-target="match" aria-controls="moduleQuick" aria-selected="false" tabindex="-1"><span class="dock-tab-code">02</span><span class="dock-tab-label">แมตช์</span></button>
-    <button class="dock-workspace-tab" type="button" role="tab" data-dock-view-target="control" aria-controls="moduleActions moduleResult" aria-selected="false" tabindex="-1"><span class="dock-tab-code">03</span><span class="dock-tab-label">คอนโทรล</span></button>
-    <button class="dock-workspace-tab" type="button" role="tab" data-dock-view-target="system" aria-controls="moduleSystem dockSystemLaunchpad" aria-selected="false" tabindex="-1"><span class="dock-tab-code">04</span><span class="dock-tab-label">ระบบ</span></button>
+    <button class="dock-workspace-tab" type="button" role="tab" data-dock-view-target="control" aria-controls="moduleActions moduleResult" aria-selected="false" tabindex="-1"><span class="dock-tab-code">03</span><span class="dock-tab-label">กราฟิก</span></button>
+    <button class="dock-workspace-tab" type="button" role="tab" data-dock-view-target="system" aria-controls="moduleSystem dockSystemLaunchpad" aria-selected="false" tabindex="-1"><span class="dock-tab-code">04</span><span class="dock-tab-label">ตั้งค่าระบบ</span></button>
   </nav>
 </div>
 <div id="drawerBackdrop" class="drawer-backdrop"></div>
 <aside id="drawer" class="drawer" data-active-tab="tabMatch" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" aria-hidden="true"><div class="drawer-head"><div class="drawer-heading"><span>CONTROL CENTER</span><h2 id="drawerTitle">Match Loader</h2></div><button class="ghost tiny" id="btnCloseDrawer" aria-label="ปิดหน้าตั้งค่า">ปิด</button></div><div class="tabs" id="tabs" role="tablist" aria-label="หมวดการตั้งค่า"></div><div class="drawer-body">
-  <div id="tabMatch" class="tabpage grid"><section class="card"><div class="section-title"><h2>Match Loader</h2><button class="ghost tiny help-btn" data-help="match">วิธีการใช้งาน Match Loader</button></div><p class="small muted">ผลค้นหาแบบ realtime จากช่องค้นหาบนหน้า Dock คลิกเลือกคู่ได้ทันที แล้วกด Load Match</p><div class="match-results" id="matchResults"></div><div class="action-row"><button class="success" id="btnLoadMatchDrawer">Load Match</button><button class="primary" id="btnNextMatchDrawer">Next</button><button class="ghost" id="btnRefreshMatchResults">Refresh Results</button></div></section></div>
+  <div id="tabMatch" class="tabpage grid"><section class="card"><div class="section-title"><h2>เลือกคู่แข่งขัน</h2><button class="ghost tiny help-btn" data-help="match">วิธีใช้งาน</button></div><p class="small muted">คลิกเลือกคู่จากผลค้นหา แล้วกดโหลดเพื่อส่งชื่อทีม คะแนน โลโก้ และข้อมูลประกอบเข้า OBS</p><div class="match-results" id="matchResults"></div><div class="action-row"><button class="primary" id="btnLoadMatchDrawer">โหลดคู่</button><button class="attention" id="btnNextMatchDrawer">คู่ถัดไป</button><button class="ghost" id="btnRefreshMatchResults">รีเฟรชรายการ</button></div></section></div>
   <div id="tabSheet" class="tabpage grid">
     <section class="card" id="resultUpdateModeCard">
       <div class="section-title"><h2>ระบบอัปเดตผลแข่งขัน</h2></div>
@@ -1234,7 +1239,30 @@ async function pollCommandBus(){if(commandPollBusy||!obs.connected||!settings.so
 setInterval(pollCommandBus,650);
 function fmtClock(sec){sec=Math.max(0,Math.floor(sec));return `${pad2(sec/60)}:${pad2(sec%60)}`}
 function deriveReadiness(){const issues=[],match=state.match||{},rows=state.sheetRows||[],logos=[match.LogoA||match.TeamA,match.LogoB||match.TeamB].filter(Boolean),usingLocal=settings.logo&&settings.logo.mode==='local',missingLogos=logos.filter(name=>{const info=logoInfo(name),local=usingLocal?findLocalLogo(name):null;return !local&&(!info||!info.found)}),room=currentMatchRoomHostState();if(resultUpdateModeIsStale())issues.push({code:'MODE',label:'ระบบอัปเดตผลเปลี่ยนแล้ว • ต้อง Reload',tone:'bad'});if(!match.MatchID)issues.push({code:'MATCH',label:'ยังไม่ได้โหลดคู่',tone:'warn'});if(!rows.length)issues.push({code:'SHEET',label:'ยังไม่ได้โหลดตาราง',tone:'warn'});if(!obs.connected)issues.push({code:'OBS',label:'OBS ยังไม่เชื่อมต่อ',tone:'bad'});if(logos.length&&(!state.logoChecked||missingLogos.length))issues.push({code:'LOGO',label:state.logoChecked?`Logo หาย ${missingLogos.length}`:'ยังไม่ได้ตรวจ Logo',tone:'warn'});if(usesFirebaseResultUpdates()){if(location.protocol==='file:')issues.push({code:'FIREBASE',label:'Firebase ต้องเปิดผ่าน HTTP หรือ Pages',tone:'bad'});else if(!room.available)issues.push({code:'FIREBASE',label:'กำลังเริ่มระบบ Match Room',tone:'warn'});else if(room.roomStatus!=='OPEN')issues.push({code:'ROOM',label:'ยังไม่ได้สร้าง Firebase Match Room',tone:'warn'});else if(room.backupError)issues.push({code:'BACKUP',label:'Local backup เขียนไม่ได้',tone:'bad'});else if(!room.connected)issues.push({code:'FIREBASE',label:'Offline • Local backup ทำงาน',tone:'warn'});if(saveRuntime.status==='firebase-pending')issues.push({code:'SYNC',label:saveRuntime.error||'Firebase รอ Sync',tone:'warn'})}if(saveRuntime.status==='error'||pendingSaveCount())issues.push({code:'SAVE',label:saveRuntime.error||`Pending ${pendingSaveCount()}`,tone:'bad'});return{ready:issues.length===0,issues}}
-function renderOperationalState(){const el=$('dockViewState');if(!el)return;const view=document.body.dataset.dockView||'score',meta=DOCK_VIEW_META&&DOCK_VIEW_META[view]?DOCK_VIEW_META[view]:{state:'READY'},readiness=deriveReadiness();let text=meta.state,tone='ready';if(saveRuntime.busy){text=saveRuntime.status==='retrying'?'RETRYING':'SAVING';tone='busy'}else if(readiness.issues.length){text=`BLOCKED ${readiness.issues.length}`;tone=readiness.issues.some(issue=>issue.tone==='bad')?'error':'warn'}else if(state.dirty){text='UNSAVED';tone='warn'}else if(state.timerRunning){text='ON AIR';tone='live'}el.textContent=text;el.dataset.state=tone;const detail=readiness.issues.map(issue=>`${issue.code}: ${issue.label}`).join(' | ');el.title=detail||text;el.setAttribute('aria-label','สถานะระบบ '+(detail||text));if($('miniReadyStatus'))$('miniReadyStatus').textContent=readiness.ready?'READY':`BLOCKED ${readiness.issues.length}`;if($('miniReadinessDetails'))$('miniReadinessDetails').innerHTML=readiness.ready?'<span>พร้อมใช้งาน</span>':readiness.issues.map(issue=>`<span class="${issue.tone}">${esc(issue.code)}: ${esc(issue.label)}</span>`).join('')}
+function renderOperationalState(){
+  const el=$('dockViewState');
+  if(!el)return;
+  const view=document.body.dataset.dockView||'score',meta=DOCK_VIEW_META&&DOCK_VIEW_META[view]?DOCK_VIEW_META[view]:{state:'READY'},readiness=deriveReadiness();
+  let text=meta.state,tone='ready';
+  if(saveRuntime.busy){text=saveRuntime.status==='retrying'?'RETRYING':'SAVING';tone='busy'}
+  else if(readiness.issues.length){text=`BLOCKED ${readiness.issues.length}`;tone=readiness.issues.some(issue=>issue.tone==='bad')?'error':'warn'}
+  else if(state.dirty){text='UNSAVED';tone='warn'}
+  else if(state.timerRunning){text='ON AIR';tone='live'}
+  el.textContent=text;el.dataset.state=tone;
+  const detail=readiness.issues.map(issue=>`${issue.code}: ${issue.label}`).join(' | ');
+  el.title=detail||text;el.setAttribute('aria-label','สถานะระบบ '+(detail||text));
+  if($('miniReadyStatus'))$('miniReadyStatus').textContent=readiness.ready?'READY':`BLOCKED ${readiness.issues.length}`;
+  if($('miniReadinessDetails'))$('miniReadinessDetails').innerHTML=readiness.ready?'<span>พร้อมใช้งาน</span>':readiness.issues.map(issue=>`<span class="${issue.tone}">${esc(issue.code)}: ${esc(issue.label)}</span>`).join('');
+  const match=state.match||{},matchSummary=match.MatchID?matchTitle(match):'ยังไม่ได้เลือกคู่';
+  const readinessLabel=saveRuntime.busy?(saveRuntime.status==='retrying'?'กำลังส่งข้อมูลซ้ำ':'กำลังบันทึกข้อมูล'):readiness.issues.length?`ต้องตรวจสอบ ${readiness.issues.length} รายการ`:state.timerRunning?'กำลังถ่ายทอดสด':state.dirty?'มีข้อมูลยังไม่บันทึก':match.MatchID?'พร้อมออกอากาศ':'พร้อม แต่ยังไม่ได้เลือกคู่';
+  const readinessDetail=readiness.issues.length?readiness.issues.slice(0,2).map(issue=>issue.label).join(' • '):state.timerRunning?`${currentPreset().label} • ${state.period||'-'} • เวลา ${fmtClock(state.clockSec)}`:match.MatchID?`${currentPreset().label} • ตรวจสอบแล้วให้กดเริ่มเวลาเมื่อพร้อม`:'เลือกคู่แข่งขันและตรวจสอบ OBS ก่อนเริ่ม';
+  const room=currentMatchRoomHostState(),modeText=usesFirebaseResultUpdates()&&room.roomCode?`${resultUpdateModeLabel()} • Room ${room.roomCode}`:resultUpdateModeLabel();
+  if($('dockReadinessLabel'))$('dockReadinessLabel').textContent=readinessLabel;
+  if($('dockReadinessDetail'))$('dockReadinessDetail').textContent=readinessDetail;
+  if($('dockMatchSummary'))$('dockMatchSummary').textContent=matchSummary;
+  if($('dockRuntimeMode'))$('dockRuntimeMode').textContent=`ระบบผล: ${modeText}`;
+  if($('dockReadinessStrip'))$('dockReadinessStrip').dataset.state=tone==='live'?'live':tone==='error'?'error':readiness.ready?'ready':tone;
+}
 function renderRecoveryBanner(){const banner=$('dockRecoveryBanner'),pending=pendingSaveCount(),hasError=saveRuntime.status==='error',firebasePending=saveRuntime.status==='firebase-pending',backupFailed=firebasePending&&saveRuntime.error==='firebase_local_backup_failed';if(!banner)return;banner.hidden=!pending&&!hasError&&!firebasePending;banner.setAttribute('aria-busy',saveRuntime.busy?'true':'false');const blocked=saveOutbox.filter(op=>op.retryBlocked).length,message=backupFailed?'Firebase ยังไม่ยืนยัน และ Local backup เขียนไม่ได้ • อย่าปิดหน้า ตรวจพื้นที่ Browser แล้วกด Retry Firebase':firebasePending?'Firebase Local backup ปลอดภัยแล้ว • ระบบจะ Sync เข้า Match Room อัตโนมัติเมื่อเชื่อมต่อ':hasError?(blocked?`Conflict ${blocked} รายการ: ${saveRuntime.error||'Load Sheet แล้วตรวจสอบ'}`:`บันทึกต้องตรวจสอบ: ${saveRuntime.error||'unknown error'}`):`มี Pending ${pending} รายการ รอส่งไป Google Sheet`;if($('dockRecoveryText'))$('dockRecoveryText').textContent=message;if($('btnBannerRetry')){$('btnBannerRetry').textContent=firebasePending?'Retry Firebase':'Retry';$('btnBannerRetry').hidden=!pending&&!firebasePending;$('btnBannerRetry').disabled=saveRuntime.busy||(!firebasePending&&(!pending||blocked===pending))}if($('btnBannerDiscard')){$('btnBannerDiscard').hidden=!pending;$('btnBannerDiscard').disabled=saveRuntime.busy||!pending}if($('btnBannerLoadSheet')){$('btnBannerLoadSheet').hidden=!hasError;$('btnBannerLoadSheet').disabled=saveRuntime.busy}if($('moduleResult'))$('moduleResult').setAttribute('aria-busy',saveRuntime.busy?'true':'false')}
 function renderSheetSourceStatus(){const el=$('sheetSourceStatus');if(!el)return;const rows=state.sheetRows||[],firebaseMode=usesFirebaseResultUpdates();el.className='settings-hint small sheet-source-status'+(isExcelSheetSource()?' excel':'');if(!rows.length){el.textContent='ยังไม่ได้โหลดข้อมูลแมตช์';return}if(isExcelSheetSource()){const file=state.sheetSourceName||'ไฟล์ .xlsx',tab=state.sheetSourceTab||'Matches';el.textContent=`กำลังใช้ Excel: ${file} • แท็บ ${tab} • ${rows.length} คู่ • ${firebaseMode?(settings.webhookUrl?'Save/Finish ไป Firebase + mirror Google Sheet':'Save/Finish ไป Firebase Match Room'):'Save/Finish เก็บใน Dock เท่านั้น'} • ไม่แก้ไฟล์ต้นฉบับ`;return}el.textContent=`กำลังใช้ Google Sheet • ${rows.length} คู่${state.sheetLoadSource==='webhook'?' • Secure Webhook':''}${firebaseMode?(settings.webhookUrl?' • ใช้เป็นรายชื่อ และ mirror ผลกลับ Sheet แบบ background':' • ใช้เป็นรายชื่อเท่านั้น • ตั้ง Webhook เพื่อ mirror ผลกลับ Sheet'):''}`}
 function renderSaveStatus(){const el=$('stSave'),pending=pendingSaveCount(),firebaseMode=usesFirebaseResultUpdates(),firebasePending=saveRuntime.status==='firebase-pending',room=currentMatchRoomHostState(),stale=resultUpdateModeIsStale(),finished=currentMatchIsFinished();let label=firebaseMode?'Save: Firebase':'Save: Google Script',tone='warn';if(stale){label='Save: Reload Required';tone='bad'}else if(saveRuntime.busy){label=saveRuntime.status==='retrying'?'Save: Retrying':firebaseMode?'Save: Writing Firebase':'Save: Writing Google'}else if(saveRuntime.status==='error'){label='Save: Error';tone='bad'}else if(pending){label=`Save: Google Pending ${pending}`}else if(firebasePending){label='Save: Firebase Pending'}else if(state.dirty){label='Save: Unsaved'}else if(firebaseMode){label=room.roomStatus==='OPEN'?`Save: Firebase ${room.roomCode}`:'Save: Firebase • No Room';tone=room.roomStatus==='OPEN'&&room.connected?'ok':'warn'}else if(isExcelSheetSource()){label='Save: Local Excel';tone='ok'}else if(state.lastSavedResult||saveRuntime.status==='saved'){label='Save: Google Sheet';tone='ok'}if(el){el.className='status '+tone;el.dataset.fullLabel=label;el.title=saveRuntime.error?`${label} - ${saveRuntime.error}`:label;el.setAttribute('aria-label',el.title)}const busy=saveRuntime.busy,currentPending=hasPendingForMatch(state.match&&state.match.MatchID),blocked=busy||currentPending||firebasePending||stale;['btnNextMatch','btnNextMatchTop','btnNextMatchDrawer','btnLoadMatch','btnLoadMatchDrawer'].forEach(id=>{if($(id))$(id).disabled=blocked});if($('btnSaveResult'))$('btnSaveResult').disabled=blocked||finished;if($('btnFinishMatch'))$('btnFinishMatch').disabled=blocked||(finished&&!state.dirty);if($('btnPendingResults')){$('btnPendingResults').textContent=pending?`Retry Pending (${pending})`:'Pending (0)';$('btnPendingResults').disabled=busy||!pending}if($('btnDiscardPending')){$('btnDiscardPending').style.display=pending?'':'none';$('btnDiscardPending').disabled=busy}renderRecoveryBanner();updateMiniStatus()}
@@ -1289,14 +1317,14 @@ function saveSettingsFromInputs(showToast=true){if(resultUpdateModeIsStale()){en
 async function testWebhook(){saveSettingsFromInputs(false);if(!settings.webhookUrl)return toast('ยังไม่ได้ใส่ Apps Script Webhook URL');const btn=$('btnTestWebhook');if(btn)btn.disabled=true;if($('stSave')){$('stSave').className='status warn';$('stSave').textContent='Webhook: Testing'}updateMiniStatus();try{const info=await jsonp(settings.webhookUrl,{action:'webhookInfo'},12000);if(!info||info.ok===false)throw new Error((info&&info.error)||'webhook_info_failed');const setup=info.setup||await jsonp(settings.webhookUrl,{action:'setupCheck'},12000);renderSheetSetupStatus(setup);if(!setup||setup.ok===false)throw new Error((setup&&setup.error)||'setup_check_failed');const list=await jsonp(settings.webhookUrl,{action:'presenceList'},12000);if(!list||list.ok===false)throw new Error((list&&list.error)||'presence_list_failed');const users=(list.users||[]).length,online=Number(list.onlineCount||0),version=info.version||'unknown',mobileState=!!(info.features&&info.features.mobileRemoteState),setupReady=setup&&setup.ok!==false;if($('stSave')){$('stSave').className=mobileState&&setupReady?'status ok':'status warn';$('stSave').textContent=(mobileState&&setupReady?'Webhook: OK ':'Webhook: Check ')+version}toast(mobileState?`Webhook OK v${version} | Setup ${setupReady?'OK':'ต้องซ่อม'} | Online ${online} คน | Users ${users}`:`Webhook เชื่อมต่อได้ แต่ Mobile Remote ต้องอัปเดต Apps Script เป็นเวอร์ชันล่าสุดจากหน้า Settings | Online ${online} คน | Users ${users}`)}catch(e){try{const list=await jsonp(settings.webhookUrl,{action:'presenceList'},8000);if(list&&list.ok!==false){if($('stSave')){$('stSave').className='status warn';$('stSave').textContent='Webhook: Old Script'}toast('Webhook เชื่อมต่อได้ แต่สคริปต์ยังไม่มี setupCheck กรุณาอัปเดต Apps Script เวอร์ชันล่าสุด');return}}catch(_){}if($('stSave')){$('stSave').className='status bad';$('stSave').textContent='Webhook: Error'}toast('Webhook ใช้งานไม่ได้: '+webhookErrorText(e))}finally{if(btn)btn.disabled=false;updateMiniStatus()}}
 async function testWebhookV2(){if(!saveSettingsFromInputs(false))return false;if(!settings.webhookUrl)return toast('ยังไม่ได้ใส่ Apps Script Webhook URL'),false;const btn=$('btnTestWebhook'),originalLabel=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='กำลังทดสอบ Webhook...'}try{const info=await jsonp(settings.webhookUrl,{action:'webhookInfo'},12000);if(!info||info.ok===false)throw new Error((info&&info.error)||'webhook_info_failed');const features=info.features||{},required=['matchDataV2','teamColors','idempotentSave','optimisticRevision','sheetColorPicker','teamColorsSheet','teamColorsTwoWaySync','sheetFillColorSync','sheetFillFormatTrigger','teamColorsRealtimeSet','teamColorsRealtimeGet','teamColorsRevisionPoll','sheetReadProxy','portableInstall','multiDeviceClients','perSpreadsheetDeployment','connectionInfoDialog'],missing=required.filter(key=>!features[key]);if(missing.length)throw new Error('Apps Script ต้องอัปเดต: '+missing.join(', '));webhookCapabilityCache={url:settings.webhookUrl,at:Date.now(),features};const setup=info.setup||await jsonp(settings.webhookUrl,{action:'setupCheck'},12000);renderSheetSetupStatus(setup);if(!setup||setup.ok===false)throw new Error((setup&&setup.error)||'setup_check_failed');scheduleTeamColorPoll(400);toast(`Webhook V2 OK ${info.version||''} | Private Sheet, Team Colors Real-time, Fill Sync, Revision และ Multi-device พร้อมใช้งาน`);return true}catch(e){const message=webhookErrorText(e);toast('Webhook V2 ยังไม่พร้อม: '+message);return false}finally{if(btn){btn.disabled=false;btn.textContent=originalLabel||'ทดสอบ Webhook'}renderSaveStatus()}}
 const DRAWER_PAGES=[
-  {label:'แมตช์',id:'tabMatch',title:'Match Loader'},
-  {label:'ชีต',id:'tabSheet',title:'ข้อมูลแมตช์ / ระบบผล'},
-  {label:'OBS',id:'tabObs',title:'OBS & Sources'},
-  {label:'โลโก้',id:'tabLogos',title:'Team Logos'},
-  {label:'FX',id:'tabGraphics',title:'FX Sources'},
-  {label:'Sources',id:'tabSourceActions',title:'Source Actions'},
-  {label:'เลย์เอาต์',id:'tabDockLayout',title:'Dock Layout'},
-  {label:'ระบบ',id:'tabAdvanced',title:'Safety & Log'}
+  {label:'แมตช์',id:'tabMatch',title:'เลือกคู่แข่งขัน',group:'data'},
+  {label:'ข้อมูล',id:'tabSheet',title:'ข้อมูลแมตช์และระบบผล',group:'data'},
+  {label:'OBS',id:'tabObs',title:'OBS และแหล่งภาพ',group:'graphics'},
+  {label:'โลโก้',id:'tabLogos',title:'โลโก้และสีทีม',group:'graphics'},
+  {label:'เอฟเฟกต์',id:'tabGraphics',title:'เอฟเฟกต์ภาพ',group:'graphics'},
+  {label:'ปุ่มลัด',id:'tabSourceActions',title:'ปุ่มลัดควบคุมกราฟิก',group:'graphics'},
+  {label:'เลย์เอาต์',id:'tabDockLayout',title:'เลย์เอาต์ Dock',group:'system'},
+  {label:'ขั้นสูง',id:'tabAdvanced',title:'ความปลอดภัยและ Log',group:'system'}
 ];
 let activeDrawerTab='tabMatch';
 let drawerReturnFocus=null;
@@ -1320,7 +1348,7 @@ function activateDrawerTab(id,resetScroll=true){
   if(resetScroll&&body)body.scrollTop=0;
 }
 function initDrawer(){
-  $('tabs').innerHTML=DRAWER_PAGES.map((page,i)=>`<button class="tab ${i===0?'active':''}" id="drawerTab${i}" type="button" role="tab" data-tab="${page.id}" aria-controls="${page.id}" aria-selected="${i===0?'true':'false'}" tabindex="${i===0?'0':'-1'}">${page.label}</button>`).join('');
+  $('tabs').innerHTML=DRAWER_PAGES.map((page,i)=>`<button class="tab ${i===0?'active':''}" id="drawerTab${i}" type="button" role="tab" data-tab="${page.id}" data-group="${page.group||'system'}" aria-controls="${page.id}" aria-selected="${i===0?'true':'false'}" tabindex="${i===0?'0':'-1'}">${page.label}</button>`).join('');
   $('tabs').onclick=e=>{const button=e.target.closest('[data-tab]');if(!button)return;activateDrawerTab(button.dataset.tab);button.focus()};
   $('tabs').onkeydown=e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const tabs=[...document.querySelectorAll('#tabs .tab')],current=tabs.indexOf(document.activeElement);let next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(current+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;e.preventDefault();activateDrawerTab(tabs[next].dataset.tab);tabs[next].focus()};
   document.querySelectorAll('.drawer-body .tabpage').forEach((panel,i)=>{panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby','drawerTab'+i)});
@@ -2520,10 +2548,10 @@ function bindTeamColorControls(){if(teamColorControlsBound)return;teamColorContr
 const __oldRenderAllForTeamColors=renderAll;renderAll=function(){__oldRenderAllForTeamColors();renderTeamColorSwatches()};
 const DOCK_VIEW_KEY='pepslive.dock.activeView.v2';
 const DOCK_VIEW_META={
-  score:{kicker:'LIVE SCORE',title:'ให้คะแนน',state:'ON AIR'},
-  match:{kicker:'MATCH CENTER',title:'เลือกคู่แข่งขัน',state:'QUEUE'},
-  control:{kicker:'LIVE CONTROL',title:'ควบคุม Sources',state:'ACTIONS'},
-  system:{kicker:'SYSTEM CHECK',title:'สถานะและตั้งค่า',state:'READY'}
+  score:{kicker:'LIVE CONTROL',title:'ถ่ายทอดสด',state:'ON AIR'},
+  match:{kicker:'MATCH CENTER',title:'เลือกคู่แข่งขัน',state:'เตรียมงาน'},
+  control:{kicker:'GRAPHICS CONTROL',title:'ควบคุมกราฟิก',state:'คำสั่ง'},
+  system:{kicker:'SYSTEM CHECK',title:'ตั้งค่าระบบ',state:'ตรวจสอบ'}
 };
 function setDockView(view,persist=true){
   if(!DOCK_VIEW_META[view])view='score';

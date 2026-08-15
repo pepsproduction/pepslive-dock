@@ -489,9 +489,9 @@ function renderEmptyCurrent() {
   byId("updatedText").textContent = "ยังไม่มีข้อมูล";
   setLogo(byId("teamALogo"), "");
   setLogo(byId("teamBLogo"), "");
-  byId("teamACard").style.setProperty("--team-color", "#ff7a21");
+  byId("teamACard").style.setProperty("--team-color", "#ff6a00");
   byId("teamACard").style.setProperty("--team-secondary", "#111111");
-  byId("teamBCard").style.setProperty("--team-color", "#4cc9ff");
+  byId("teamBCard").style.setProperty("--team-color", "#d9a441");
   byId("teamBCard").style.setProperty("--team-secondary", "#ffffff");
 }
 
