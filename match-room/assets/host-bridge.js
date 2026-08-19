@@ -1144,14 +1144,6 @@ async function startMatchRoomHost() {
 
   function openViewer() {
     if (!session?.viewerUrl) return;
-    let popup;
-    try {
-      popup = window.open(session.viewerUrl, "_blank");
-      if (popup) {
-        try { popup.opener = null; } catch (_) {}
-        return;
-      }
-    } catch (_) {}
     window.location.assign(session.viewerUrl);
   }
 
