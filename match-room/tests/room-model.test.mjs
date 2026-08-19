@@ -9,11 +9,20 @@ import {
   normalizeLogoAssets,
   normalizeSchedule,
   normalizeTeamColors,
+  randomRoomCode,
+  sanitizeRoomCode,
   scheduleFingerprint,
   safeLogoKey,
   safeTeamKey,
   teamColorsFingerprint,
 } from '../assets/room-model.js';
+
+test('room codes stay exactly four digits and never truncate legacy six-digit values', () => {
+  assert.match(randomRoomCode(), /^\d{4}$/);
+  assert.equal(sanitizeRoomCode('3808'), '3808');
+  assert.equal(sanitizeRoomCode('380842'), '');
+  assert.equal(sanitizeRoomCode('room-3808'), '');
+});
 
 test('schedule keeps Sheet order, Thai names, leading-zero IDs, and finished scores', () => {
   const schedule = normalizeSchedule({

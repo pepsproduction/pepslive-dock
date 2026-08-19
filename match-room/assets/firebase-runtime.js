@@ -18,19 +18,22 @@ import {
 import { firebaseConfig } from "./firebase-config.js";
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1"]);
+const PUBLIC_VIEWER_URL = "https://pepsproduction.github.io/pepslive-dock/match-room/index.html";
 let runtimePromise;
 
 export function resolveFirebaseMode(url = window.location.href) {
   const parsed = new URL(url, window.location.href);
   const requested = parsed.searchParams.get("firebaseMode");
   if (requested === "production" || requested === "emulator") return requested;
-  return LOCAL_HOSTS.has(parsed.hostname) ? "emulator" : "production";
+  return "production";
 }
 
 export function viewerUrlForRoom(roomCode, mode = resolveFirebaseMode()) {
-  const url = new URL("../", import.meta.url);
+  const localUrl = new URL("../", import.meta.url);
+  const url = mode === "emulator" ? localUrl : new URL(PUBLIC_VIEWER_URL);
   url.searchParams.set("room", String(roomCode || ""));
-  if (LOCAL_HOSTS.has(url.hostname) || mode === "emulator") {
+  url.searchParams.set("v", "2");
+  if (mode === "emulator") {
     url.searchParams.set("firebaseMode", mode);
   }
   return url.toString();

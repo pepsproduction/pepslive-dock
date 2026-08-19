@@ -14,7 +14,7 @@ import {
   teamColorsFingerprint
 } from "./room-model.js";
 
-const bridge = window.PepsLiveDockMatchRoomBridge;
+let bridge = window.PepsLiveDockMatchRoomBridge;
 const params = new URLSearchParams(window.location.search);
 const HOST_SESSION_KEY = "pepslive.matchRoom.hostSession.v1";
 const HOST_BACKUP_KEY = "pepslive.matchRoom.hostBackup.v1";
@@ -22,10 +22,23 @@ const HOST_WRITER_LEASE_KEY = "pepslive.matchRoom.writerLease.v1";
 const FALLBACK_LEASE_MS = 6500;
 const FALLBACK_HEARTBEAT_MS = 2000;
 
-if (bridge && params.get("remote") !== "1" && window.location.protocol !== "file:") {
+let hostStarted = false;
+
+function bootHostBridge() {
+  if (hostStarted || params.get("remote") === "1" || window.location.protocol === "file:") return;
+  bridge = window.PepsLiveDockMatchRoomBridge;
+  if (!bridge) return;
+  hostStarted = true;
   startMatchRoomHost().catch((error) => {
+    hostStarted = false;
     console.warn("PepsLive Match Room host failed to start", error);
   });
+}
+
+bootHostBridge();
+if (!hostStarted) {
+  setTimeout(bootHostBridge, 0);
+  setTimeout(bootHostBridge, 250);
 }
 
 async function startMatchRoomHost() {
@@ -62,6 +75,11 @@ async function startMatchRoomHost() {
   let session = Object.prototype.hasOwnProperty.call(backup, "session")
     ? (backup.session ? { ...(storedSession || {}), ...backup.session } : null)
     : storedSession;
+  if (session && !ROOM_CODE_PATTERN.test(String(session.code || ""))) {
+    quarantinePending("legacy_room_code_rejected");
+    session = null;
+    persist();
+  }
   let firebase;
   let runtime;
   let syncing = false;
@@ -255,6 +273,17 @@ async function startMatchRoomHost() {
 
   function notify(message) {
     if (bridge.notify) bridge.notify(message);
+  }
+
+  function firebaseErrorText(error) {
+    const raw = String(error?.code || error?.message || error || "");
+    if (/permission.?denied/i.test(raw)) {
+      return "Firebase ปฏิเสธสิทธิ์ • ตรวจว่าเปิด Anonymous Auth และอัปเดต Database Rules สำหรับ Room 4 หลักแล้ว";
+    }
+    if (/auth\//i.test(raw)) {
+      return `Firebase Auth ใช้งานไม่ได้ • ${raw}`;
+    }
+    return raw;
   }
 
   function setStatus(state, message) {
@@ -948,7 +977,7 @@ async function startMatchRoomHost() {
       return;
     }
     if (!isEnabled()) {
-      notify("เลือก Firebase Realtime Database ที่ Settings > Sheet ก่อนสร้างห้อง");
+      notify("Match Room ใช้ได้เมื่อเปิด Dock ผ่าน Local Server หรือ HTTPS");
       return;
     }
     if (!runtime || !databaseConnected || (session && session.status !== "CLOSED")) return;
@@ -1115,7 +1144,7 @@ async function startMatchRoomHost() {
 
   ui.create.addEventListener("click", () => createRoom().catch((error) => {
     setStatus("error", "สร้างห้องไม่สำเร็จ");
-    notify(`สร้าง Match Room ไม่สำเร็จ: ${error.message || error}`);
+    notify(`สร้าง Match Room ไม่สำเร็จ: ${firebaseErrorText(error)}`);
     renderSession();
   }));
   ui.save.addEventListener("click", () => saveMeta().catch((error) => notify(`อัปเดตห้องไม่สำเร็จ: ${error.message || error}`)));
@@ -1265,14 +1294,14 @@ function mountUi() {
   const mount = document.getElementById("moduleSystem");
   const container = document.createElement("div");
   container.className = "match-room-host";
-  container.dataset.resultModeUi = "firebase";
-  const firebaseModeVisible = document.body.dataset.resultUpdateMode === "firebase";
-  container.hidden = !firebaseModeVisible;
-  container.setAttribute("aria-hidden", firebaseModeVisible ? "false" : "true");
-  if (!firebaseModeVisible) container.setAttribute("inert", "");
+  container.dataset.resultModeUi = "local firebase";
+  const realtimeVisible = document.body.dataset.resultUpdateMode !== "apps-script";
+  container.hidden = !realtimeVisible;
+  container.setAttribute("aria-hidden", realtimeVisible ? "false" : "true");
+  if (!realtimeVisible) container.setAttribute("inert", "");
   container.innerHTML = `
-    <div class="match-room-host-head"><h3>Firebase Match Room</h3><span class="match-room-host-status" data-state="backup">กำลังเริ่มระบบ</span></div>
-    <div class="match-room-host-head"><strong class="match-room-host-code">------</strong><small>ผู้ชมอ่านอย่างเดียว • เจ้าของแก้สีทีมได้</small></div>
+    <div class="match-room-host-head"><h3>Match Room Viewer • Realtime</h3><span class="match-room-host-status" data-state="backup">กำลังเริ่มระบบ</span></div>
+    <div class="match-room-host-head"><strong class="match-room-host-code">------</strong><small>เลขห้อง 4 หลัก • ผู้ชมอ่านอย่างเดียว • เจ้าของแก้สีทีมได้</small></div>
     <div class="match-room-host-actions">
       <button class="primary tiny" type="button" data-room-action="create" disabled>สร้างห้อง</button>
       <button class="soft tiny" type="button" data-room-action="copy" disabled>Copy Viewer</button>

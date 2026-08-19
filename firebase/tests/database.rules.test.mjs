@@ -18,7 +18,7 @@ import {
 } from 'firebase/database';
 
 const PROJECT_ID = 'demo-pepslive-match-room';
-const ROOM_CODE = '123456';
+const ROOM_CODE = '1234';
 const OWNER_UID = 'owner-anon-uid';
 const VIEWER_UID = 'viewer-anon-uid';
 const OTHER_UID = 'other-anon-uid';
@@ -369,7 +369,7 @@ test('unauthenticated clients cannot read a public room', async () => {
   await assertFails(get(ref(db, `${roomPath()}/meta/status`)));
 });
 
-test('owner creates one complete six-digit room with server timestamps', async () => {
+test('owner creates one complete four-digit room with server timestamps', async () => {
   const ownerDb = dbFor(OWNER_UID);
   await assertSucceeds(
     set(ref(ownerDb, roomPath()), createRoomPayload()),
@@ -382,14 +382,14 @@ test('owner creates one complete six-digit room with server timestamps', async (
 
   await assertSucceeds(
     set(
-      ref(ownerDb, roomPath('567890')),
-      createRoomPayload(OWNER_UID, '567890', { schedule: null }),
+      ref(ownerDb, roomPath('5678')),
+      createRoomPayload(OWNER_UID, '5678', { schedule: null }),
     ),
   );
   await assertFails(
     set(
-      ref(ownerDb, roomPath('678901')),
-      createRoomPayload(OWNER_UID, '678901', {
+      ref(ownerDb, roomPath('6789')),
+      createRoomPayload(OWNER_UID, '6789', {
         schedule: scheduleSnapshot({ items: { i_1000: scheduleItem() } }),
       }),
     ),
@@ -398,36 +398,36 @@ test('owner creates one complete six-digit room with server timestamps', async (
   const otherDb = dbFor(OTHER_UID);
   await assertFails(
     set(
-      ref(otherDb, roomPath('234567')),
-      createRoomPayload(OWNER_UID, '234567'),
+      ref(otherDb, roomPath('2345')),
+      createRoomPayload(OWNER_UID, '2345'),
     ),
   );
   await assertFails(
     set(
-      ref(ownerDb, roomPath('12345')),
-      createRoomPayload(OWNER_UID, '12345'),
+      ref(ownerDb, roomPath('123')),
+      createRoomPayload(OWNER_UID, '123'),
     ),
   );
   await assertFails(
     set(
-      ref(ownerDb, roomPath('345678')),
-      createRoomPayload(OWNER_UID, '345678', {
+      ref(ownerDb, roomPath('3456')),
+      createRoomPayload(OWNER_UID, '3456', {
         current: { scoreA: -1 },
       }),
     ),
   );
   await assertFails(
     set(
-      ref(ownerDb, roomPath('456780')),
-      createRoomPayload(OWNER_UID, '456780', {
+      ref(ownerDb, roomPath('4567')),
+      createRoomPayload(OWNER_UID, '4567', {
         current: { revision: 2 },
       }),
     ),
   );
   await assertFails(
     set(
-      ref(ownerDb, roomPath('456781')),
-      createRoomPayload(OWNER_UID, '456781', {
+      ref(ownerDb, roomPath('4568')),
+      createRoomPayload(OWNER_UID, '4568', {
         meta: { status: 'CLOSED' },
       }),
     ),
@@ -435,8 +435,8 @@ test('owner creates one complete six-digit room with server timestamps', async (
   const seededEventId = 'op_seeded_001';
   await assertFails(
     set(
-      ref(ownerDb, roomPath('456782')),
-      createRoomPayload(OWNER_UID, '456782', {
+      ref(ownerDb, roomPath('4569')),
+      createRoomPayload(OWNER_UID, '4569', {
         current: {
           status: 'FULL TIME',
           matchStatus: 'FINISHED',
@@ -460,8 +460,8 @@ test('owner creates one complete six-digit room with server timestamps', async (
   );
   await assertFails(
     set(
-      ref(ownerDb, `${roomPath('456789')}/meta`),
-      createRoomPayload(OWNER_UID, '456789').meta,
+      ref(ownerDb, `${roomPath('4570')}/meta`),
+      createRoomPayload(OWNER_UID, '4570').meta,
     ),
   );
 });
@@ -847,7 +847,7 @@ test('meta limits, immutable identity fields, and terminal CLOSED status are enf
     update(metaRef, { ownerUid: OTHER_UID, updatedAt: serverTimestamp() }),
   );
   await assertFails(
-    update(metaRef, { roomCode: '654321', updatedAt: serverTimestamp() }),
+    update(metaRef, { roomCode: '12345', updatedAt: serverTimestamp() }),
   );
   await assertFails(
     update(metaRef, { createdAt: SEEDED_AT + 1, updatedAt: serverTimestamp() }),

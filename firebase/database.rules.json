@@ -4,7 +4,7 @@
     ".write": false,
     "matchRoomsV1": {
       "$roomCode": {
-        ".write": "auth !== null && $roomCode.matches(/^[0-9]{6}$/) && !data.exists() && newData.child('meta/ownerUid').val() === auth.uid",
+        ".write": "auth !== null && $roomCode.matches(/^[0-9]{4}$/) && !data.exists() && newData.child('meta/ownerUid').val() === auth.uid",
         ".validate": "newData.hasChildren(['meta', 'current']) && newData.child('meta/roomCode').val() === $roomCode && (data.exists() || (!newData.child('matches').exists() && !newData.child('audit').exists()))",
         "meta": {
           ".read": "auth !== null && data.child('ownerUid').val() === auth.uid",
@@ -16,7 +16,7 @@
           },
           "roomCode": {
             ".read": "auth !== null && data.parent().child('ownerUid').val() === auth.uid",
-            ".validate": "newData.isString() && newData.val() === $roomCode && newData.val().matches(/^[0-9]{6}$/) && (!data.exists() || newData.val() === data.val())"
+            ".validate": "newData.isString() && newData.val() === $roomCode && newData.val().matches(/^[0-9]{4}$/) && (!data.exists() || newData.val() === data.val())"
           },
           "publicView": {
             ".read": "auth !== null && (data.parent().child('ownerUid').val() === auth.uid || data.parent().child('publicView').val() === true)",

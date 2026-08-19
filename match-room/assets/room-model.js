@@ -1,5 +1,5 @@
 export const ROOM_ROOT = "matchRoomsV1";
-export const ROOM_CODE_PATTERN = /^\d{6}$/;
+export const ROOM_CODE_PATTERN = /^\d{4}$/;
 export const MAX_SCHEDULE_ITEMS = 1000;
 export const MAX_LOGO_ASSETS = 128;
 export const MAX_LOGO_DATA_URL_LENGTH = 70000;
@@ -39,13 +39,14 @@ function encodeKey(value) {
 }
 
 export function sanitizeRoomCode(value) {
-  return String(value || "").replace(/\D/g, "").slice(0, 6);
+  const code = String(value || "").trim();
+  return ROOM_CODE_PATTERN.test(code) ? code : "";
 }
 
 export function randomRoomCode() {
   const values = new Uint32Array(1);
   crypto.getRandomValues(values);
-  return String(100000 + (values[0] % 900000));
+  return String(1000 + (values[0] % 9000));
 }
 
 export function safeMatchKey(matchId) {
@@ -418,8 +419,8 @@ export function buildExcelXml(meta = {}, current = {}, matches = {}) {
     [["สถานที่", "String"], [meta.venue || "", "String"]],
     [["รอบ", "String"], [meta.round || "", "String"], ["กลุ่ม", "String"], [meta.group || "", "String"]],
     [],
-    [["Match ID", "String"], ["Team A", "String"], ["Score A", "String"], ["Score B", "String"], ["Team B", "String"], ["Period", "String"], ["Status", "String"], ["Updated At", "String"]],
-    [[current.matchId || "", "String"], [current.teamAName || "", "String"], [Number(current.scoreA || 0), "Number"], [Number(current.scoreB || 0), "Number"], [current.teamBName || "", "String"], [current.period || "", "String"], [current.status || "", "String"], [new Date(Number(current.updatedAt || Date.now())).toISOString(), "String"]]
+    [["Match ID", "String"], ["Team A", "String"], ["Score A", "String"], ["Score B", "String"], ["Team B", "String"], ["Period", "String"], ["Status", "String"], ["Updated At", "String"], ["Team A Primary", "String"], ["Team A Secondary", "String"], ["Team B Primary", "String"], ["Team B Secondary", "String"]],
+    [[current.matchId || "", "String"], [current.teamAName || "", "String"], [Number(current.scoreA || 0), "Number"], [Number(current.scoreB || 0), "Number"], [current.teamBName || "", "String"], [current.period || "", "String"], [current.status || "", "String"], [new Date(Number(current.updatedAt || Date.now())).toISOString(), "String"], [current.teamAPrimaryColor || "", "String"], [current.teamASecondaryColor || "", "String"], [current.teamBPrimaryColor || "", "String"], [current.teamBSecondaryColor || "", "String"]]
   ];
 
   if (history.length) {
@@ -434,7 +435,11 @@ export function buildExcelXml(meta = {}, current = {}, matches = {}) {
         [item.teamBName || "", "String"],
         [item.period || "", "String"],
         [item.status || "", "String"],
-        [new Date(Number(item.createdAt || item.updatedAt || Date.now())).toISOString(), "String"]
+        [new Date(Number(item.createdAt || item.updatedAt || Date.now())).toISOString(), "String"],
+        [item.teamAPrimaryColor || "", "String"],
+        [item.teamASecondaryColor || "", "String"],
+        [item.teamBPrimaryColor || "", "String"],
+        [item.teamBSecondaryColor || "", "String"]
       ]);
     }
   }
