@@ -693,7 +693,7 @@ function stopListening() {
 async function joinRoom(code) {
   const normalized = sanitizeRoomCode(code);
   if (!ROOM_CODE_PATTERN.test(normalized)) {
-    setNotice("กรุณากรอกเลขห้อง 6 หลัก • ห้องเดิมยังเชื่อมต่ออยู่");
+    setNotice("กรุณากรอกเลขห้อง 4 หลัก • ห้องเดิมยังเชื่อมต่ออยู่");
     return;
   }
   const generation = ++joinGeneration;
@@ -937,6 +937,6 @@ if (initialCode) {
   byId("roomCodeInput").value = initialCode;
   joinRoom(initialCode);
 } else {
-  byId("firebaseModeText").textContent = "Localhost ใช้ Emulator เป็นค่าเริ่มต้น • GitHub Pages ใช้ Production";
+  byId("firebaseModeText").textContent = "Match Room ใช้ Production Realtime • ใช้ firebaseMode=emulator เฉพาะงานทดสอบนักพัฒนา";
   render();
 }

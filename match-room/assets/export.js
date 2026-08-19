@@ -66,7 +66,7 @@ function buildScheduleExcelXml(meta = {}, scheduleRows = []) {
     [["สถานที่", "String"], [meta.venue || "", "String"]],
     [["รอบ", "String"], [meta.round || "", "String"], ["กลุ่ม", "String"], [meta.group || "", "String"]],
     [],
-    [["Order", "String"], ["Match ID", "String"], ["Team A", "String"], ["Score A", "String"], ["Score B", "String"], ["Team B", "String"], ["Status", "String"], ["Winner", "String"], ["Label 1", "String"], ["Label 2", "String"], ["Label 3", "String"], ["Label 4", "String"], ["Label 5", "String"]]
+    [["Order", "String"], ["Match ID", "String"], ["Team A", "String"], ["Score A", "String"], ["Score B", "String"], ["Team B", "String"], ["Status", "String"], ["Winner", "String"], ["Label 1", "String"], ["Label 2", "String"], ["Label 3", "String"], ["Label 4", "String"], ["Label 5", "String"], ["Team A Primary", "String"], ["Team A Secondary", "String"], ["Team B Primary", "String"], ["Team B Secondary", "String"]]
   ];
 
   for (const [index, match] of scheduleRows.entries()) {
@@ -84,7 +84,11 @@ function buildScheduleExcelXml(meta = {}, scheduleRows = []) {
       [match.label2 || "", "String"],
       [match.label3 || "", "String"],
       [match.label4 || "", "String"],
-      [match.label5 || "", "String"]
+      [match.label5 || "", "String"],
+      [match.teamAPrimaryColor || "", "String"],
+      [match.teamASecondaryColor || "", "String"],
+      [match.teamBPrimaryColor || "", "String"],
+      [match.teamBSecondaryColor || "", "String"]
     ]);
   }
 
@@ -97,7 +101,7 @@ export function exportExcel(meta, current, matches, scheduleRows = []) {
   const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8" });
   const anchor = document.createElement("a");
   anchor.href = URL.createObjectURL(blob);
-  anchor.download = `pepslive-match-room-${meta.roomCode || "room"}.xml`;
+  anchor.download = `pepslive-match-room-${meta.roomCode || "room"}.xls`;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(anchor.href), 0);
   return { filename: anchor.download, bytes: blob.size };
