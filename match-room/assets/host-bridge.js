@@ -1142,6 +1142,19 @@ async function startMatchRoomHost() {
     notify("Copy Viewer URL แล้ว");
   }
 
+  function openViewer() {
+    if (!session?.viewerUrl) return;
+    let popup;
+    try {
+      popup = window.open(session.viewerUrl, "_blank");
+      if (popup) {
+        try { popup.opener = null; } catch (_) {}
+        return;
+      }
+    } catch (_) {}
+    window.location.assign(session.viewerUrl);
+  }
+
   ui.create.addEventListener("click", () => createRoom().catch((error) => {
     setStatus("error", "สร้างห้องไม่สำเร็จ");
     notify(`สร้าง Match Room ไม่สำเร็จ: ${firebaseErrorText(error)}`);
@@ -1149,7 +1162,7 @@ async function startMatchRoomHost() {
   }));
   ui.save.addEventListener("click", () => saveMeta().catch((error) => notify(`อัปเดตห้องไม่สำเร็จ: ${error.message || error}`)));
   ui.copy.addEventListener("click", () => copyViewerUrl().catch((error) => notify(`Copy ไม่สำเร็จ: ${error.message || error}`)));
-  ui.open.addEventListener("click", () => { if (session?.viewerUrl) window.open(session.viewerUrl, "_blank", "noopener"); });
+  ui.open.addEventListener("click", openViewer);
   ui.close.addEventListener("click", () => closeRoom().catch((error) => notify(`ปิดห้องไม่สำเร็จ: ${error.message || error}`)));
   const unregisterHostAdapter = typeof bridge.registerHostAdapter === "function"
     ? bridge.registerHostAdapter({
