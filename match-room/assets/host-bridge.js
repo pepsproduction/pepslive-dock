@@ -12,7 +12,7 @@ import {
   safeEventKey,
   safeTeamKey,
   teamColorsFingerprint
-} from "./room-model.js";
+} from "./room-model.js?v=2";
 
 let bridge = window.PepsLiveDockMatchRoomBridge;
 const params = new URLSearchParams(window.location.search);
@@ -1179,7 +1179,7 @@ async function startMatchRoomHost() {
     if (runtime) return runtime;
     if (firebaseInitPromise) return firebaseInitPromise;
     firebaseInitPromise = (async () => {
-      firebase ||= await import("./firebase-runtime.js");
+      firebase ||= await import("./firebase-runtime.js?v=2");
       const nextRuntime = await firebase.getFirebaseRuntime();
       setStatus("backup", `กำลังเชื่อม Firebase ${nextRuntime.mode}`);
       await waitForDatabaseConnection(nextRuntime);

@@ -1,11 +1,11 @@
-import { copyMatch, copyResult, copyTeams, exportExcel } from "./export.js";
+import { copyMatch, copyResult, copyTeams, exportExcel } from "./export.js?v=2";
 import {
   ROOM_CODE_PATTERN,
   ROOM_ROOT,
   safeLogoKey,
   safeTeamKey,
   sanitizeRoomCode
-} from "./room-model.js";
+} from "./room-model.js?v=2";
 
 const byId = (id) => document.getElementById(id);
 const DEFAULT_LOGO = "../logos/default.svg";
@@ -718,7 +718,7 @@ async function joinRoom(code) {
   history.replaceState(null, "", url);
 
   try {
-    const firebase = await import("./firebase-runtime.js");
+    const firebase = await import("./firebase-runtime.js?v=2");
     const runtime = await firebase.getFirebaseRuntime();
     if (!isCurrentJoin()) return;
     firebaseApi = firebase;
