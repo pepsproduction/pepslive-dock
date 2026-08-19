@@ -6,6 +6,7 @@ import {
   MAX_LOGO_DATA_URL_LENGTH,
   MAX_SCHEDULE_ITEMS,
   logoAssetsFingerprint,
+  normalizeRoomCodeInput,
   normalizeLogoAssets,
   normalizeSchedule,
   normalizeTeamColors,
@@ -22,6 +23,14 @@ test('room codes stay exactly four digits and never truncate legacy six-digit va
   assert.equal(sanitizeRoomCode('3808'), '3808');
   assert.equal(sanitizeRoomCode('380842'), '');
   assert.equal(sanitizeRoomCode('room-3808'), '');
+});
+
+test('room code input stays editable until strict four-digit submit validation', () => {
+  assert.equal(normalizeRoomCodeInput('5'), '5');
+  assert.equal(normalizeRoomCodeInput('55a2'), '552');
+  assert.equal(normalizeRoomCodeInput('5527'), '5527');
+  assert.equal(normalizeRoomCodeInput('55278'), '5527');
+  assert.equal(normalizeRoomCodeInput(''), '');
 });
 
 test('schedule keeps Sheet order, Thai names, leading-zero IDs, and finished scores', () => {
