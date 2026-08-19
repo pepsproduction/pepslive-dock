@@ -1,11 +1,12 @@
-import { copyMatch, copyResult, copyTeams, exportExcel } from "./export.js?v=2";
+import { copyMatch, copyResult, copyTeams, exportExcel } from "./export.js?v=3";
 import {
   ROOM_CODE_PATTERN,
   ROOM_ROOT,
+  normalizeRoomCodeInput,
   safeLogoKey,
   safeTeamKey,
   sanitizeRoomCode
-} from "./room-model.js?v=2";
+} from "./room-model.js?v=3";
 
 const byId = (id) => document.getElementById(id);
 const DEFAULT_LOGO = "../logos/default.svg";
@@ -816,7 +817,7 @@ async function joinRoom(code) {
 }
 
 byId("roomCodeInput").addEventListener("input", (event) => {
-  event.target.value = sanitizeRoomCode(event.target.value);
+  event.target.value = normalizeRoomCodeInput(event.target.value);
 });
 byId("joinForm").addEventListener("submit", (event) => {
   event.preventDefault();

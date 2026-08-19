@@ -43,6 +43,10 @@ export function sanitizeRoomCode(value) {
   return ROOM_CODE_PATTERN.test(code) ? code : "";
 }
 
+export function normalizeRoomCodeInput(value) {
+  return String(value ?? "").replace(/\D/g, "").slice(0, 4);
+}
+
 export function randomRoomCode() {
   const values = new Uint32Array(1);
   crypto.getRandomValues(values);
